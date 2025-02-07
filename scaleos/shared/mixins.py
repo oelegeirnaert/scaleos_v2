@@ -1,6 +1,10 @@
 from django.db import models
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils import timezone
+import datetime
+
+ITS_NOW = timezone.make_aware(datetime.datetime.now(),timezone.get_default_timezone())
 
 class AdminLinkMixin(models.Model):
     pass
