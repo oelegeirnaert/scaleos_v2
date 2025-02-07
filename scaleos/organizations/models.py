@@ -1,9 +1,12 @@
+import logging
 from django.db import models
 from polymorphic.models import PolymorphicModel
 from scaleos.shared.mixins import AdminLinkMixin
 from scaleos.shared.fields import NameField
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
+
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 class Organization(PolymorphicModel, AdminLinkMixin, NameField):
