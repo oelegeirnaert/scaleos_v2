@@ -226,7 +226,8 @@ class BrunchEvent(SingleEvent):
         verbose_name_plural = _("brunch events")
 
 class BrunchEventPrice(AdminLinkMixin):
-    pass
+    brunch_event = models.ForeignKey(BrunchEvent, related_name="prices", on_delete=models.CASCADE, null=True, blank=True)
+    
     
 
 class CeremonyEvent(SingleEvent):

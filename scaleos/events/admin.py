@@ -68,7 +68,16 @@ class BrunchEventAdmin(PolymorphicChildModelAdmin):
 
 @admin.register(event_models.ReceptionEvent)
 class ReceptionEventAdmin(PolymorphicChildModelAdmin):
-    from scaleos.reservations.admin import BrunchReservationInlineAdmin
+    base_model = event_models.SingleEvent  # Explicitly set here!
+    # define custom features here
+
+@admin.register(event_models.DinnerEvent)
+class DinnerEventAdmin(PolymorphicChildModelAdmin):
+    base_model = event_models.SingleEvent  # Explicitly set here!
+    # define custom features here
+
+@admin.register(event_models.DanceEvent)
+class DanceEventAdmin(PolymorphicChildModelAdmin):
     base_model = event_models.SingleEvent  # Explicitly set here!
     # define custom features here
 
@@ -86,10 +95,12 @@ class EventAdmin(PolymorphicParentModelAdmin):
         event_models.SingleEvent,
         event_models.ReceptionEvent,
         event_models.BrunchEvent,
+        event_models.DinnerEvent,
+        event_models.DanceEvent,
     ]
     list_filter = [PolymorphicChildModelFilter]
     list_display = ["name"]
     search_fields = ["name"]
-    readonly_fields = ["free_spots", "free_capacity"]
+
 
 
