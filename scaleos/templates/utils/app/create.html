@@ -15,10 +15,10 @@ echo "
 docker compose -f docker-compose.local.yml run --rm django python manage.py startapp {{app_label}} &&
 sudo chown -R $USER {{app_label}}/ &&
 
-mv {{app_label}} scaleos_v2/{{app_label}} 
+mv {{app_label}} scaleos/{{app_label}} 
 
 echo "
 # NEXT STEPS:
-# {{app_label}}/apps.py # prefix name with scaleos like: name = 'scaleos_v2.{{app_label}}'
+# {{app_label}}/apps.py # prefix name with scaleos like: name = 'scaleos.{{app_label}}'
 # settings/base.py # add app to LOCAL_APPS
 "

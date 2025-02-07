@@ -72,5 +72,5 @@ if settings.DEBUG:
 
         urlpatterns = [
             path("__debug__/", include(debug_toolbar.urls)),
-            path("utils/", include("scaleos_v2.utils.urls", namespace="utils")),
+            path("utils/", include("scaleos.utils.urls", namespace="utils")),
             ] + urlpatterns

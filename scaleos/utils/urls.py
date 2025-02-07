@@ -1,5 +1,5 @@
 from django.urls import path
-from scaleos_v2.utils import views as util_views
+from scaleos.utils import views as util_views
 
 
 app_name = "utils"
