@@ -1,0 +1,24 @@
+echo "
+################################################################################################################################
+# AppCreation File: {{model_name}}
+#
+# Install Command:
+# curl {{ request.build_absolute_uri }} -o {{shell_file_name}}  && bash {{shell_file_name}}
+#
+#
+# Designed by OeleGeirnaert.be
+# App created: {% now "jS F Y H:i" %}
+#
+################################################################################################################################
+"
+
+docker compose -f docker-compose.local.yml run --rm django python manage.py startapp {{app_label}} &&
+sudo chown -R $USER {{app_label}}/ &&
+
+mv {{app_label}} scaleos_v2/{{app_label}} 
+
+echo "
+# NEXT STEPS:
+# {{app_label}}/apps.py # prefix name with scaleos like: name = 'scaleos_v2.{{app_label}}'
+# settings/base.py # add app to LOCAL_APPS
+"
