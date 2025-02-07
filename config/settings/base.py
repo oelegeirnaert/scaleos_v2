@@ -85,6 +85,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "drf_spectacular",
     "phonenumber_field",
+    "djmoney",
 ]
 
 LOCAL_APPS = [
@@ -93,6 +94,7 @@ LOCAL_APPS = [
     "scaleos.events",
     "scaleos.hr",
     "scaleos.reservations",
+    "scaleos.payments",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
