@@ -15,7 +15,13 @@ echo "
 docker compose -f docker-compose.local.yml run --rm django python manage.py startapp {{app_label}} &&
 sudo chown -R $USER {{app_label}}/ &&
 
-mv {{app_label}} scaleos/{{app_label}} 
+DIRECTORY="{{destination_directory}}"
+if [ -d "$DIRECTORY" ]; then
+  echo "$DIRECTORY does exist."
+  return
+fi
+
+mv {{app_label}} {{destination_directory}}
 
 echo "
 # NEXT STEPS:

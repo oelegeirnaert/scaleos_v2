@@ -14,5 +14,5 @@ def create_app(request, app_label, model_name):
     context["model_name"] = model_name
     context["project"] = "scaleos"
     context["shell_file_name"] = f"app_{app_label}.sh"
-    context["destination_directory"] = f""
+    context["destination_directory"] = f"{project_name}/{app_label}"
     return render(request=request, template_name="utils/app/create.html", context=context, content_type="text/plain")
