@@ -2,9 +2,30 @@ from django.contrib import admin
 from scaleos.events import models as event_models
 from polymorphic.admin import PolymorphicChildModelFilter
 from polymorphic.admin import PolymorphicParentModelAdmin
-from polymorphic.admin import PolymorphicChildModelAdmin
+from polymorphic.admin import PolymorphicChildModelAdmin, StackedPolymorphicInline, PolymorphicInlineSupportMixin
 
 # Register your models here.
+class EventInlineAdmin(StackedPolymorphicInline):
+    """
+    An inline for a polymorphic model.
+    The actual form appearance of each row is determined by
+    the child inline that corresponds with the actual model type.
+    """
+    class BrunchInlineAdmin(StackedPolymorphicInline.Child):
+        model = event_models.BrunchEvent
+
+    class DinnerEventInlineAdmin(StackedPolymorphicInline.Child):
+        model = event_models.DinnerEvent
+
+    class DanceInlineAdmin(StackedPolymorphicInline.Child):
+        model = event_models.DanceEvent
+
+    model = event_models.SingleEvent
+    child_inlines = (
+        BrunchInlineAdmin,
+        DinnerEventInlineAdmin,
+        DanceInlineAdmin,
+    )
 
 @admin.register(event_models.WeddingConcept)
 class WeddingConceptAdmin(PolymorphicChildModelAdmin):
@@ -12,9 +33,11 @@ class WeddingConceptAdmin(PolymorphicChildModelAdmin):
     # define custom features here
 
 @admin.register(event_models.BrunchConcept)
-class BrunchConceptAdmin(PolymorphicChildModelAdmin):
+class BrunchConceptAdmin(PolymorphicInlineSupportMixin, PolymorphicChildModelAdmin):
     base_model = event_models.BrunchConcept  # Explicitly set here!
     # define custom features here
+    inlines = [EventInlineAdmin]
+    
 
 @admin.register(event_models.DinnerAndDanceConcept)
 class DinnerAndDanceConceptAdmin(PolymorphicChildModelAdmin):
@@ -22,7 +45,7 @@ class DinnerAndDanceConceptAdmin(PolymorphicChildModelAdmin):
     # define custom features here
 
 @admin.register(event_models.Concept)
-class ConceptAdmin(PolymorphicParentModelAdmin):
+class ConceptAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
     base_model = event_models.Concept
     child_models = [
         event_models.Concept,  # Delete once a submodel has been added.
@@ -33,9 +56,10 @@ class ConceptAdmin(PolymorphicParentModelAdmin):
     list_filter = [PolymorphicChildModelFilter]
     list_display = ["name"]
     search_fields = ["name"]
+    inlines = [EventInlineAdmin]
 
-@admin.register(event_models.Brunch)
-class BrunchAdmin(PolymorphicChildModelAdmin):
+@admin.register(event_models.BrunchEvent)
+class BrunchEventAdmin(PolymorphicChildModelAdmin):
     base_model = event_models.SingleEvent  # Explicitly set here!
     # define custom features here
 

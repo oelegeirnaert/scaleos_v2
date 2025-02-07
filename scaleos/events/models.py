@@ -3,6 +3,7 @@ from polymorphic.models import PolymorphicModel
 from scaleos.shared.mixins import AdminLinkMixin, ITS_NOW
 from scaleos.shared.fields import NameField
 from django.utils.translation import gettext_lazy as _
+import datetime
 
 # Create your models here.
 
@@ -17,6 +18,11 @@ class Concept(PolymorphicModel, NameField):
         verbose_name_plural = _("concepts")   
 
 class WeddingConcept(Concept):
+
+    class Meta:
+        verbose_name = _("wedding concept")
+        verbose_name_plural = _("wedding concepts")
+
     def generate_events(self):
         ceremony, ceremony_created = Ceremony.objects.get_or_create(concept_id=self.id)
         ceremony.name = f"Ceremony {self.name}"
@@ -43,9 +49,18 @@ class WeddingConcept(Concept):
         Concept.objects.filter(id=self.id).update(force_event_generation=False)
 
 class BrunchConcept(Concept):
-    pass
+    default_starting_time = models.TimeField(null=True, blank=True)
+    default_ending_time = models.TimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("brunch concept")
+        verbose_name_plural = _("brunch concepts")
 
 class DinnerAndDanceConcept(Concept):
+    class Meta:
+        verbose_name = _("dinner & dance concept")
+        verbose_name_plural = _("dinner & dance concepts")
+
     def generate_events(self):
         dinner, dinner_created = Dinner.objects.get_or_create(concept_id=self.id)
         dinner.name = f"Dinner {self.name}"
@@ -98,6 +113,10 @@ class SingleEvent(Event):
     ) 
     """
 
+    class Meta:
+        verbose_name = _("single event")
+        verbose_name_plural = _("single events")
+
     @property
     def status(self):
         if self.starting_at and ITS_NOW < self.starting_at:
@@ -127,27 +146,70 @@ class SingleEvent(Event):
 
         return "unknown status...."
     
-class Dance(SingleEvent):
-    pass
+    def set_upcoming_sunday(self):
+        today = datetime.date.today()
+        next_sunday = today + datetime.timedelta( (6-today.weekday()) % 7 )
+        starting_time = datetime.time(12, 0)
+        if self.concept and hasattr(self.concept, "default_starting_time"):
+            if self.concept.default_starting_time is not None:
+                starting_time = self.concept.default_starting_time
 
-class Dinner(SingleEvent):
+        ending_time = datetime.time(23, 0)
+        if self.concept and hasattr(self.concept, "default_ending_time"):
+            if self.concept.default_ending_time is not None:
+                ending_time = self.concept.default_ending_time
+
+        self.starting_at = datetime.datetime.combine(next_sunday, starting_time)
+        self.ending_on = datetime.datetime.combine(next_sunday, ending_time)
+        self.save()
+    
+class DanceEvent(SingleEvent):
+    class Meta:
+        verbose_name = _("dance event")
+        verbose_name_plural = _("dance events")
+
+class DinnerEvent(SingleEvent):
     ICON = "local_dining"
+
+    class Meta:
+        verbose_name = _("dinner event")
+        verbose_name_plural = _("dinner events")
     
 
-class Brunch(SingleEvent):
+class BrunchEvent(SingleEvent):
     ICON = "local_dining"
+
+    class Meta:
+        verbose_name = _("brunch event")
+        verbose_name_plural = _("brunch events")
     
 
-class Ceremony(SingleEvent):
+class CeremonyEvent(SingleEvent):
     ICON = "visibility"
 
-class Reception(SingleEvent):
+    class Meta:
+        verbose_name = _("ceremony event")
+        verbose_name_plural = _("ceremony events")
+
+class ReceptionEvent(SingleEvent):
     ICON = "wc"
+
+    class Meta:
+        verbose_name = _("reception event")
+        verbose_name_plural = _("reception events")
     
-class Closing(SingleEvent):
+class ClosingEvent(SingleEvent):
     ICON = "hotel"
 
+    class Meta:
+        verbose_name = _("closing event")
+        verbose_name_plural = _("closing events")
 
-class Break(SingleEvent):
+
+class BreakEvent(SingleEvent):
     ICON = "pause"
+
+    class Meta:
+        verbose_name = _("break event")
+        verbose_name_plural = _("break events")
     
