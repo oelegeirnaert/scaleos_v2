@@ -62,6 +62,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ------------------------------------------------------------------------------
 DJANGO_APPS = [
     "django.contrib.auth",
+    "polymorphic", # Oele
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.sites",
@@ -87,6 +88,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "scaleos.users",
+    "scaleos.organizations",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
