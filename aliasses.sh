@@ -6,3 +6,4 @@ alias mm='docker compose -f docker-compose.local.yml run --rm django python mana
 alias mi='docker compose -f docker-compose.local.yml run --rm django python manage.py migrate'
 alias manage='docker compose -f docker-compose.local.yml run --rm django python manage.py'
 alias mkwaerboom='docker compose -f docker-compose.local.yml run --rm django python manage.py create_organization waerboom'
+alias mkpersons='docker compose -f docker-compose.local.yml run --rm django python manage.py create_persons'

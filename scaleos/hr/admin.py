@@ -10,5 +10,5 @@ class PersonAdmin(admin.ModelAdmin):
         "primary_email_address",
         "primary_telephone_number",
     ]
-
+    readonly_fields = ["age"]
     search_fields = ["name", "national_number"]
