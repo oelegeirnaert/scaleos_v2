@@ -19,4 +19,4 @@ class Reservation(PolymorphicModel):
         verbose_name_plural = _("reservations")   
 
 class BrunchReservation(Reservation):
-    brunch = models.ForeignKey("events.BrunchEvent", on_delete=models.CASCADE, null=True, blank=False)
+    brunch = models.ForeignKey("events.BrunchEvent", related_name="reservations", on_delete=models.CASCADE, null=True, blank=False)

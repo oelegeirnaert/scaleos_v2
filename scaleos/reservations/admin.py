@@ -4,6 +4,10 @@ from polymorphic.admin import PolymorphicChildModelFilter
 from polymorphic.admin import PolymorphicParentModelAdmin
 from polymorphic.admin import PolymorphicChildModelAdmin, StackedPolymorphicInline, PolymorphicInlineSupportMixin
 
+class BrunchReservationInlineAdmin(admin.TabularInline):
+    model = reservation_models.BrunchReservation
+    extra = 0
+    show_change_link = True
 
 @admin.register(reservation_models.BrunchReservation)
 class BrunchReservationAdmin(PolymorphicChildModelAdmin):

@@ -60,8 +60,10 @@ class ConceptAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
 
 @admin.register(event_models.BrunchEvent)
 class BrunchEventAdmin(PolymorphicChildModelAdmin):
+    from scaleos.reservations.admin import BrunchReservationInlineAdmin
     base_model = event_models.SingleEvent  # Explicitly set here!
     # define custom features here
+    inlines = [BrunchReservationInlineAdmin]
 
 @admin.register(event_models.SingleEvent)
 class SingleEventAdmin(PolymorphicChildModelAdmin):
