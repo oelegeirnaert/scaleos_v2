@@ -1,9 +1,12 @@
+import logging
 from django.db import models
 from polymorphic.models import PolymorphicModel
 from scaleos.shared.mixins import AdminLinkMixin, ITS_NOW
 from scaleos.shared.fields import NameField
 from django.utils.translation import gettext_lazy as _
 import datetime
+
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 
@@ -13,6 +16,7 @@ class Concept(PolymorphicModel, NameField):
         on_delete=models.CASCADE,
         null=True,
     )
+    
     class Meta:
         verbose_name = _("concept")
         verbose_name_plural = _("concepts")   
@@ -56,6 +60,25 @@ class BrunchConcept(Concept):
         verbose_name = _("brunch concept")
         verbose_name_plural = _("brunch concepts")
 
+    def generate(self, from_date, to_date, weekday=7):
+        current_date = from_date + datetime.timedelta( (6-from_date.weekday()) % weekday )
+        while current_date <= to_date:
+            logger.debug("Creating brunch concept on %s", from_date)
+            starting_time = datetime.time(12, 0)
+            if hasattr(self, "default_starting_time"):
+                if self.default_starting_time is not None:
+                    starting_time = self.default_starting_time
+
+            ending_time = datetime.time(23, 0)
+            if hasattr(self, "default_ending_time"):
+                if self.default_ending_time is not None:
+                    ending_time = self.default_ending_time
+
+            current_date = current_date + datetime.timedelta(days=7)
+            starting_dt = datetime.datetime.combine(current_date, starting_time)
+            ending_dt = datetime.datetime.combine(current_date, ending_time)
+            brunch_event, created = BrunchEvent.objects.get_or_create(concept_id=self.id, starting_at=starting_dt, ending_on=ending_dt)
+
 class DinnerAndDanceConcept(Concept):
     class Meta:
         verbose_name = _("dinner & dance concept")
@@ -88,6 +111,16 @@ class Event(PolymorphicModel, NameField):
         verbose_name = _("event")
         verbose_name_plural = _("events")
 
+    @property
+    def free_spots(self):
+        if self.maximum_number_of_guests is None:
+            return _('unlimited')
+        return self.maximum_number_of_guests
+    
+    @property
+    def free_percentage(self):
+        return 100
+
 class SingleEvent(Event):
     class STATUS(models.TextChoices):
         UPCOMING = 'UPCOMING', _('upcoming')
@@ -116,6 +149,15 @@ class SingleEvent(Event):
     class Meta:
         verbose_name = _("single event")
         verbose_name_plural = _("single events")
+
+    def __str__(self):
+        if self.name:
+            return f'{self.name}'
+        
+        if self.concept and self.concept.name and self.starting_at:
+            return f'{self.concept.name} {self.starting_at.date()}'
+        return super().__str__()
+    
 
     @property
     def status(self):
@@ -182,6 +224,9 @@ class BrunchEvent(SingleEvent):
     class Meta:
         verbose_name = _("brunch event")
         verbose_name_plural = _("brunch events")
+
+class BrunchEventPrice(AdminLinkMixin):
+    pass
     
 
 class CeremonyEvent(SingleEvent):
@@ -212,4 +257,8 @@ class BreakEvent(SingleEvent):
     class Meta:
         verbose_name = _("break event")
         verbose_name_plural = _("break events")
+
+class ReceptionEvent(SingleEvent):
+    ICON = "wc"
+    
     

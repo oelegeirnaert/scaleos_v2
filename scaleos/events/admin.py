@@ -64,19 +64,32 @@ class BrunchEventAdmin(PolymorphicChildModelAdmin):
     base_model = event_models.SingleEvent  # Explicitly set here!
     # define custom features here
     inlines = [BrunchReservationInlineAdmin]
+    readonly_fields = ["free_spots", "free_percentage"]
+
+@admin.register(event_models.ReceptionEvent)
+class ReceptionEventAdmin(PolymorphicChildModelAdmin):
+    from scaleos.reservations.admin import BrunchReservationInlineAdmin
+    base_model = event_models.SingleEvent  # Explicitly set here!
+    # define custom features here
 
 @admin.register(event_models.SingleEvent)
 class SingleEventAdmin(PolymorphicChildModelAdmin):
     base_model = event_models.Event  # Explicitly set here!
     # define custom features here
+    readonly_fields = ["free_spots", "free_percentage"]
 
 @admin.register(event_models.Event)
-class OrganizationAdmin(PolymorphicParentModelAdmin):
+class EventAdmin(PolymorphicParentModelAdmin):
     base_model = event_models.Event
     child_models = [
         event_models.Event,  # Delete once a submodel has been added.
         event_models.SingleEvent,
+        event_models.ReceptionEvent,
+        event_models.BrunchEvent,
     ]
     list_filter = [PolymorphicChildModelFilter]
     list_display = ["name"]
     search_fields = ["name"]
+    readonly_fields = ["free_spots", "free_capacity"]
+
+
