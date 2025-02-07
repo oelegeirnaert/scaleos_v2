@@ -1,6 +1,7 @@
 import logging
 from django.core.management.base import BaseCommand, CommandError
 from scaleos.organizations import models as organization_models
+from scaleos.events import models as event_models
 import datetime
 
 logger = logging.getLogger(__name__)
@@ -40,4 +41,8 @@ class Command(BaseCommand):
 
         waerboom.name = "BRUSSELS WAERBOOM EVENT"
         waerboom.save()
+
+        brunch_concept = event_models.BrunchConcept.objects.get_or_create(organizer_id=waerboom.pk, name="Gastronomisch buffet op zondag")
+        dinner_and_dance_concept = event_models.DinnerAndDanceConcept.objects.get_or_create(organizer_id=waerboom.pk, name="Dinner & Dance")
+
         return True
