@@ -24,7 +24,7 @@ class Concept(PolymorphicModel, NameField):
 
 class ConceptPriceMatrix(AdminLinkMixin):
     concept = models.ForeignKey(Concept, on_delete=models.CASCADE, null=False, blank=True)
-    price_matrix = models.ForeignKey("payments.PriceMatrix", on_delete=models.CASCADE, null=True, blank=False)
+    price_matrix = models.OneToOneField("payments.PriceMatrix", on_delete=models.CASCADE, null=True, blank=False)
     valid_from = models.DateTimeField(null=True, blank=True)
     valid_till = models.DateTimeField(null=True, blank=True)
 
