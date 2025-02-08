@@ -141,7 +141,8 @@ extend-unsafe-fixes = [
     "D100",    # D100 - Module dostrings not required in test files.
     "D104",    # D104 - Package dostrings not required in test files.
     "ARG",     # ARG - Unused args are common in tests with mock patches and mock functions.
-    "PLR2004"   # no like in tests
+    "PLR2004",   # no like in tests
+    "DTZ001",    # i use nake aware in tests
 ]
 # END OELE
 

@@ -96,7 +96,6 @@ def test_status_of_single_event(faker):
             hour=11,
             minute=00,
             second=00,
-            tzinfo=datetime.UTC,
         ),
         timezone.get_default_timezone(),
     )
@@ -113,7 +112,6 @@ def test_status_of_single_event(faker):
             hour=11,
             minute=00,
             second=00,
-            tzinfo=datetime.UTC,
         ),
         timezone.get_default_timezone(),
     )
@@ -132,7 +130,6 @@ def test_status_of_single_event(faker):
             hour=11,
             minute=00,
             second=00,
-            tzinfo=datetime.UTC,
         ),
         timezone.get_default_timezone(),
     )
@@ -151,7 +148,6 @@ def test_status_of_single_event(faker):
             hour=11,
             minute=00,
             second=00,
-            tzinfo=datetime.UTC,
         ),
         timezone.get_default_timezone(),
     )

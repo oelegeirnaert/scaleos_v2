@@ -38,7 +38,7 @@ def test_person_to_string(faker):
     assert str(person) == "Oele Geirnaert"
 
     person_without_name = model_factories.PersonFactory.create(
-        name=None,
-        family_name=None,
+        name="",
+        family_name="",
     )
     assert str(person_without_name) != ""
