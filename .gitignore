@@ -276,3 +276,6 @@ scaleos/media/
 .env
 .envs/*
 !.envs/.local/
+
+# Oele
+bin
