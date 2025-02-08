@@ -36,3 +36,11 @@ This can be done in the docker container:
     ::
 
         docker run --rm docs make apidocs
+
+Solve `polymorphic_ctype_id` value defined..
+
+The model AgePriceMatrix# **1** does not have a `polymorphic_ctype_id` value defined.
+Where the number after the # is the id of the given content type.
+    ::
+
+        AgePriceMatrix.objects.filter(id=1).update(polymorphic_ctype_id=ContentType.objects.filter(model__iexact="AgePriceMatrix").first().id)
