@@ -31,3 +31,11 @@ def test_age(faker):
 
     person_without_birthday = model_factories.PersonFactory.create(birthday=None) 
     assert person_without_birthday.age is None
+
+@pytest.mark.django_db
+def test_person_to_string(faker):
+    person = model_factories.PersonFactory.create(name="Oele", family_name="Geirnaert") 
+    assert "Oele Geirnaert" == str(person)
+
+    person_without_name = model_factories.PersonFactory.create(name=None, family_name=None)
+    assert "" != str(person_without_name)
