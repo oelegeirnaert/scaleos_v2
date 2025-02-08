@@ -13,12 +13,17 @@ class EventInlineAdmin(StackedPolymorphicInline):
     """
     class BrunchInlineAdmin(StackedPolymorphicInline.Child):
         model = event_models.BrunchEvent
+        show_change_link = True
+
 
     class DinnerEventInlineAdmin(StackedPolymorphicInline.Child):
         model = event_models.DinnerEvent
+        show_change_link = True
+
 
     class DanceInlineAdmin(StackedPolymorphicInline.Child):
         model = event_models.DanceEvent
+        show_change_link = True
 
     model = event_models.SingleEvent
     child_inlines = (
@@ -26,6 +31,8 @@ class EventInlineAdmin(StackedPolymorphicInline):
         DinnerEventInlineAdmin,
         DanceInlineAdmin,
     )
+
+    
 
 @admin.register(event_models.WeddingConcept)
 class WeddingConceptAdmin(PolymorphicChildModelAdmin):
@@ -64,7 +71,7 @@ class BrunchEventAdmin(PolymorphicChildModelAdmin):
     base_model = event_models.SingleEvent  # Explicitly set here!
     # define custom features here
     inlines = [BrunchReservationInlineAdmin]
-    readonly_fields = ["free_spots", "free_percentage"]
+    readonly_fields = ["free_spots", "free_percentage", "used_spots", "used_percentage"]
 
 @admin.register(event_models.ReceptionEvent)
 class ReceptionEventAdmin(PolymorphicChildModelAdmin):
