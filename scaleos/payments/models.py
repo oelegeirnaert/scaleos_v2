@@ -7,6 +7,7 @@ from scaleos.shared.fields import LogInfoFields, NameField, PublicKeyField
 from moneyed import CURRENCIES
 from moneyed import Money
 from django.utils.translation import gettext_lazy as _
+from admin_ordering.models import OrderableModel
 
 logger = logging.getLogger(__name__)
 
@@ -104,9 +105,15 @@ class PriceHistory(LogInfoFields):
     class Meta:
         ordering = ["-created_on"]
 
-class AgePriceMatrix(LogInfoFields, AdminLinkMixin, NameField):
+class PriceMatrix(PolymorphicModel, LogInfoFields, AdminLinkMixin, NameField):
     valid_from = models.DateTimeField(null=True, blank=True)
     valid_till = models.DateTimeField(null=True, blank=True)
+
+class AgePriceMatrix(PriceMatrix):
+    pass
+
+class BulkPriceMatrix(PriceMatrix):
+    pass
 
 class AgePriceMatrixItem(AdminLinkMixin):
     age_price_matrix = models.ForeignKey(
@@ -139,3 +146,34 @@ class AgePriceMatrixItem(AdminLinkMixin):
         if self.age_price_matrix and self.age_price_matrix.name and self.from_age and self.price:
             return f"{self.age_price_matrix.name} ({self.from_age}-...): {self.price}"
         return super().__str__()
+    
+class BulkPriceMatrixItem(AdminLinkMixin, OrderableModel):
+    bulk_price_matrix = models.ForeignKey(
+        BulkPriceMatrix,
+        related_name="prices",
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+
+    from_number_of_items = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="from number of items",
+    )
+    to_number_of_items = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="to number of items",
+    )
+    amount = models.IntegerField(default=1, help_text="You get")
+    price = models.OneToOneField(
+        Price,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=False,
+        help_text="for the price of",
+    )
+
+    class Meta(OrderableModel.Meta):
+        verbose_name = _('bulk price matrix item')
+        verbose_name = _('bulk price matrix items')
