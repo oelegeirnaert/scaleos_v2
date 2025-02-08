@@ -1,13 +1,13 @@
-from django.db import models
-from scaleos.shared.mixins import AdminLinkMixin
-from scaleos.shared.fields import NameField
+import datetime
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db import models
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
-from django.conf import settings
-from django.utils.translation import gettext_lazy as _
-from datetime import date
 
+from scaleos.shared.fields import NameField
+from scaleos.shared.mixins import AdminLinkMixin
 
 
 # Create your models here.
@@ -15,7 +15,7 @@ class Person(
     AdminLinkMixin,
     NameField,
 ):
-    family_name = models.CharField(null=True)
+    family_name = models.CharField(default="")
     user = models.OneToOneField(
         get_user_model(),
         related_name="person",
@@ -23,11 +23,11 @@ class Person(
         null=True,
         blank=True,
     )
-    national_number = models.CharField(null=True, blank=True)
-    middle_name = models.CharField(null=True, blank=True)
-    
-    nationality = models.CharField(null=True, blank=True)
-    gender = models.CharField(null=True, blank=True)
+    national_number = models.CharField(default="", blank=True)
+    middle_name = models.CharField(default="", blank=True)
+
+    nationality = models.CharField(default="", blank=True)
+    gender = models.CharField(default="", blank=True)
     country = CountryField(null=True, blank=True)
 
     """
@@ -47,7 +47,7 @@ class Person(
     mother_tongue = models.CharField(
         max_length=50,
         choices=settings.LANGUAGES,
-        null=True,
+        default="",
         blank=True,
     )
 
@@ -55,15 +55,22 @@ class Person(
 
     def __str__(self):
         if self.name and self.family_name:
-            return f'{self.name} {self.family_name}'
+            return f"{self.name} {self.family_name}"
         return super().__str__()
-    
+
     @property
     def age(self):
         self.get_age()
 
     def get_age(self, today=None):
         if today is None:
-                today = date.today()
+            today = datetime.datetime.now(tz=datetime.UTC).date()
+
         if self.birthday:
-            return today.year - self.birthday.year - ((today.month, today.day) < (self.birthday.month, self.birthday.day))
+            return (
+                today.year
+                - self.birthday.year
+                - ((today.month, today.day) < (self.birthday.month, self.birthday.day))
+            )
+
+        return None

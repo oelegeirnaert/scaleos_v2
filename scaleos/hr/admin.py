@@ -1,5 +1,7 @@
 from django.contrib import admin
+
 from scaleos.hr import models as hr_models
+
 
 # Register your models here.
 @admin.register(hr_models.Person)

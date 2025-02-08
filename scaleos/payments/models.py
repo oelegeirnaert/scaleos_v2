@@ -1,15 +1,19 @@
 import logging
-from django.db import models
-from djmoney.models.fields import MoneyField
-from polymorphic.models import PolymorphicModel
-from scaleos.shared.mixins import AdminLinkMixin, ITS_NOW
-from scaleos.shared.fields import LogInfoFields, NameField, PublicKeyField
-from moneyed import CURRENCIES
-from moneyed import Money
-from django.utils.translation import gettext_lazy as _
+
 from admin_ordering.models import OrderableModel
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+from djmoney.models.fields import MoneyField
+from moneyed import Money
+from polymorphic.models import PolymorphicModel
+
+from scaleos.shared.fields import LogInfoFields
+from scaleos.shared.fields import NameField
+from scaleos.shared.fields import PublicKeyField
+from scaleos.shared.mixins import AdminLinkMixin
 
 logger = logging.getLogger(__name__)
+
 
 # Create your models here.
 class Price(LogInfoFields, AdminLinkMixin, PublicKeyField):
@@ -105,14 +109,18 @@ class PriceHistory(LogInfoFields):
     class Meta:
         ordering = ["-created_on"]
 
+
 class PriceMatrix(PolymorphicModel, LogInfoFields, AdminLinkMixin, NameField):
     pass
+
 
 class AgePriceMatrix(PriceMatrix):
     pass
 
+
 class BulkPriceMatrix(PriceMatrix):
     pass
+
 
 class AgePriceMatrixItem(AdminLinkMixin):
     age_price_matrix = models.ForeignKey(
@@ -140,12 +148,25 @@ class AgePriceMatrixItem(AdminLinkMixin):
     )
 
     def __str__(self):
-        if self.age_price_matrix and self.age_price_matrix.name and self.from_age and self.till_age and self.price:
-            return f"{self.age_price_matrix.name} ({self.from_age}-{self.till_age}): {self.price}"
-        if self.age_price_matrix and self.age_price_matrix.name and self.from_age and self.price:
+        if (
+            self.age_price_matrix
+            and self.age_price_matrix.name
+            and self.from_age
+            and self.till_age
+            and self.price
+        ):
+            return f"{self.age_price_matrix.name} \
+                ({self.from_age}-{self.till_age}): {self.price}"
+        if (
+            self.age_price_matrix
+            and self.age_price_matrix.name
+            and self.from_age
+            and self.price
+        ):
             return f"{self.age_price_matrix.name} ({self.from_age}-...): {self.price}"
         return super().__str__()
-    
+
+
 class BulkPriceMatrixItem(AdminLinkMixin, OrderableModel):
     bulk_price_matrix = models.ForeignKey(
         BulkPriceMatrix,
@@ -174,5 +195,5 @@ class BulkPriceMatrixItem(AdminLinkMixin, OrderableModel):
     )
 
     class Meta(OrderableModel.Meta):
-        verbose_name = _('bulk price matrix item')
-        verbose_name = _('bulk price matrix items')
+        verbose_name = _("bulk price matrix item")
+        verbose_name_plural = _("bulk price matrix items")

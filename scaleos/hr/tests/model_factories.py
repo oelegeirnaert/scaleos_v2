@@ -1,12 +1,8 @@
-from collections.abc import Sequence
-from typing import Any
+import datetime
 
 from factory import Faker
 from factory import fuzzy
-from factory import post_generation
 from factory.django import DjangoModelFactory
-import datetime
-
 
 from scaleos.hr import models as hr_models
 

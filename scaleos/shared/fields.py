@@ -1,17 +1,21 @@
-from django.db import models
-from django.utils.translation import gettext_lazy as _
 import uuid
 
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+
 class NameField(models.Model):
-    name = models.CharField(verbose_name=_("name"), max_length=100, null=True)
+    name = models.CharField(verbose_name=_("name"), max_length=100, default="")
+
     class Meta:
         abstract = True
 
     def __str__(self):
-            if self.name:  # pragma: no cover
-                return self.name
-            return super().__str__()
-    
+        if self.name:  # pragma: no cover
+            return self.name
+        return super().__str__()
+
+
 class LogInfoFields(models.Model):
     created_on = models.DateTimeField(auto_now_add=True, null=True)
     modified_on = models.DateTimeField(auto_now=True, null=True)
@@ -19,6 +23,7 @@ class LogInfoFields(models.Model):
     class Meta:
         abstract = True
         get_latest_by = ["created_on"]
+
 
 class PublicKeyField(models.Model):
     public_key = models.UUIDField(unique=True, null=True, editable=False)
