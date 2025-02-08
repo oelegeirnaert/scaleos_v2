@@ -106,8 +106,7 @@ class PriceHistory(LogInfoFields):
         ordering = ["-created_on"]
 
 class PriceMatrix(PolymorphicModel, LogInfoFields, AdminLinkMixin, NameField):
-    valid_from = models.DateTimeField(null=True, blank=True)
-    valid_till = models.DateTimeField(null=True, blank=True)
+    pass
 
 class AgePriceMatrix(PriceMatrix):
     pass

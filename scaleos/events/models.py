@@ -22,6 +22,12 @@ class Concept(PolymorphicModel, NameField):
         verbose_name = _("concept")
         verbose_name_plural = _("concepts")   
 
+class ConceptPriceMatrix(AdminLinkMixin):
+    concept = models.ForeignKey(Concept, on_delete=models.CASCADE, null=False, blank=True)
+    price_matrix = models.ForeignKey("payments.PriceMatrix", on_delete=models.CASCADE, null=True, blank=False)
+    valid_from = models.DateTimeField(null=True, blank=True)
+    valid_till = models.DateTimeField(null=True, blank=True)
+
 class WeddingConcept(Concept):
 
     class Meta:
