@@ -9,8 +9,8 @@ alias devshell='docker compose -f docker-compose.local.yml run --rm django pytho
 alias manage='docker compose -f docker-compose.local.yml run --rm django python manage.py'
 
 # Documentation
-alias docsup="docker compose -f docker-compose.local.yml -f docker-compose.docs.yml up"
-alias docsopen="chromium-browser http://localhost:9000/"
+alias docsup="docker compose -f docker-compose.local.yml -f docker-compose.docs.yml up -d"
+alias docsopen="docsup && chromium-browser http://localhost:9000/"
 
 # Testing
 alias generate_test_report='docker compose -f docker-compose.local.yml run --rm django coverage html'
