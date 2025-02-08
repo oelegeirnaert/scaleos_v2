@@ -5,6 +5,7 @@ alias devtest='docker compose -f docker-compose.local.yml run --rm django covera
 alias testreport='devtest && docker compose -f docker-compose.local.yml run --rm django coverage html'
 alias mm='docker compose -f docker-compose.local.yml run --rm django python manage.py makemigrations'
 alias mi='docker compose -f docker-compose.local.yml run --rm django python manage.py migrate'
+alias devshell='docker compose -f docker-compose.local.yml run --rm django python manage.py shell_plus --ipython'
 alias manage='docker compose -f docker-compose.local.yml run --rm django python manage.py'
 alias mkwaerboom='docker compose -f docker-compose.local.yml run --rm django python manage.py create_organization waerboom'
 alias mkpersons='docker compose -f docker-compose.local.yml run --rm django python manage.py create_persons'
