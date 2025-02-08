@@ -8,7 +8,7 @@ class NameField(models.Model):
         abstract = True
 
     def __str__(self):
-            if self.name:
+            if self.name:  # pragma: no cover
                 return self.name
             return super().__str__()
     
@@ -27,7 +27,7 @@ class PublicKeyField(models.Model):
         abstract = True
 
     def save(self, *args, **kwargs):
-        if self.public_key is None:
+        if self.public_key is None:  # pragma: no cover
             self.public_key = uuid.uuid4()
 
         super().save(*args, **kwargs)

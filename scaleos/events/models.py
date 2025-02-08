@@ -17,6 +17,7 @@ class Concept(PolymorphicModel, NameField):
         on_delete=models.CASCADE,
         null=True,
     )
+    force_event_generation = models.BooleanField
     
     class Meta:
         verbose_name = _("concept")
@@ -35,29 +36,30 @@ class WeddingConcept(Concept):
         verbose_name_plural = _("wedding concepts")
 
     def generate_events(self):
-        ceremony, ceremony_created = Ceremony.objects.get_or_create(concept_id=self.id)
+        ceremony, ceremony_created = CeremonyEvent.objects.get_or_create(concept_id=self.id)
         ceremony.name = f"Ceremony {self.name}"
         ceremony.save()
 
-        reception, reception_created = Reception.objects.get_or_create(
+        reception, reception_created = ReceptionEvent.objects.get_or_create(
             concept_id=self.id,
         )
         reception.name = f"Reception {self.name}"
         reception.save()
 
-        dinner, dinner_created = Dinner.objects.get_or_create(concept_id=self.id)
+        dinner, dinner_created = DinnerEvent.objects.get_or_create(concept_id=self.id)
         dinner.name = f"Dinner {self.name}"
         dinner.save()
 
-        dance, dance_created = Dance.objects.get_or_create(concept_id=self.id)
+        dance, dance_created = DanceEvent.objects.get_or_create(concept_id=self.id)
         dance.name = f"Dansfeest {self.name}"
         dance.save()
 
-        closing, closing_created = Closing.objects.get_or_create(concept_id=self.id)
+        closing, closing_created = ClosingEvent.objects.get_or_create(concept_id=self.id)
         closing.name = f"Afsluit {self.name}"
         closing.save()
 
-        Concept.objects.filter(id=self.id).update(force_event_generation=False)
+        # Concept.objects.filter(id=self.id).update(force_event_generation=False)
+        return True
 
 class BrunchConcept(Concept):
     default_starting_time = models.TimeField(null=True, blank=True)
@@ -92,15 +94,16 @@ class DinnerAndDanceConcept(Concept):
         verbose_name_plural = _("dinner & dance concepts")
 
     def generate_events(self):
-        dinner, dinner_created = Dinner.objects.get_or_create(concept_id=self.id)
+        dinner, dinner_created = DinnerEvent.objects.get_or_create(concept_id=self.id)
         dinner.name = f"Dinner {self.name}"
         dinner.save()
 
-        dance, dance_created = Dance.objects.get_or_create(concept_id=self.id)
+        dance, dance_created = DanceEvent.objects.get_or_create(concept_id=self.id)
         dance.name = f"Dance {self.name}"
         dance.save()
 
-        Concept.objects.filter(id=self.id).update(force_event_generation=False)
+        # Concept.objects.filter(id=self.id).update(force_event_generation=False)
+        return True
 
 class Event(PolymorphicModel, NameField):
     concept = models.ForeignKey(

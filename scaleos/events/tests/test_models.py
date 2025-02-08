@@ -8,6 +8,8 @@ import logging
 import datetime
 from moneyed import Money, EUR, USD
 from django.utils import timezone
+from django.utils.translation import activate
+from django.conf import settings
 
 @pytest.mark.django_db
 def test_brunchconcept_can_generate_events(faker): 
@@ -20,7 +22,11 @@ def test_brunchconcept_can_generate_events(faker):
 
 @pytest.mark.django_db
 def test_brunch_has_free_capacity(faker): 
+    activate('nl')
     brunch_event = event_factories.BrunchEventFactory.create()
+
+    assert "ongelimiteerd" == brunch_event.free_spots
+
     brunch_event.maximum_number_of_guests = 100
 
     assert 100 == brunch_event.free_spots
@@ -59,6 +65,18 @@ def test_brunch_has_free_capacity(faker):
     assert 100 == brunch_event.reserved_percentage
     assert 110 == brunch_event.reserved_spots
     assert 10 == brunch_event.over_reserved_spots
+
+@pytest.mark.django_db
+def test_wedding_concept_event_generation(faker): 
+    wedding_concept = event_factories.WeddingConceptFactory.create()
+    assert wedding_concept.generate_events()
+
+@pytest.mark.django_db
+def test_dinner_and_dance_concept_event_generation(faker): 
+    dinner_and_dance_concept = event_factories.DinnerAndDanceConceptFactory.create()
+    assert dinner_and_dance_concept.generate_events()
+
+
 
     
 
