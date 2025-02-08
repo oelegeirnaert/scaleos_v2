@@ -56,6 +56,9 @@ jobs:
       - name: Run Django Tests
         run: docker compose -f docker-compose.local.yml run django pytest
 
+      - name: Create Coverage Report
+        run: docker compose -f docker-compose.local.yml run --rm django coverage json
+
         # Oele
       - name: Update Coverage Badge
         # GitHub actions: default branch variable
