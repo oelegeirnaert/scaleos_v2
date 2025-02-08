@@ -1,4 +1,6 @@
 # source aliasses.sh
+
+# Quick Dev
 alias devup='docker compose -f docker-compose.local.yml up'
 alias devbuild='docker compose -f docker-compose.local.yml build'
 alias mm='docker compose -f docker-compose.local.yml run --rm django python manage.py makemigrations'
@@ -16,7 +18,10 @@ alias devtest='docker compose -f docker-compose.local.yml run --rm django covera
 alias open_test_report='chromium-browser http://127.0.0.1:5500/htmlcov/index.html'
 alias testreport='devtest && generate_test_report && open_test_report'
 
-
 # Data
 alias mkwaerboom='docker compose -f docker-compose.local.yml run --rm django python manage.py create_organization waerboom'
 alias mkpersons='docker compose -f docker-compose.local.yml run --rm django python manage.py create_persons'
+
+#i18n
+alias devtrans='manage makemessages -a'
+alias devtranscompile="manage compilemessages"

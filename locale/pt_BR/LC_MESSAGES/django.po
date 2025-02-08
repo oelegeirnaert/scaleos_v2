@@ -6,310 +6,459 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-02-08 12:38+0100\n"
 "Language: pt-BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-#: scaleos/templates/account/account_inactive.html:5
-#: scaleos/templates/account/account_inactive.html:8
-msgid "Account Inactive"
-msgstr "Conta Inativa"
 
-#: scaleos/templates/account/account_inactive.html:10
-msgid "This account is inactive."
-msgstr "Esta conta está inativa."
-
-#: scaleos/templates/account/email.html:7
-msgid "Account"
-msgstr "Conta"
-
-#: scaleos/templates/account/email.html:10
-msgid "E-mail Addresses"
-msgstr "Endereços de E-mail"
-
-#: scaleos/templates/account/email.html:13
-msgid "The following e-mail addresses are associated with your account:"
-msgstr "Os seguintes endereços de e-mail estão associados à sua conta:"
-
-#: scaleos/templates/account/email.html:27
-msgid "Verified"
-msgstr "Verificado"
-
-#: scaleos/templates/account/email.html:29
-msgid "Unverified"
-msgstr "Não verificado"
-
-#: scaleos/templates/account/email.html:31
-msgid "Primary"
-msgstr "Primário"
-
-#: scaleos/templates/account/email.html:37
-msgid "Make Primary"
-msgstr "Tornar Primário"
-
-#: scaleos/templates/account/email.html:38
-msgid "Re-send Verification"
-msgstr "Reenviar verificação"
-
-#: scaleos/templates/account/email.html:39
-msgid "Remove"
-msgstr "Remover"
-
-#: scaleos/templates/account/email.html:46
-msgid "Warning:"
-msgstr "Aviso:"
-
-#: scaleos/templates/account/email.html:46
-msgid ""
-"You currently do not have any e-mail address set up. You should really add "
-"an e-mail address so you can receive notifications, reset your password, etc."
+#: config/settings/base.py:33
+msgid "English"
 msgstr ""
-"No momento, você não tem nenhum endereço de e-mail configurado. Você "
-"realmente deve adicionar um endereço de e-mail para receber notificações, "
-"redefinir sua senha etc."
 
-#: scaleos/templates/account/email.html:51
-msgid "Add E-mail Address"
-msgstr "Adicionar Endereço de E-mail"
-
-#: scaleos/templates/account/email.html:56
-msgid "Add E-mail"
-msgstr "Adicionar E-mail"
-
-#: scaleos/templates/account/email.html:66
-msgid "Do you really want to remove the selected e-mail address?"
-msgstr "Você realmente deseja remover o endereço de e-mail selecionado?"
-
-#: scaleos/templates/account/email_confirm.html:6
-#: scaleos/templates/account/email_confirm.html:10
-msgid "Confirm E-mail Address"
-msgstr "Confirme o endereço de e-mail"
-
-#: scaleos/templates/account/email_confirm.html:16
-#, python-format
-msgid ""
-"Please confirm that <a href=\"mailto:%(email)s\">%(email)s</a> is an e-mail "
-"address for user %(user_display)s."
+#: config/settings/base.py:34
+msgid "French"
 msgstr ""
-"Confirme se <a href=\"mailto:%(email)s\">%(email)s</a> é um endereço de "
-"e-mail do usuário %(user_display)s."
 
-#: scaleos/templates/account/email_confirm.html:20
-msgid "Confirm"
-msgstr "Confirmar"
+#: config/settings/base.py:35
+msgid "Dutch"
+msgstr ""
 
-#: scaleos/templates/account/email_confirm.html:27
-#, python-format
-msgid ""
-"This e-mail confirmation link expired or is invalid. Please <a href="
-"\"%(email_url)s\">issue a new e-mail confirmation request</a>."
-msgstr "Este link de confirmação de e-mail expirou ou é inválido. "
-"Por favor, <a href=\"%(email_url)s\">emita um novo pedido de confirmação por e-mail</a>."
-
-#: scaleos/templates/account/login.html:7
-#: scaleos/templates/account/login.html:11
-#: scaleos/templates/account/login.html:56
-#: scaleos/templates/base.html:72
-msgid "Sign In"
-msgstr "Entrar"
-
-#: scaleos/templates/account/login.html:17
-msgid "Please sign in with one of your existing third party accounts:"
-msgstr "Faça login com uma de suas contas de terceiros existentes:"
-
-#: scaleos/templates/account/login.html:19
-#, python-format
-msgid ""
-"Or, <a href=\"%(signup_url)s\">sign up</a> for a %(site_name)s account and "
-"sign in below:"
-msgstr "Ou, <a href=\"%(signup_url)s\">cadastre-se</a> para uma conta em %(site_name)s e entre abaixo:"
-
-#: scaleos/templates/account/login.html:32
-msgid "or"
-msgstr "ou"
-
-#: scaleos/templates/account/login.html:41
-#, python-format
-msgid ""
-"If you have not created an account yet, then please <a href=\"%(signup_url)s"
-"\">sign up</a> first."
-msgstr "Se você ainda não criou uma conta, <a href=\"%(signup_url)s"
-"\">registre-se primeiro</a>."
-
-#: scaleos/templates/account/login.html:55
-msgid "Forgot Password?"
-msgstr "Esqueceu sua senha?"
-
-#: scaleos/templates/account/logout.html:5
-#: scaleos/templates/account/logout.html:8
-#: scaleos/templates/account/logout.html:17
-#: scaleos/templates/base.html:61
-msgid "Sign Out"
-msgstr "Sair"
-
-#: scaleos/templates/account/logout.html:10
-msgid "Are you sure you want to sign out?"
-msgstr "Você tem certeza que deseja sair?"
-
-#: scaleos/templates/account/password_change.html:6
-#: scaleos/templates/account/password_change.html:9
-#: scaleos/templates/account/password_change.html:14
-#: scaleos/templates/account/password_reset_from_key.html:5
-#: scaleos/templates/account/password_reset_from_key.html:8
-#: scaleos/templates/account/password_reset_from_key_done.html:4
-#: scaleos/templates/account/password_reset_from_key_done.html:7
-msgid "Change Password"
-msgstr "Alterar Senha"
-
-#: scaleos/templates/account/password_reset.html:7
-#: scaleos/templates/account/password_reset.html:11
-#: scaleos/templates/account/password_reset_done.html:6
-#: scaleos/templates/account/password_reset_done.html:9
-msgid "Password Reset"
-msgstr "Redefinição de senha"
-
-#: scaleos/templates/account/password_reset.html:16
-msgid ""
-"Forgotten your password? Enter your e-mail address below, and we'll send you "
-"an e-mail allowing you to reset it."
-msgstr "Esqueceu sua senha? Digite seu endereço de e-mail abaixo e enviaremos um e-mail permitindo que você o redefina."
-
-#: scaleos/templates/account/password_reset.html:21
-msgid "Reset My Password"
-msgstr "Redefinir minha senha"
-
-#: scaleos/templates/account/password_reset.html:24
-msgid "Please contact us if you have any trouble resetting your password."
-msgstr "Entre em contato conosco se tiver algum problema para redefinir sua senha."
-
-#: scaleos/templates/account/password_reset_done.html:15
-msgid ""
-"We have sent you an e-mail. Please contact us if you do not receive it "
-"within a few minutes."
-msgstr "Enviamos um e-mail para você. Entre em contato conosco se você não recebê-lo dentro de alguns minutos."
-
-#: scaleos/templates/account/password_reset_from_key.html:8
-msgid "Bad Token"
-msgstr "Token Inválido"
-
-#: scaleos/templates/account/password_reset_from_key.html:12
-#, python-format
-msgid ""
-"The password reset link was invalid, possibly because it has already been "
-"used.  Please request a <a href=\"%(passwd_reset_url)s\">new password reset</"
-"a>."
-msgstr "O link de redefinição de senha era inválido, possivelmente porque já foi usado. "
-"<a href=\"%(passwd_reset_url)s\">Solicite uma nova redefinição de senha</a>."
-
-#: scaleos/templates/account/password_reset_from_key.html:18
-msgid "change password"
-msgstr "alterar senha"
-
-#: scaleos/templates/account/password_reset_from_key.html:21
-#: scaleos/templates/account/password_reset_from_key_done.html:8
-msgid "Your password is now changed."
-msgstr "Sua senha agora foi alterada."
-
-#: scaleos/templates/account/password_set.html:6
-#: scaleos/templates/account/password_set.html:9
-#: scaleos/templates/account/password_set.html:14
-msgid "Set Password"
-msgstr "Definir Senha"
-
-#: scaleos/templates/account/signup.html:6
-msgid "Signup"
-msgstr "Cadastro"
-
-#: scaleos/templates/account/signup.html:9
-#: scaleos/templates/account/signup.html:19
-#: scaleos/templates/base.html:67
-msgid "Sign Up"
-msgstr "Cadastro"
-
-#: scaleos/templates/account/signup.html:11
-#, python-format
-msgid ""
-"Already have an account? Then please <a href=\"%(login_url)s\">sign in</a>."
-msgstr "já tem uma conta? Então, por favor, faça <a href=\"%(login_url)s\">login</a>."
-
-#: scaleos/templates/account/signup_closed.html:5
-#: scaleos/templates/account/signup_closed.html:8
-msgid "Sign Up Closed"
-msgstr "Inscrições encerradas"
-
-#: scaleos/templates/account/signup_closed.html:10
-msgid "We are sorry, but the sign up is currently closed."
-msgstr "Lamentamos, mas as inscrições estão encerradas no momento."
-
-#: scaleos/templates/account/verification_sent.html:5
-#: scaleos/templates/account/verification_sent.html:8
-#: scaleos/templates/account/verified_email_required.html:5
-#: scaleos/templates/account/verified_email_required.html:8
-msgid "Verify Your E-mail Address"
-msgstr "Verifique seu endereço de e-mail"
-
-#: scaleos/templates/account/verification_sent.html:10
-msgid ""
-"We have sent an e-mail to you for verification. Follow the link provided to "
-"finalize the signup process. Please contact us if you do not receive it "
-"within a few minutes."
-msgstr "Enviamos um e-mail para você para verificação. Siga o link fornecido para finalizar o processo de inscrição. Entre em contato conosco se você não recebê-lo dentro de alguns minutos."
-
-#: scaleos/templates/account/verified_email_required.html:12
-msgid ""
-"This part of the site requires us to verify that\n"
-"you are who you claim to be. For this purpose, we require that you\n"
-"verify ownership of your e-mail address. "
-msgstr "Esta parte do site exige que verifiquemos se você é quem afirma ser.\n"
-"Para esse fim, exigimos que você verifique a propriedade\n"
-"do seu endereço de e-mail."
-
-#: scaleos/templates/account/verified_email_required.html:16
-msgid ""
-"We have sent an e-mail to you for\n"
-"verification. Please click on the link inside this e-mail. Please\n"
-"contact us if you do not receive it within a few minutes."
-msgstr "Enviamos um e-mail para você para verificação.\n"
-"Por favor, clique no link dentro deste e-mail.\n"
-"Entre em contato conosco se você não recebê-lo dentro de alguns minutos."
-
-#: scaleos/templates/account/verified_email_required.html:20
-#, python-format
-msgid ""
-"<strong>Note:</strong> you can still <a href=\"%(email_url)s\">change your e-"
-"mail address</a>."
-msgstr "<strong>Nota</strong>: você ainda pode <a href=\"%(email_url)s\">alterar seu endereço de e-mail</a>."
-
-#: scaleos/templates/base.html:57
+#: htmlcov/z_5959481cfbb5d58f_base_html.html:165 scaleos/templates/base.html:83
 msgid "My Profile"
 msgstr "Meu perfil"
 
-#: scaleos/users/admin.py:17
+#: htmlcov/z_5959481cfbb5d58f_base_html.html:169 scaleos/templates/base.html:87
+msgid "Sign Out"
+msgstr "Sair"
+
+#: htmlcov/z_5959481cfbb5d58f_base_html.html:175 scaleos/templates/base.html:93
+msgid "Sign Up"
+msgstr "Cadastro"
+
+#: htmlcov/z_5959481cfbb5d58f_base_html.html:180
+#: scaleos/templates/allauth/layouts/entrance.html:8
+#: scaleos/templates/base.html:98
+msgid "Sign In"
+msgstr "Entrar"
+
+#: scaleos/events/models.py:23
+msgid "concept"
+msgstr ""
+
+#: scaleos/events/models.py:24
+msgid "concepts"
+msgstr ""
+
+#: scaleos/events/models.py:35
+msgid "wedding concept"
+msgstr ""
+
+#: scaleos/events/models.py:36
+msgid "wedding concepts"
+msgstr ""
+
+#: scaleos/events/models.py:69
+msgid "brunch concept"
+msgstr ""
+
+#: scaleos/events/models.py:70
+msgid "brunch concepts"
+msgstr ""
+
+#: scaleos/events/models.py:93
+msgid "dinner & dance concept"
+msgstr ""
+
+#: scaleos/events/models.py:94
+msgid "dinner & dance concepts"
+msgstr ""
+
+#: scaleos/events/models.py:121
+msgid "event"
+msgstr ""
+
+#: scaleos/events/models.py:122
+msgid "events"
+msgstr ""
+
+#: scaleos/events/models.py:128
+msgid "unlimited"
+msgstr ""
+
+#: scaleos/events/models.py:164
+msgid "upcoming"
+msgstr ""
+
+#: scaleos/events/models.py:165
+msgid "ongoing"
+msgstr ""
+
+#: scaleos/events/models.py:166
+msgid "ended"
+msgstr ""
+
+#: scaleos/events/models.py:167
+msgid "unknown"
+msgstr ""
+
+#: scaleos/events/models.py:188
+msgid "single event"
+msgstr ""
+
+#: scaleos/events/models.py:189
+msgid "single events"
+msgstr ""
+
+#: scaleos/events/models.py:219
+#, python-brace-format
+msgid "upcoming, on {self.starting_at}"
+msgstr ""
+
+#: scaleos/events/models.py:222
+#, python-brace-format
+msgid "ongoing... ending on {self.ending_on}"
+msgstr ""
+
+#: scaleos/events/models.py:248
+msgid "dance event"
+msgstr ""
+
+#: scaleos/events/models.py:249
+msgid "dance events"
+msgstr ""
+
+#: scaleos/events/models.py:255
+msgid "dinner event"
+msgstr ""
+
+#: scaleos/events/models.py:256
+msgid "dinner events"
+msgstr ""
+
+#: scaleos/events/models.py:263
+msgid "brunch event"
+msgstr ""
+
+#: scaleos/events/models.py:264
+msgid "brunch events"
+msgstr ""
+
+#: scaleos/events/models.py:288
+msgid "ceremony event"
+msgstr ""
+
+#: scaleos/events/models.py:289
+msgid "ceremony events"
+msgstr ""
+
+#: scaleos/events/models.py:295
+msgid "reception event"
+msgstr ""
+
+#: scaleos/events/models.py:296
+msgid "reception events"
+msgstr ""
+
+#: scaleos/events/models.py:302
+msgid "closing event"
+msgstr ""
+
+#: scaleos/events/models.py:303
+msgid "closing events"
+msgstr ""
+
+#: scaleos/events/models.py:310
+msgid "break event"
+msgstr ""
+
+#: scaleos/events/models.py:311
+msgid "break events"
+msgstr ""
+
+#: scaleos/organizations/models.py:15
+msgid "organization"
+msgstr ""
+
+#: scaleos/organizations/models.py:16
+msgid "organizations"
+msgstr ""
+
+#: scaleos/organizations/models.py:23
+msgid "enterprise"
+msgstr ""
+
+#: scaleos/organizations/models.py:24
+msgid "enterprises"
+msgstr ""
+
+#: scaleos/payments/models.py:33
+msgid "free"
+msgstr ""
+
+#: scaleos/payments/models.py:71
+msgid "save first"
+msgstr ""
+
+#: scaleos/payments/models.py:177
+msgid "bulk price matrix item"
+msgstr ""
+
+#: scaleos/payments/models.py:178
+msgid "bulk price matrix items"
+msgstr ""
+
+#: scaleos/reservations/models.py:18
+msgid "reservation"
+msgstr ""
+
+#: scaleos/reservations/models.py:19
+msgid "reservations"
+msgstr ""
+
+#: scaleos/shared/fields.py:6
+msgid "name"
+msgstr ""
+
+#: scaleos/users/admin.py:24
 msgid "Personal info"
 msgstr "Informação pessoal"
 
-#: scaleos/users/admin.py:19
+#: scaleos/users/admin.py:26
 msgid "Permissions"
 msgstr "Permissões"
 
-#: scaleos/users/admin.py:30
+#: scaleos/users/admin.py:37
 msgid "Important dates"
 msgstr "Datas importantes"
 
-#: scaleos/users/apps.py:7
+#: scaleos/users/apps.py:9
 msgid "Users"
 msgstr "Usuários"
 
-#: scaleos/users/forms.py:24
-#: scaleos/users/tests/test_forms.py:36
-msgid "This username has already been taken."
+#: scaleos/users/forms.py:27 scaleos/users/tests/test_forms.py:35
+#, fuzzy
+#| msgid "This username has already been taken."
+msgid "This email has already been taken."
 msgstr "Este nome de usuário já foi usado."
 
-#: scaleos/users/models.py:15
+#: scaleos/users/models.py:21
 msgid "Name of User"
 msgstr "Nome do Usuário"
 
-#: scaleos/users/views.py:23
+#: scaleos/users/models.py:24
+#, fuzzy
+#| msgid "E-mail Addresses"
+msgid "email address"
+msgstr "Endereços de E-mail"
+
+#: scaleos/users/tests/test_views.py:72 scaleos/users/views.py:25
 msgid "Information successfully updated"
 msgstr "Informação atualizada com sucesso"
+
+#~ msgid "Account Inactive"
+#~ msgstr "Conta Inativa"
+
+#~ msgid "This account is inactive."
+#~ msgstr "Esta conta está inativa."
+
+#~ msgid "Account"
+#~ msgstr "Conta"
+
+#~ msgid "The following e-mail addresses are associated with your account:"
+#~ msgstr "Os seguintes endereços de e-mail estão associados à sua conta:"
+
+#~ msgid "Verified"
+#~ msgstr "Verificado"
+
+#~ msgid "Unverified"
+#~ msgstr "Não verificado"
+
+#~ msgid "Primary"
+#~ msgstr "Primário"
+
+#~ msgid "Make Primary"
+#~ msgstr "Tornar Primário"
+
+#~ msgid "Re-send Verification"
+#~ msgstr "Reenviar verificação"
+
+#~ msgid "Remove"
+#~ msgstr "Remover"
+
+#~ msgid "Warning:"
+#~ msgstr "Aviso:"
+
+#~ msgid ""
+#~ "You currently do not have any e-mail address set up. You should really "
+#~ "add an e-mail address so you can receive notifications, reset your "
+#~ "password, etc."
+#~ msgstr ""
+#~ "No momento, você não tem nenhum endereço de e-mail configurado. Você "
+#~ "realmente deve adicionar um endereço de e-mail para receber notificações, "
+#~ "redefinir sua senha etc."
+
+#~ msgid "Add E-mail Address"
+#~ msgstr "Adicionar Endereço de E-mail"
+
+#~ msgid "Add E-mail"
+#~ msgstr "Adicionar E-mail"
+
+#~ msgid "Do you really want to remove the selected e-mail address?"
+#~ msgstr "Você realmente deseja remover o endereço de e-mail selecionado?"
+
+#~ msgid "Confirm E-mail Address"
+#~ msgstr "Confirme o endereço de e-mail"
+
+#, python-format
+#~ msgid ""
+#~ "Please confirm that <a href=\"mailto:%(email)s\">%(email)s</a> is an e-"
+#~ "mail address for user %(user_display)s."
+#~ msgstr ""
+#~ "Confirme se <a href=\"mailto:%(email)s\">%(email)s</a> é um endereço de e-"
+#~ "mail do usuário %(user_display)s."
+
+#~ msgid "Confirm"
+#~ msgstr "Confirmar"
+
+#, python-format
+#~ msgid ""
+#~ "This e-mail confirmation link expired or is invalid. Please <a "
+#~ "href=\"%(email_url)s\">issue a new e-mail confirmation request</a>."
+#~ msgstr ""
+#~ "Este link de confirmação de e-mail expirou ou é inválido. Por favor, <a "
+#~ "href=\"%(email_url)s\">emita um novo pedido de confirmação por e-mail</a>."
+
+#~ msgid "Please sign in with one of your existing third party accounts:"
+#~ msgstr "Faça login com uma de suas contas de terceiros existentes:"
+
+#, python-format
+#~ msgid ""
+#~ "Or, <a href=\"%(signup_url)s\">sign up</a> for a %(site_name)s account "
+#~ "and sign in below:"
+#~ msgstr ""
+#~ "Ou, <a href=\"%(signup_url)s\">cadastre-se</a> para uma conta em "
+#~ "%(site_name)s e entre abaixo:"
+
+#~ msgid "or"
+#~ msgstr "ou"
+
+#, python-format
+#~ msgid ""
+#~ "If you have not created an account yet, then please <a "
+#~ "href=\"%(signup_url)s\">sign up</a> first."
+#~ msgstr ""
+#~ "Se você ainda não criou uma conta, <a href=\"%(signup_url)s\">registre-se "
+#~ "primeiro</a>."
+
+#~ msgid "Forgot Password?"
+#~ msgstr "Esqueceu sua senha?"
+
+#~ msgid "Are you sure you want to sign out?"
+#~ msgstr "Você tem certeza que deseja sair?"
+
+#~ msgid "Change Password"
+#~ msgstr "Alterar Senha"
+
+#~ msgid "Password Reset"
+#~ msgstr "Redefinição de senha"
+
+#~ msgid ""
+#~ "Forgotten your password? Enter your e-mail address below, and we'll send "
+#~ "you an e-mail allowing you to reset it."
+#~ msgstr ""
+#~ "Esqueceu sua senha? Digite seu endereço de e-mail abaixo e enviaremos um "
+#~ "e-mail permitindo que você o redefina."
+
+#~ msgid "Reset My Password"
+#~ msgstr "Redefinir minha senha"
+
+#~ msgid "Please contact us if you have any trouble resetting your password."
+#~ msgstr ""
+#~ "Entre em contato conosco se tiver algum problema para redefinir sua senha."
+
+#~ msgid ""
+#~ "We have sent you an e-mail. Please contact us if you do not receive it "
+#~ "within a few minutes."
+#~ msgstr ""
+#~ "Enviamos um e-mail para você. Entre em contato conosco se você não recebê-"
+#~ "lo dentro de alguns minutos."
+
+#~ msgid "Bad Token"
+#~ msgstr "Token Inválido"
+
+#, python-format
+#~ msgid ""
+#~ "The password reset link was invalid, possibly because it has already been "
+#~ "used.  Please request a <a href=\"%(passwd_reset_url)s\">new password "
+#~ "reset</a>."
+#~ msgstr ""
+#~ "O link de redefinição de senha era inválido, possivelmente porque já foi "
+#~ "usado. <a href=\"%(passwd_reset_url)s\">Solicite uma nova redefinição de "
+#~ "senha</a>."
+
+#~ msgid "change password"
+#~ msgstr "alterar senha"
+
+#~ msgid "Your password is now changed."
+#~ msgstr "Sua senha agora foi alterada."
+
+#~ msgid "Set Password"
+#~ msgstr "Definir Senha"
+
+#~ msgid "Signup"
+#~ msgstr "Cadastro"
+
+#, python-format
+#~ msgid ""
+#~ "Already have an account? Then please <a href=\"%(login_url)s\">sign in</"
+#~ "a>."
+#~ msgstr ""
+#~ "já tem uma conta? Então, por favor, faça <a href=\"%(login_url)s\">login</"
+#~ "a>."
+
+#~ msgid "Sign Up Closed"
+#~ msgstr "Inscrições encerradas"
+
+#~ msgid "We are sorry, but the sign up is currently closed."
+#~ msgstr "Lamentamos, mas as inscrições estão encerradas no momento."
+
+#~ msgid "Verify Your E-mail Address"
+#~ msgstr "Verifique seu endereço de e-mail"
+
+#~ msgid ""
+#~ "We have sent an e-mail to you for verification. Follow the link provided "
+#~ "to finalize the signup process. Please contact us if you do not receive "
+#~ "it within a few minutes."
+#~ msgstr ""
+#~ "Enviamos um e-mail para você para verificação. Siga o link fornecido para "
+#~ "finalizar o processo de inscrição. Entre em contato conosco se você não "
+#~ "recebê-lo dentro de alguns minutos."
+
+#~ msgid ""
+#~ "This part of the site requires us to verify that\n"
+#~ "you are who you claim to be. For this purpose, we require that you\n"
+#~ "verify ownership of your e-mail address. "
+#~ msgstr ""
+#~ "Esta parte do site exige que verifiquemos se você é quem afirma ser.\n"
+#~ "Para esse fim, exigimos que você verifique a propriedade\n"
+#~ "do seu endereço de e-mail."
+
+#~ msgid ""
+#~ "We have sent an e-mail to you for\n"
+#~ "verification. Please click on the link inside this e-mail. Please\n"
+#~ "contact us if you do not receive it within a few minutes."
+#~ msgstr ""
+#~ "Enviamos um e-mail para você para verificação.\n"
+#~ "Por favor, clique no link dentro deste e-mail.\n"
+#~ "Entre em contato conosco se você não recebê-lo dentro de alguns minutos."
+
+#, python-format
+#~ msgid ""
+#~ "<strong>Note:</strong> you can still <a href=\"%(email_url)s\">change "
+#~ "your e-mail address</a>."
+#~ msgstr ""
+#~ "<strong>Nota</strong>: você ainda pode <a href=\"%(email_url)s\">alterar "
+#~ "seu endereço de e-mail</a>."
