@@ -11,8 +11,11 @@ alias docsup="docker compose -f docker-compose.local.yml -f docker-compose.docs.
 alias docsopen="chromium-browser http://localhost:9000/"
 
 # Testing
+alias generate_test_report='docker compose -f docker-compose.local.yml run --rm django coverage html'
 alias devtest='docker compose -f docker-compose.local.yml run --rm django coverage run -m pytest'
-alias testreport='devtest && docker compose -f docker-compose.local.yml run --rm django coverage html'
+alias open_test_report='chromium-browser http://127.0.0.1:5500/htmlcov/index.html'
+alias testreport='devtest && generate_test_report && open_test_report'
+
 
 # Data
 alias mkwaerboom='docker compose -f docker-compose.local.yml run --rm django python manage.py create_organization waerboom'
