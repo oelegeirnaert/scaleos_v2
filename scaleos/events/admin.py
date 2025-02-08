@@ -5,6 +5,12 @@ from polymorphic.admin import PolymorphicParentModelAdmin
 from polymorphic.admin import PolymorphicChildModelAdmin, StackedPolymorphicInline, PolymorphicInlineSupportMixin
 
 # Register your models here.
+
+class ConceptPriceMatrixInlineAdmin(admin.TabularInline):
+    model = event_models.ConceptPriceMatrix
+    extra = 0
+    show_change_link = True
+
 class EventInlineAdmin(StackedPolymorphicInline):
     """
     An inline for a polymorphic model.
@@ -43,7 +49,7 @@ class WeddingConceptAdmin(PolymorphicChildModelAdmin):
 class BrunchConceptAdmin(PolymorphicInlineSupportMixin, PolymorphicChildModelAdmin):
     base_model = event_models.BrunchConcept  # Explicitly set here!
     # define custom features here
-    inlines = [EventInlineAdmin]
+    inlines = [ConceptPriceMatrixInlineAdmin, EventInlineAdmin]
     
 
 @admin.register(event_models.DinnerAndDanceConcept)
@@ -63,7 +69,7 @@ class ConceptAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
     list_filter = [PolymorphicChildModelFilter]
     list_display = ["name"]
     search_fields = ["name"]
-    inlines = [EventInlineAdmin]
+    inlines = [ConceptPriceMatrixInlineAdmin, EventInlineAdmin]
 
 @admin.register(event_models.BrunchEvent)
 class BrunchEventAdmin(PolymorphicChildModelAdmin):
@@ -108,6 +114,10 @@ class EventAdmin(PolymorphicParentModelAdmin):
     list_filter = [PolymorphicChildModelFilter]
     list_display = ["name"]
     search_fields = ["name"]
+
+@admin.register(event_models.ConceptPriceMatrix)
+class ConceptPriceMatrixAdmin(admin.ModelAdmin):
+    pass
 
 
 
