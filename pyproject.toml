@@ -118,6 +118,7 @@ select = [
   # "LOG",
   "RUF",
 ]
+
 ignore = [
   "S101", # Use of assert detected https://docs.astral.sh/ruff/rules/assert/
   "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
@@ -132,6 +133,17 @@ ignore = [
 extend-unsafe-fixes = [
     "UP038",
 ]
+
+# OELE
+[tool.ruff.per-file-ignores]
+"scaleos/**/tests/*.py" = [
+    "B018",    # B018 - Found useless expression - necessary for testing exceptions are raised.
+    "D100",    # D100 - Module dostrings not required in test files.
+    "D104",    # D104 - Package dostrings not required in test files.
+    "ARG",     # ARG - Unused args are common in tests with mock patches and mock functions.
+    "PLR2004"   # no like in tests
+]
+# END OELE
 
 [tool.ruff.lint.isort]
 force-single-line = true
