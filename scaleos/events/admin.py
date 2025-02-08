@@ -71,7 +71,7 @@ class BrunchEventAdmin(PolymorphicChildModelAdmin):
     base_model = event_models.SingleEvent  # Explicitly set here!
     # define custom features here
     inlines = [BrunchReservationInlineAdmin]
-    readonly_fields = ["free_spots", "free_percentage", "used_spots", "used_percentage"]
+    readonly_fields = ["free_spots", "free_percentage", "reserved_spots", "reserved_percentage", "over_reserved_spots"]
 
 @admin.register(event_models.ReceptionEvent)
 class ReceptionEventAdmin(PolymorphicChildModelAdmin):

@@ -5,6 +5,7 @@ from scaleos.shared.mixins import AdminLinkMixin, ITS_NOW
 from scaleos.shared.fields import NameField
 from django.utils.translation import gettext_lazy as _
 import datetime
+from django.db.models import Sum
 
 logger = logging.getLogger(__name__)
 
@@ -111,15 +112,43 @@ class Event(PolymorphicModel, NameField):
         verbose_name = _("event")
         verbose_name_plural = _("events")
 
+
     @property
     def free_spots(self):
         if self.maximum_number_of_guests is None:
             return _('unlimited')
+        
+        if hasattr(self, "reserved_spots") and self.reserved_spots is not None:
+            the_result = self.maximum_number_of_guests - self.reserved_spots
+            if the_result <= 0:
+                return 0
+            return the_result
+        
         return self.maximum_number_of_guests
     
     @property
     def free_percentage(self):
-        return 100
+        if self.reserved_percentage < 100:
+            return 100 - self.reserved_percentage
+        return 0
+
+    @property
+    def reserved_percentage(self):
+        if hasattr(self, "reserved_spots") and self.reserved_spots is not None and self.maximum_number_of_guests is not None:
+            the_result = self.reserved_spots / self.maximum_number_of_guests * 100
+            if the_result <= 100:
+                return the_result
+            return 100
+        return 0 
+    
+    @property
+    def over_reserved_spots(self):
+        if self.reserved_percentage >= 100:
+            return (self.maximum_number_of_guests - self.reserved_spots) * -1
+        
+        return 0
+
+
 
 class SingleEvent(Event):
     class STATUS(models.TextChoices):
@@ -225,9 +254,22 @@ class BrunchEvent(SingleEvent):
         verbose_name = _("brunch event")
         verbose_name_plural = _("brunch events")
 
+    @property
+    def reserved_spots(self):
+        from scaleos.reservations.models import BrunchReservation
+        from django.core.exceptions import FieldError
+        try:
+            the_result = BrunchReservation.objects.filter(brunch_event_id=self.pk).aggregate(total=Sum('amount'))['total']
+            if the_result is not None:
+                return the_result
+        except FieldError:
+            logger.warning("we cannot calculate the used spots")
+
+        return 0
+
 class BrunchEventPrice(AdminLinkMixin):
     brunch_event = models.ForeignKey(BrunchEvent, related_name="prices", on_delete=models.CASCADE, null=True, blank=True)
-    
+
     
 
 class CeremonyEvent(SingleEvent):

@@ -24,3 +24,5 @@ class BrunchEventFactory(DjangoModelFactory[event_models.BrunchEvent]):
 
 
 
+
+
