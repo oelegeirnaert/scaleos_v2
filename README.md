@@ -1,5 +1,7 @@
 # ScaleOS
 
++ [![cov](https://oelegeirnaert.github.io/scaleos_v2/badges/coverage.svg)](https://github.com/oelegeirnaert/scaleos_v2/actions)
+
 Your next-gen software...
 
 [![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
