@@ -132,3 +132,10 @@ class AgePriceMatrixItem(AdminLinkMixin):
         blank=False,
         help_text="will pay",
     )
+
+    def __str__(self):
+        if self.age_price_matrix and self.age_price_matrix.name and self.from_age and self.till_age and self.price:
+            return f"{self.age_price_matrix.name} ({self.from_age}-{self.till_age}): {self.price}"
+        if self.age_price_matrix and self.age_price_matrix.name and self.from_age and self.price:
+            return f"{self.age_price_matrix.name} ({self.from_age}-...): {self.price}"
+        return super().__str__()

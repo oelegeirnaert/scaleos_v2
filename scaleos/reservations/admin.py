@@ -8,6 +8,7 @@ class BrunchReservationInlineAdmin(admin.TabularInline):
     model = reservation_models.BrunchReservation
     extra = 0
     show_change_link = True
+    readonly_fields = ["total_price"]
 
 @admin.register(reservation_models.BrunchReservation)
 class BrunchReservationAdmin(PolymorphicChildModelAdmin):
