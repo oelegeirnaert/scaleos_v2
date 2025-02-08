@@ -56,11 +56,8 @@ jobs:
       - name: Compile Translations
         run: docker compose -f docker-compose.local.yml run --rm django python manage.py compilemessages
 
-      - name: Run Django Tests
-        run: docker compose -f docker-compose.local.yml run django pytest
-
-      - name: Create Coverage Report
-        run: docker compose -f docker-compose.local.yml run --rm django coverage json
+      - name: Run Django Tests with coverage report
+        run: docker compose -f docker-compose.local.yml run django coverage json pytest
 
         # Oele
       - name: Update Coverage Badge
