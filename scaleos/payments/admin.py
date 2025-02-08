@@ -13,6 +13,11 @@ class PriceHistoryInlineAdmin(admin.TabularInline):
     show_change_link = True
     readonly_fields = ["created_on"]
 
+class AgePriceMatrixItemInlineAdmin(admin.TabularInline):
+    model = payment_models.AgePriceMatrixItem
+    extra = 0
+    show_change_link = True
+
 @admin.register(payment_models.Price)
 class PriceAdmin(admin.ModelAdmin):
     readonly_fields = [
@@ -23,6 +28,17 @@ class PriceAdmin(admin.ModelAdmin):
         "price",
         "price_vat_included",
         "price_vat_excluded",
+        "public_key",
     ]
     list_display = ["price_text"]
     inlines = [PriceHistoryInlineAdmin]
+
+
+@admin.register(payment_models.AgePriceMatrix)
+class AgePriceMatrixAdmin(admin.ModelAdmin):
+    inlines = [AgePriceMatrixItemInlineAdmin]
+
+
+@admin.register(payment_models.AgePriceMatrixItem)
+class AgePriceMatrixItemAdmin(admin.ModelAdmin):
+    pass

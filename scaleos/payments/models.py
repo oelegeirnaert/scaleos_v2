@@ -3,14 +3,15 @@ from django.db import models
 from djmoney.models.fields import MoneyField
 from polymorphic.models import PolymorphicModel
 from scaleos.shared.mixins import AdminLinkMixin, ITS_NOW
-from scaleos.shared.fields import LogInfoFields
+from scaleos.shared.fields import LogInfoFields, NameField, PublicKeyField
 from moneyed import CURRENCIES
 from moneyed import Money
+from django.utils.translation import gettext_lazy as _
 
 logger = logging.getLogger(__name__)
 
 # Create your models here.
-class Price(LogInfoFields, AdminLinkMixin):
+class Price(LogInfoFields, AdminLinkMixin, PublicKeyField):
     current_price = MoneyField(
         max_digits=15,
         decimal_places=2,
@@ -102,3 +103,32 @@ class PriceHistory(LogInfoFields):
 
     class Meta:
         ordering = ["-created_on"]
+
+class AgePriceMatrix(LogInfoFields, AdminLinkMixin, NameField):
+    valid_from = models.DateTimeField(null=True, blank=True)
+    valid_till = models.DateTimeField(null=True, blank=True)
+
+class AgePriceMatrixItem(AdminLinkMixin):
+    age_price_matrix = models.ForeignKey(
+        AgePriceMatrix,
+        related_name="prices",
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+
+    from_age = models.IntegerField(
+        null=True,
+        blank=True,
+    )
+    till_age = models.IntegerField(
+        null=True,
+        blank=True,
+    )
+
+    price = models.OneToOneField(
+        Price,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=False,
+        help_text="will pay",
+    )
