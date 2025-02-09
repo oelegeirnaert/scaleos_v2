@@ -44,3 +44,9 @@ Where the number after the # is the id of the given content type.
     ::
 
         AgePriceMatrix.objects.filter(id=1).update(polymorphic_ctype_id=ContentType.objects.filter(model__iexact="AgePriceMatrix").first().id)
+
+Generate a key pair for Django WebPush:
+    ::
+
+        https://pypi.org/project/django-webpush/
+        https://web-push-codelab.glitch.me/

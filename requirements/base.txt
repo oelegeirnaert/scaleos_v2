@@ -37,5 +37,5 @@ django-countries==7.6.1  # https://pypi.org/project/django-countries
 phonenumbers==8.13.54  # https://pypi.org/project/phonenumbers/
 django-phonenumber-field==8.0.0 # https://pypi.org/project/django-phonenumber-field/
 django-money==3.5.3  # https://pypi.org/project/django-money/
-django-admin-ordering==0.20.0  #https://pypi.org/project/django-admin-ordering/
-
+django-admin-ordering==0.20.0  # https://pypi.org/project/django-admin-ordering/
+django-webpush==0.3.6  # https://pypi.org/project/django-webpush/
