@@ -1,0 +1,39 @@
+name: Build & Deploy DOCS to Scaleway
+# https://github.com/actions/checkout
+on:
+  workflow_dispatch:
+jobs:
+
+  compose:
+        runs-on: ubuntu-latest
+        steps:
+          -
+            name: Set up Docker Compose
+            uses: docker/setup-compose-action@v1
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: 'main'
+
+    - name: Login to Scaleway Container Registry
+      uses: docker/login-action@v3
+      with:
+        username: nologin
+        # https://console.scaleway.com/iam/api-keys - USE A PERSONAL KEY
+        password: ${{ secrets.SCALEWAY_API_KEY }}
+        # https://console.scaleway.com/registry/namespaces/fr-par/8c340c30-d6ee-47e2-bf4c-99475907aabf/settings
+        registry: ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}
+
+    - name: Build the Docker image
+      # run: docker build compose/local/docs/ -t ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_docs:latest
+      run: docker compose -f docker-compose.docs.yml build
+
+    - name: Tag the Docker image
+      # run: docker build compose/local/docs/ -t ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_docs:latest
+      run: docker image tag scaleos_local_docs ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_docs
+
+    - name: Push the Docker Image
+      run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_docs
