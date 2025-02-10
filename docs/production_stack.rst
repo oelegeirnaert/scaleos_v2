@@ -67,6 +67,15 @@ Stop a stack
 
         docker stack rm scaleos
 
+Remove everything from docker
+----------------------------------------------------------------------
+
+If everything needs to be cleared for clean install
+    
+    ::
+
+        docker system prune -a --volumes
+
         
 
 Install Swarmpit
