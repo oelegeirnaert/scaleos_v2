@@ -9,7 +9,7 @@ alias devshell='docker compose -f docker-compose.local.yml run --rm django pytho
 alias manage='docker compose -f docker-compose.local.yml run --rm django python manage.py'
 
 # Documentation
-alias docsup="docker compose -f docker-compose.local.yml -f docker-compose.docs.yml up -d"
+alias docsup="docker compose -f docker-compose.docs.yml up -d"
 alias docsopen="docsup && chromium-browser http://localhost:9000/"
 
 # Testing

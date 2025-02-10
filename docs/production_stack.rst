@@ -1,0 +1,57 @@
+The production stack
+======================================================================
+
+How to install & configure Docker Swarm with share
+----------------------------------------------------------------------
+
+Inspired by: https://dev.to/hackmamba/how-to-create-a-docker-swarm-of-appwrite-containers-and-ui-with-swarmpit-1nje
+ATTENTION: When making the NFS share MANAGER and WORKER are used as USERS
+
+
+Manager: 
+
+    ::
+
+        sudo apt install nfs-kernel-server
+        sudo mkdir -p home/root/nfs/app -p
+        sudo chown nobody:nogroup home/root/nfs/app
+        sudo nano /etc/exports
+            home/root/nfs/app    <WORKER_ip>(rw,sync,no_subtree_check)
+        sudo systemctl restart nfs-kernel-server
+
+Worker:
+
+    ::
+
+        sudo apt install nfs-common
+        sudo mkdir -p /nfs/app
+        sudo mount <MANAGER_ip>:/home/root/nfs/app /nfs/app
+
+Manager:
+
+    ::
+
+        sudo docker swarm init --advertise-addr <MANAGER_TAILSCALE_ip>
+            This will generate a command that needs to be executed on the worker.
+
+BUT if you forgot the JOIN token for the WORKER:
+
+    ::
+    
+        docker swarm join-token worker
+
+Bring the stack up
+----------------------------------------------------------------------
+
+docker stack deploy -c docker-compose.yml scaleos
+
+        
+
+Install Swarmpit
+----------------------------------------------------------------------
+
+Install the Swarmpit by using the following code:
+
+    ::
+
+        sudo git clone https://github.com/swarmpit/swarmpit -b master && sudo docker stack deploy -c swarmpit/docker-compose.arm.yml swarmpit
