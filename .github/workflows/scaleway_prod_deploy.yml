@@ -1,0 +1,74 @@
+name: SCALEWAY - DO NOT USE ME - Build & Deploy ScaleOS V2 PRODUCTION
+# https://github.com/actions/checkout
+on:
+  workflow_dispatch:
+jobs:
+
+  compose:
+        runs-on: ubuntu-latest
+        steps:
+          -
+            name: Set up Docker Compose
+            uses: docker/setup-compose-action@v1
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: 'main'
+
+    - name: Login to Scaleway Container Registry
+      uses: docker/login-action@v3
+      with:
+        username: nologin
+        # https://console.scaleway.com/iam/api-keys - USE A PERSONAL KEY
+        password: ${{ secrets.SCALEWAY_API_KEY }}
+        # https://console.scaleway.com/registry/namespaces/fr-par/8c340c30-d6ee-47e2-bf4c-99475907aabf/settings
+        registry: ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}
+
+    - name: Build the Docker image
+      # run: docker build compose/local/docs/ -t ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_docs:latest
+      run: docker compose -f docker-compose.production.yml build
+
+    # - name: Tag the Docker image
+      # run: docker build compose/local/docs/ -t ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_docs:latest
+      # run: docker image tag scaleos_production_django ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_django
+
+    # - name: Push the Docker Image
+      # run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_django
+
+    - name: Tag the scaleos_production_django
+      run: docker image tag scaleos_production_django ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_django:latest
+    - name: Push scaleos_production_django
+      run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_django:latest
+
+    - name: Tag the scaleos_production_traefik
+      run: docker image tag scaleos_production_traefik ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_traefik:latest
+    - name: Push scaleos_production_traefik
+      run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_traefik:latest
+
+    - name: Tag the scaleos_production_nginx
+      run: docker image tag scaleos_production_nginx ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_nginx:latest
+    - name: Push scaleos_production_nginx
+      run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_nginx:latest
+
+    - name: Tag the scaleos_production_celerybeat
+      run: docker image tag scaleos_production_celerybeat ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_celerybeat:latest
+    - name: Push scaleos_production_celerybeat
+      run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_celerybeat:latest
+
+    - name: Tag the scaleos_production_flower
+      run: docker image tag scaleos_production_flower ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_flower:latest
+    - name: Push scaleos_production_flower
+      run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_flower:latest
+
+    - name: Tag the scaleos_production_celeryworker
+      run: docker image tag scaleos_production_celeryworker ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_celeryworker:latest
+    - name: Push scaleos_production_celeryworker
+      run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_celeryworker:latest
+
+    - name: Tag the scaleos_production_postgres
+      run: docker image tag scaleos_production_postgres ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_postgres:latest
+    - name: Push scaleos_production_postgres
+      run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_postgres:latest

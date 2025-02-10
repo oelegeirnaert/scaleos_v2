@@ -1,0 +1,77 @@
+# Test Oele
+name: GITHUB - Build and Push Docker to Container Registery
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Compose
+        uses: docker/setup-compose-action@v1
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: 'main'
+
+      - name: Build the Docker image
+        run: docker compose -f docker-compose.production.yml build
+
+      - name: Check DB Migrations
+        run: docker compose -f docker-compose.local.yml run --rm django python manage.py makemigrations --check
+
+      - name: Run DB Migrations
+        run: docker compose -f docker-compose.local.yml run --rm django python manage.py migrate
+
+      - name: Compile Translations
+        run: docker compose -f docker-compose.local.yml run --rm django python manage.py compilemessages
+
+      - name: Tag the scaleos_production_django
+        run: docker image tag scaleos_production_django ghcr.io/oelegeirnaert/scaleos_production_django:latest
+      - name: Push scaleos_production_django
+        run: docker push ghcr.io/oelegeirnaert/scaleos_production_django:latest
+
+      - name: Tag the scaleos_production_traefik
+        run: docker image tag scaleos_production_traefik ghcr.io/oelegeirnaert/scaleos_production_traefik:latest
+      - name: Push scaleos_production_traefik
+        run: docker push ghcr.io/oelegeirnaert/scaleos_production_traefik:latest
+
+      - name: Tag the scaleos_production_nginx
+        run: docker image tag scaleos_production_nginx ghcr.io/oelegeirnaert/scaleos_production_nginx:latest
+      - name: Push scaleos_production_nginx
+        run: docker push ghcr.io/oelegeirnaert/scaleos_production_nginx:latest
+
+      - name: Tag the scaleos_production_celerybeat
+        run: docker image tag scaleos_production_celerybeat ghcr.io/oelegeirnaert/scaleos_production_celerybeat:latest
+      - name: Push scaleos_production_celerybeat
+        run: docker push ghcr.io/oelegeirnaert/scaleos_production_celerybeat:latest
+
+      - name: Tag the scaleos_production_flower
+        run: docker image tag scaleos_production_flower ghcr.io/oelegeirnaert/scaleos_production_flower:latest
+      - name: Push scaleos_production_flower
+        run: docker push ghcr.io/oelegeirnaert/scaleos_production_flower:latest
+
+      - name: Tag the scaleos_production_celeryworker
+        run: docker image tag scaleos_production_celeryworker ghcr.io/oelegeirnaert/scaleos_production_celeryworker:latest
+      - name: Push scaleos_production_celeryworker
+        run: docker push ghcr.io/oelegeirnaert/scaleos_production_celeryworker:latest
+
+      - name: Tag the scaleos_production_postgres
+        run: docker image tag scaleos_production_postgres ghcr.io/oelegeirnaert/scaleos_production_postgres:latest
+      - name: Push scaleos_production_postgres
+        run: docker push ghcr.io/oelegeirnaert/scaleos_production_postgres:latest

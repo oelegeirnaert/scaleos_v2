@@ -1,4 +1,4 @@
-name: Build & Deploy DOCS to Scaleway
+name: SCALEWAY - DO NOT USE ME - Build & Deploy DOCS
 # https://github.com/actions/checkout
 on:
   workflow_dispatch:
