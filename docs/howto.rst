@@ -50,3 +50,10 @@ Generate a key pair for Django WebPush:
 
         https://pypi.org/project/django-webpush/
         https://web-push-codelab.glitch.me/
+
+
+revert one or multiple commits (the nuber 1 is the numbers of steps you want to go back)
+
+    ::
+
+        git revert HEAD~1..HEAD 
