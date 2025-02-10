@@ -83,5 +83,5 @@ Hostinger
 ----------------------------------------------------------------------
 
 ssh root@147.93.122.129
-LOGIN INTO GITHUB: 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
+LOGIN INTO GITHUB
 Installed Tailscale
