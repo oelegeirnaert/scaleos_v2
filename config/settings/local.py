@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # ruff: noqa: E501
 from .base import *  # noqa: F403
 from .base import INSTALLED_APPS
@@ -8,6 +9,14 @@ from .base import env
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
 DEBUG = True
+
+# Oele
+# Optional -- use for local development only: the WebAuthn uses the
+# ``fido2`` package, and versions up to including version 1.1.3 do not
+# regard localhost as a secure origin, which is problematic during
+# local development and testing.
+MFA_WEBAUTHN_ALLOW_INSECURE_ORIGIN = True
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env(
     "DJANGO_SECRET_KEY",

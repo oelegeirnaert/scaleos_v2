@@ -61,6 +61,10 @@ ROOT_URLCONF = "config.urls"
 # https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
 WSGI_APPLICATION = "config.wsgi.application"
 
+# Oele
+# Make sure "webauthn" is included.
+MFA_SUPPORTED_TYPES = ["totp", "webauthn", "recovery_codes"]
+
 # APPS
 # ------------------------------------------------------------------------------
 DJANGO_APPS = [
@@ -71,7 +75,7 @@ DJANGO_APPS = [
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # "django.contrib.humanize", # Handy template tags
+    "django.contrib.humanize",  # Handy template tags
     "django.contrib.admin",
     "django.forms",
 ]
