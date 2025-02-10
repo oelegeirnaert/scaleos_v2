@@ -22,11 +22,7 @@ volumes:
 
 services:
   django: &django
-    build:
-      context: .
-      dockerfile: ./compose/production/django/Dockerfile
-
-    image: ghcr.io/oelegeirnaert/scaleos_production_django
+    image: ghcr.io/oelegeirnaert/scaleos_production_django:latest
     volumes:
       - production_django_media:/app/scaleos/media
     depends_on:
@@ -37,10 +33,7 @@ services:
     command: /start
 
   postgres:
-    build:
-      context: .
-      dockerfile: ./compose/production/postgres/Dockerfile
-    image: ghcr.io/oelegeirnaert/scaleos_production_postgres
+    image: ghcr.io/oelegeirnaert/scaleos_production_postgres:latest
     volumes:
       - production_postgres_data:/var/lib/postgresql/data
       - production_postgres_data_backups:/backups
@@ -48,10 +41,7 @@ services:
       - .env
 
   traefik:
-    build:
-      context: .
-      dockerfile: ./compose/production/traefik/Dockerfile
-    image: ghcr.io/oelegeirnaert/scaleos_production_traefik
+    image: ghcr.io/oelegeirnaert/scaleos_production_traefik:latest
     depends_on:
       - django
     volumes:
@@ -70,24 +60,21 @@ services:
 
   celeryworker:
     <<: *django
-    image: ghcr.io/oelegeirnaert/scaleos_production_celeryworker
+    image: ghcr.io/oelegeirnaert/scaleos_production_celeryworker:latest
     command: /start-celeryworker
 
   celerybeat:
     <<: *django
-    image: ghcr.io/oelegeirnaert/scaleos_production_celerybeat
+    image: ghcr.io/oelegeirnaert/scaleos_production_celerybeat:latest
     command: /start-celerybeat
 
   flower:
     <<: *django
-    image: ghcr.io/oelegeirnaert/scaleos_production_flower
+    image: ghcr.io/oelegeirnaert/scaleos_production_flower:latest
     command: /start-flower
 
   nginx:
-    build:
-      context: .
-      dockerfile: ./compose/production/nginx/Dockerfile
-    image: ghcr.io/oelegeirnaert/scaleos_production_nginx
+    image: ghcr.io/oelegeirnaert/scaleos_production_nginx:latest
     depends_on:
       - django
     volumes:
