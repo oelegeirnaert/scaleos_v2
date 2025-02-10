@@ -41,7 +41,7 @@
       <script defer src="{% static 'js/project.js' %}"></script>
     {% endblock javascript %}
   </head>
-  <body class="{% block bodyclass %}{% endblock bodyclass %}">
+  <body class="{{ view_name }} {% block bodyclass %}{% endblock bodyclass %}">
     {% block body %}
       <div class="mb-1">
         <nav class="navbar navbar-expand-md navbar-light bg-light">

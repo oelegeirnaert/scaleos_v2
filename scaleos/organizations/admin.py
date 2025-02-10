@@ -11,6 +11,7 @@ from scaleos.organizations import models as organization_models
 @admin.register(organization_models.Enterprise)
 class EnterpriseAdmin(PolymorphicChildModelAdmin):
     base_model = organization_models.Organization  # Explicitly set here!
+    readonly_fields = ["slug"]
     # define custom features here
 
 
@@ -24,3 +25,4 @@ class OrganizationAdmin(PolymorphicParentModelAdmin):
     list_filter = [PolymorphicChildModelFilter]
     list_display = ["name"]
     search_fields = ["number", "name"]
+    readonly_fields = ["slug"]

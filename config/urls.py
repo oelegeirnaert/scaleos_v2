@@ -24,7 +24,11 @@ urlpatterns = [
     path("users/", include("scaleos.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
-    # ...
+    # Oele
+    path(
+        "organization/",
+        include("scaleos.organizations.urls", namespace="organizations"),
+    ),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

@@ -1,11 +1,13 @@
 import uuid
 
+from autoslug import AutoSlugField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
 class NameField(models.Model):
     name = models.CharField(verbose_name=_("name"), max_length=100, default="")
+    slug = AutoSlugField(populate_from="name", null=True)
 
     class Meta:
         abstract = True

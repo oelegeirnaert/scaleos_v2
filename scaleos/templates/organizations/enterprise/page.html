@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>{{ organization }}</h1>
+  {{ view_name }}
+  {% if view_name == "concepts" %}
+    {% for concept in organization.concepts.all %}
+      {{ concept }}
+      <ul>
+        {% for event in concept.events.all %}<li>{{ event }}</li>{% endfor %}
+      </ul>
+    {% endfor %}
+  {% endif %}
+{% endblock content %}

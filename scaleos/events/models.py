@@ -17,9 +17,10 @@ logger = logging.getLogger(__name__)
 MAX_PERCENTAGE = 100
 
 
-class Concept(PolymorphicModel, NameField):
+class Concept(PolymorphicModel, NameField, AdminLinkMixin):
     organizer = models.ForeignKey(
         "organizations.Organization",
+        related_name="concepts",
         on_delete=models.CASCADE,
         null=True,
     )

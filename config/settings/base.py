@@ -207,6 +207,8 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
                 "scaleos.users.context_processors.allauth_settings",
+                # Oele
+                "scaleos.utils.context_processors.view_name",
             ],
         },
     },
