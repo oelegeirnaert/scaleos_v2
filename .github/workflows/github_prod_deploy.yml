@@ -56,6 +56,11 @@ jobs:
       - name: Push scaleos_production_nginx
         run: docker push ghcr.io/oelegeirnaert/scaleos_production_nginx:latest
 
+      - name: Tag the scaleos_production_celerybeat
+        run: docker image tag scaleos_production_celerybeat ghcr.io/oelegeirnaert/scaleos_production_celerybeat:latest
+      - name: Push scaleos_production_celerybeat
+        run: docker push ghcr.io/oelegeirnaert/scaleos_production_celerybeat:latest
+
       - name: Tag the scaleos_production_flower
         run: docker image tag scaleos_production_flower ghcr.io/oelegeirnaert/scaleos_production_flower:latest
       - name: Push scaleos_production_flower
@@ -70,16 +75,3 @@ jobs:
         run: docker image tag scaleos_production_postgres ghcr.io/oelegeirnaert/scaleos_production_postgres:latest
       - name: Push scaleos_production_postgres
         run: docker push ghcr.io/oelegeirnaert/scaleos_production_postgres:latest
-
-        # Images that needs production env
-
-      - name: Check DB Migrations
-        run: docker compose -f docker-compose.production.yml run --rm django python manage.py makemigrations --check
-
-      - name: Run DB Migrations
-        run: docker compose -f docker-compose.production.yml run --rm django python manage.py migrate
-
-      - name: Tag the scaleos_production_celerybeat
-        run: docker image tag scaleos_production_celerybeat ghcr.io/oelegeirnaert/scaleos_production_celerybeat:latest
-      - name: Push scaleos_production_celerybeat
-        run: docker push ghcr.io/oelegeirnaert/scaleos_production_celerybeat:latest
