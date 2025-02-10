@@ -25,3 +25,6 @@ alias mkpersons='docker compose -f docker-compose.local.yml run --rm django pyth
 #i18n
 alias devtrans='manage makemessages -a'
 alias devtranscompile="manage compilemessages"
+
+# WebPages
+alias wpmail="chromium-browser http://127.0.0.1:8025"
