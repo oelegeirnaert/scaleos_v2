@@ -7,6 +7,10 @@ How to install & configure Docker Swarm with share
 Inspired by: https://dev.to/hackmamba/how-to-create-a-docker-swarm-of-appwrite-containers-and-ui-with-swarmpit-1nje
 ATTENTION: When making the NFS share MANAGER and WORKER are used as USERS
 
+**First Thing:** add the public IP of the server to the DNS records
+scaleos.net domain is hosted at GoDaddy
+https://dcc.godaddy.com/control/portfolio/scaleos.net/settings?tab=dns
+
 
 Manager: 
 
@@ -43,7 +47,25 @@ BUT if you forgot the JOIN token for the WORKER:
 Bring the stack up
 ----------------------------------------------------------------------
 
-docker stack deploy -c docker-compose.yml scaleos
+--with-registry-auth allows to download images from GHCR.io
+
+    ::
+
+        docker stack deploy --with-registry-auth -c docker-swarm-compose.yml scaleos 
+
+Check if latest image version
+----------------------------------------------------------------------
+
+    ::
+
+        docker images --digests
+
+Stop a stack
+----------------------------------------------------------------------
+
+    ::
+
+        docker stack rm scaleos
 
         
 
@@ -55,3 +77,11 @@ Install the Swarmpit by using the following code:
     ::
 
         sudo git clone https://github.com/swarmpit/swarmpit -b master && sudo docker stack deploy -c swarmpit/docker-compose.arm.yml swarmpit
+
+
+Hostinger
+----------------------------------------------------------------------
+
+ssh root@147.93.122.129
+LOGIN INTO GITHUB: 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
+Installed Tailscale
