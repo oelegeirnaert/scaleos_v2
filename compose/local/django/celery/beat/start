@@ -2,7 +2,7 @@
 
 # Oele
 set -e
-/wait-for-it.sh $PG_HOST:$PG_PORT --timeout=10 --strict -- echo "postgres is up"
+/wait-for-it.sh $POSTGRES_HOST:$POSTGRES_PORT --timeout=10 --strict -- echo "postgres is up"
 # EOele
 
 set -o errexit
