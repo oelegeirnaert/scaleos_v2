@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Oele
+set -e
+/wait-for-it.sh $PG_HOST:$PG_PORT --timeout=10 --strict -- echo "postgres is up"
+# EOele
+
 set -o errexit
 set -o nounset
 
