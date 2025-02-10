@@ -45,6 +45,7 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+coverage.json
 
 # Translations
 *.mo
@@ -279,4 +280,3 @@ scaleos/media/
 
 # Oele
 bin
-coverage.json
