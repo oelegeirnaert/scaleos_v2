@@ -31,6 +31,9 @@ jobs:
       # run: docker build compose/local/docs/ -t ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_docs:latest
       run: docker compose -f docker-compose.production.yml build
 
+    - name: Make django beat migrations
+      run: docker compose -f docker-compose.production.yml run --rm django python manage.py migrate django_celery_beat
+
     # - name: Tag the Docker image
       # run: docker build compose/local/docs/ -t ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_docs:latest
       # run: docker image tag scaleos_production_django ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/scaleos_production_django
