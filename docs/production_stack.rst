@@ -44,6 +44,55 @@ BUT if you forgot the JOIN token for the WORKER:
     
         docker swarm join-token worker
 
+LOGIN into GitHub Container Registry
+
+    ::
+
+        docker login ghcr.io
+
+Allow Docker Swarm to download the packages from GHCR.io
+----------------------------------------------------------------------
+To authenticate Docker with your GitHub Container Registry, you need to log in to GHCR using the token you generated.
+
+On the machine where you're running Docker Swarm, execute the following command:
+
+    ::
+
+        docker login ghcr.io -u <YOUR_GITHUB_USERNAME> -p <YOUR_GITHUB_PAT>
+
+Replace <YOUR_GITHUB_USERNAME> with your GitHub username and <YOUR_GITHUB_PAT> with the PAT you created in step 1.
+
+If successful, Docker will authenticate and store the credentials for accessing GHCR in your system.
+
+Now that Docker is authenticated, you need to ensure that your Docker Swarm can use these credentials to pull images from GHCR.
+
+Create a file called **ghcr-auth.json** with the authentication credentials:
+
+    ::
+
+        {
+            "auths": {
+                "ghcr.io": {
+                "auth": "<BASE64_ENCODED_USERNAME:PASSWORD>"
+                }
+            }
+        }
+
+You can encode the credentials using the following:
+
+    ::
+
+        echo -n "<YOUR_GITHUB_USERNAME>:<YOUR_GITHUB_PAT>" | base64
+
+Then create a Docker secret from this file:
+
+    ::
+
+
+        docker secret create ghcr-auth ghcr-auth.json
+
+
+
 Bring the stack up
 ----------------------------------------------------------------------
 
