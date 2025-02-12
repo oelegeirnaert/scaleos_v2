@@ -39,6 +39,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libpq-dev \
   # Translations dependencies
   gettext \
+  # Oele
+  gdal-bin \
+  # EOele
   # Uncomment below lines to enable Sphinx output to latex and pdf
   # texlive-latex-recommended \
   # texlive-fonts-recommended \
