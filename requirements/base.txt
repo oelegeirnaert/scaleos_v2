@@ -43,3 +43,4 @@ django-money==3.5.3  # https://pypi.org/project/django-money/
 django-admin-ordering==0.20.0  # https://pypi.org/project/django-admin-ordering/
 django-webpush==0.3.6  # https://pypi.org/project/django-webpush/
 django-autoslug==1.9.9  # https://pypi.org/project/django-autoslug/
+django-leaflet==0.29.1  # https://pypi.org/project/django-leaflet/

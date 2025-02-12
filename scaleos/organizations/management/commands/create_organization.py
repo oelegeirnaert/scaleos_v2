@@ -41,6 +41,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f"updating {waerboom}"))
 
         waerboom.name = "BRUSSELS WAERBOOM EVENT"
+        waerboom.slug = "waerboom"
         waerboom.save()
 
         brunch_prices_matrix, created = (

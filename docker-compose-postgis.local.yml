@@ -1,0 +1,113 @@
+volumes:
+  scaleos_local_postgres_data: {}
+  scaleos_local_postgres_data_backups: {}
+  scaleos_local_redis_data: {}
+  scaleos_local_postgis_data:
+  scaleos_local_postgis_data_backups:
+
+services:
+
+  postgis:
+    image: postgis/postgis:latest
+    container_name: scaleos_local_postgis
+    restart: always
+    env_file:
+      - ./.envs/.local/.postgres
+    volumes:
+      - scaleos_local_postgis_data:/var/lib/postgresql/data
+      - scaleos_local_postgis_data_backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: scaleos_local_mailpit
+    command:
+      - --smtp-auth-accept-any
+      - --smtp-auth-allow-insecure
+    ports:
+      # smtp.
+      # http://localhost:1025
+      - 1025:1025
+      # http.
+      # http://localhost:8025
+      - 8025:8025
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8025/readyz"]
+      interval: 15s
+      timeout: 5s
+      retries: 2
+    restart: on-failure
+
+  django: &django
+    build:
+      context: .
+      dockerfile: ./compose/local/django/Dockerfile
+    image: scaleos_local_django
+    container_name: scaleos_local_django
+    depends_on:
+      postgis:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app:z
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+    ports:
+      - '8000:8000'
+    command: sh -c "
+                  echo 'making migrations'
+                  && python manage.py migrate
+                  && exec uvicorn config.asgi:application --host 0.0.0.0 --reload --reload-include '*.html'
+                  && echo 'django should be started'
+                  "
+
+
+
+
+
+  redis:
+    image: docker.io/redis:6
+    container_name: scaleos_local_redis
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+    volumes:
+      - scaleos_local_redis_data:/data
+
+
+  celeryworker:
+    <<: *django
+    image: scaleos_local_celeryworker
+    container_name: scaleos_local_celeryworker
+    depends_on:
+      postgis:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports: []
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    image: scaleos_local_celerybeat
+    container_name: scaleos_local_celerybeat
+    depends_on:
+      postgis:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports: []
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    image: scaleos_local_flower
+    container_name: scaleos_local_flower
+    ports:
+      - '5555:5555'
+    command: /start-flower

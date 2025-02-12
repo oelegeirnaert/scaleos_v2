@@ -51,6 +51,7 @@ LOCALE_PATHS = [str(BASE_DIR / "locale")]
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {"default": env.db("DATABASE_URL")}
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
+DATABASES["default"]["ENGINE"] = "django.contrib.gis.db.backends.postgis"
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -77,6 +78,7 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",  # Handy template tags
     "django.contrib.admin",
+    "django.contrib.gis",  # Oele
     "django.forms",
 ]
 THIRD_PARTY_APPS = [
@@ -93,6 +95,7 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",
     "phonenumber_field",
     "djmoney",
+    "leaflet",
 ]
 
 LOCAL_APPS = [
@@ -371,3 +374,11 @@ SPECTACULAR_SETTINGS = {
 }
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+LEAFLET_CONFIG = {
+    "DEFAULT_CENTER": (50.8476, 4.3572),
+    "DEFAULT_ZOOM": 11,
+    "MAX_ZOOM": 20,
+    "MIN_ZOOM": 3,
+    "SCALE": "both",
+}
