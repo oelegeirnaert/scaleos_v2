@@ -31,3 +31,6 @@ alias wpmail="chromium-browser http://localhost:8025"
 alias wpflower="chromium-browser http://localhost:5555"
 alias wpdjangoadmin="chromium-browser http://localhost:8000/admin"
 alias wpsite="chromium-browser http://localhost:8000"
+
+# Tailwind
+alias tw='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py tailwind watch'
