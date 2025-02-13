@@ -113,10 +113,8 @@ def test_status_of_single_event(faker):
         ),
         timezone.get_default_timezone(),
     )
-    assert (
-        single_event.get_status(its_now=the_now)
-        == event_models.SingleEvent.STATUS.UNKNOWN
-    )
+    status = single_event.get_status(its_now=the_now)
+    assert status == event_models.SingleEvent.STATUS.UNKNOWN
 
     yesterday = timezone.make_aware(
         datetime.datetime(
@@ -131,10 +129,8 @@ def test_status_of_single_event(faker):
     )
     single_event.starting_at = yesterday
     single_event.ending_on = yesterday
-    assert (
-        single_event.get_status(its_now=the_now)
-        == event_models.SingleEvent.STATUS.ENDED
-    )
+    status = single_event.get_status(its_now=the_now)
+    assert status == event_models.SingleEvent.STATUS.ENDED
 
     tomorrow = timezone.make_aware(
         datetime.datetime(
@@ -149,10 +145,8 @@ def test_status_of_single_event(faker):
     )
     single_event.starting_at = tomorrow
     single_event.ending_on = tomorrow
-    assert (
-        single_event.get_status(its_now=the_now)
-        == event_models.SingleEvent.STATUS.UPCOMING
-    )
+    status = single_event.get_status(its_now=the_now)
+    assert status == event_models.SingleEvent.STATUS.UPCOMING
 
     tomorrow = timezone.make_aware(
         datetime.datetime(
@@ -167,14 +161,10 @@ def test_status_of_single_event(faker):
     )
     single_event.starting_at = tomorrow
     single_event.ending_on = None
-    assert (
-        single_event.get_status(its_now=the_now)
-        == event_models.SingleEvent.STATUS.UPCOMING
-    )
+    status = single_event.get_status(its_now=the_now)
+    assert status == event_models.SingleEvent.STATUS.UPCOMING
 
     single_event.starting_at = yesterday
     single_event.ending_on = tomorrow
-    assert (
-        single_event.get_status(its_now=the_now)
-        == event_models.SingleEvent.STATUS.ONGOING
-    )
+    status = single_event.get_status(its_now=the_now)
+    assert status == event_models.SingleEvent.STATUS.ONGOING

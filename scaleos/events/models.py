@@ -136,7 +136,7 @@ class DinnerAndDanceConcept(Concept):
         return True
 
 
-class Event(PolymorphicModel, NameField):
+class Event(PolymorphicModel, NameField, AdminLinkMixin):
     concept = models.ForeignKey(
         Concept,
         related_name="events",
@@ -240,9 +240,9 @@ class SingleEvent(Event):
         if its_now is None:
             its_now = ITS_NOW
 
-        logger.info("Starting at: %s", self.starting_at)
-        logger.info("It's now: %s", its_now)
-        logger.info("Ending on: %s", self.ending_on)
+        logger.debug("Starting at: %s", self.starting_at)
+        logger.debug("It's now: %s", its_now)
+        logger.debug("Ending on: %s", self.ending_on)
 
         if self.starting_at and self.ending_on is None and self.starting_at > its_now:
             return SingleEvent.STATUS.UPCOMING
@@ -264,19 +264,6 @@ class SingleEvent(Event):
             return SingleEvent.STATUS.ONGOING
 
         return SingleEvent.STATUS.UNKNOWN
-
-    @property
-    def status_text(self):
-        if self.status == SingleEvent.STATUS.UPCOMING:
-            return _("upcoming, starting at %s") % self.starting_at
-
-        if self.status == SingleEvent.STATUS.ONGOING:
-            return _("ongoing... ending on %s") % self.ending_on
-
-        if self.status == SingleEvent.STATUS.ENDED:
-            return _("%s is over") % self.verbose_name
-
-        return _("unknown status...")
 
     def set_upcoming_sunday(self):
         today = datetime.datetime(tzinfo=datetime.UTC).date()

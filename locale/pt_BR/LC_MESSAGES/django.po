@@ -7,218 +7,231 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-08 12:38+0100\n"
+"POT-Creation-Date: 2025-02-13 20:16+0100\n"
 "Language: pt-BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: config/settings/base.py:33
+#: config/settings/base.py:36
 msgid "English"
 msgstr ""
 
-#: config/settings/base.py:34
+#: config/settings/base.py:37
 msgid "French"
 msgstr ""
 
-#: config/settings/base.py:35
+#: config/settings/base.py:38
 msgid "Dutch"
 msgstr ""
 
-#: htmlcov/z_5959481cfbb5d58f_base_html.html:165 scaleos/templates/base.html:83
+#: htmlcov/z_5959481cfbb5d58f_base_html.html:151 scaleos/templates/base.html:72
 msgid "My Profile"
 msgstr "Meu perfil"
 
-#: htmlcov/z_5959481cfbb5d58f_base_html.html:169 scaleos/templates/base.html:87
+#: htmlcov/z_5959481cfbb5d58f_base_html.html:155 scaleos/templates/base.html:76
 msgid "Sign Out"
 msgstr "Sair"
 
-#: htmlcov/z_5959481cfbb5d58f_base_html.html:175 scaleos/templates/base.html:93
+#: htmlcov/z_5959481cfbb5d58f_base_html.html:161 scaleos/templates/base.html:82
 msgid "Sign Up"
 msgstr "Cadastro"
 
-#: htmlcov/z_5959481cfbb5d58f_base_html.html:180
+#: htmlcov/z_5959481cfbb5d58f_base_html.html:166
 #: scaleos/templates/allauth/layouts/entrance.html:8
-#: scaleos/templates/base.html:98
+#: scaleos/templates/base.html:87
 msgid "Sign In"
 msgstr "Entrar"
 
-#: scaleos/events/models.py:23
+#: scaleos/events/models.py:31
 msgid "concept"
 msgstr ""
 
-#: scaleos/events/models.py:24
+#: scaleos/events/models.py:32
 msgid "concepts"
 msgstr ""
 
-#: scaleos/events/models.py:35
+#: scaleos/events/models.py:54
 msgid "wedding concept"
 msgstr ""
 
-#: scaleos/events/models.py:36
+#: scaleos/events/models.py:55
 msgid "wedding concepts"
 msgstr ""
 
-#: scaleos/events/models.py:69
+#: scaleos/events/models.py:93
 msgid "brunch concept"
 msgstr ""
 
-#: scaleos/events/models.py:70
+#: scaleos/events/models.py:94
 msgid "brunch concepts"
 msgstr ""
 
-#: scaleos/events/models.py:93
+#: scaleos/events/models.py:124
 msgid "dinner & dance concept"
 msgstr ""
 
-#: scaleos/events/models.py:94
+#: scaleos/events/models.py:125
 msgid "dinner & dance concepts"
 msgstr ""
 
-#: scaleos/events/models.py:121
+#: scaleos/events/models.py:153
 msgid "event"
 msgstr ""
 
-#: scaleos/events/models.py:122
+#: scaleos/events/models.py:154
 msgid "events"
 msgstr ""
 
-#: scaleos/events/models.py:128
+#: scaleos/events/models.py:159
 msgid "unlimited"
 msgstr ""
 
-#: scaleos/events/models.py:164
+#: scaleos/events/models.py:200
 msgid "upcoming"
 msgstr ""
 
-#: scaleos/events/models.py:165
+#: scaleos/events/models.py:201
 msgid "ongoing"
 msgstr ""
 
-#: scaleos/events/models.py:166
+#: scaleos/events/models.py:202
 msgid "ended"
 msgstr ""
 
-#: scaleos/events/models.py:167
+#: scaleos/events/models.py:203
 msgid "unknown"
 msgstr ""
 
-#: scaleos/events/models.py:188
+#: scaleos/events/models.py:224
 msgid "single event"
 msgstr ""
 
-#: scaleos/events/models.py:189
+#: scaleos/events/models.py:225
 msgid "single events"
 msgstr ""
 
-#: scaleos/events/models.py:219
+#: scaleos/events/models.py:257
 #, python-brace-format
-msgid "upcoming, on {self.starting_at}"
+msgid "upcoming, starting on {date} at {time}."
 msgstr ""
 
-#: scaleos/events/models.py:222
-#, python-brace-format
-msgid "ongoing... ending on {self.ending_on}"
+#: scaleos/events/models.py:262 scaleos/events/models.py:264
+#, python-format
+msgid "%s is over"
 msgstr ""
 
-#: scaleos/events/models.py:248
+#: scaleos/events/models.py:266
+msgid "ongoing..."
+msgstr ""
+
+#: scaleos/events/models.py:268
+#, python-format
+msgid "ongoing... ending on %s at %s"
+msgstr ""
+
+#: scaleos/events/models.py:290
+msgid "unknown status..."
+msgstr ""
+
+#: scaleos/events/models.py:313
 msgid "dance event"
 msgstr ""
 
-#: scaleos/events/models.py:249
+#: scaleos/events/models.py:314
 msgid "dance events"
 msgstr ""
 
-#: scaleos/events/models.py:255
+#: scaleos/events/models.py:321
 msgid "dinner event"
 msgstr ""
 
-#: scaleos/events/models.py:256
+#: scaleos/events/models.py:322
 msgid "dinner events"
 msgstr ""
 
-#: scaleos/events/models.py:263
+#: scaleos/events/models.py:329
 msgid "brunch event"
 msgstr ""
 
-#: scaleos/events/models.py:264
+#: scaleos/events/models.py:330
 msgid "brunch events"
 msgstr ""
 
-#: scaleos/events/models.py:288
+#: scaleos/events/models.py:364
 msgid "ceremony event"
 msgstr ""
 
-#: scaleos/events/models.py:289
+#: scaleos/events/models.py:365
 msgid "ceremony events"
 msgstr ""
 
-#: scaleos/events/models.py:295
+#: scaleos/events/models.py:372
 msgid "reception event"
 msgstr ""
 
-#: scaleos/events/models.py:296
+#: scaleos/events/models.py:373
 msgid "reception events"
 msgstr ""
 
-#: scaleos/events/models.py:302
+#: scaleos/events/models.py:380
 msgid "closing event"
 msgstr ""
 
-#: scaleos/events/models.py:303
+#: scaleos/events/models.py:381
 msgid "closing events"
 msgstr ""
 
-#: scaleos/events/models.py:310
+#: scaleos/events/models.py:388
 msgid "break event"
 msgstr ""
 
-#: scaleos/events/models.py:311
+#: scaleos/events/models.py:389
 msgid "break events"
 msgstr ""
 
-#: scaleos/organizations/models.py:15
+#: scaleos/organizations/models.py:17
 msgid "organization"
 msgstr ""
 
-#: scaleos/organizations/models.py:16
+#: scaleos/organizations/models.py:18
 msgid "organizations"
 msgstr ""
 
-#: scaleos/organizations/models.py:23
+#: scaleos/organizations/models.py:27
 msgid "enterprise"
 msgstr ""
 
-#: scaleos/organizations/models.py:24
+#: scaleos/organizations/models.py:28
 msgid "enterprises"
 msgstr ""
 
-#: scaleos/payments/models.py:33
+#: scaleos/payments/models.py:37
 msgid "free"
 msgstr ""
 
-#: scaleos/payments/models.py:71
+#: scaleos/payments/models.py:75
 msgid "save first"
 msgstr ""
 
-#: scaleos/payments/models.py:177
+#: scaleos/payments/models.py:198
 msgid "bulk price matrix item"
 msgstr ""
 
-#: scaleos/payments/models.py:178
+#: scaleos/payments/models.py:199
 msgid "bulk price matrix items"
 msgstr ""
 
-#: scaleos/reservations/models.py:18
+#: scaleos/reservations/models.py:16
 msgid "reservation"
 msgstr ""
 
-#: scaleos/reservations/models.py:19
+#: scaleos/reservations/models.py:17
 msgid "reservations"
 msgstr ""
 
-#: scaleos/shared/fields.py:6
+#: scaleos/shared/fields.py:9
 msgid "name"
 msgstr ""
 
@@ -254,7 +267,7 @@ msgstr "Nome do Usuário"
 msgid "email address"
 msgstr "Endereços de E-mail"
 
-#: scaleos/users/tests/test_views.py:72 scaleos/users/views.py:25
+#: scaleos/users/tests/test_views.py:72 scaleos/users/views.py:26
 msgid "Information successfully updated"
 msgstr "Informação atualizada com sucesso"
 
