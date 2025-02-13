@@ -4,6 +4,11 @@ from factory.django import DjangoModelFactory
 from scaleos.events import models as event_models
 
 
+class EventFactory(DjangoModelFactory[event_models.Event]):
+    class Meta:
+        model = event_models.Event
+
+
 class ConceptFactory(DjangoModelFactory[event_models.Concept]):
     class Meta:
         model = event_models.Concept

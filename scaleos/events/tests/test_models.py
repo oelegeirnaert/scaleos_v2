@@ -70,6 +70,20 @@ def test_brunch_has_free_capacity(faker):
 
 
 @pytest.mark.django_db
+def test_if_single_event_has_a_name(faker):
+    expected_name = "single event"
+    single_event = event_factories.SingleEventFactory.create(name=expected_name)
+    assert expected_name == str(single_event)
+
+    mkdate = datetime.datetime(year=2025, month=2, day=13, hour=11, minute=00)
+    concept = event_factories.ConceptFactory.create(name="Brunch")
+    single_event.concept_id = concept.pk
+    single_event.starting_at = mkdate
+    single_event.save()
+    assert str(single_event) == "Brunch 2025-02-13"
+
+
+@pytest.mark.django_db
 def test_wedding_concept_event_generation(faker):
     wedding_concept = event_factories.WeddingConceptFactory.create()
     assert wedding_concept.generate_events()

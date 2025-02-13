@@ -224,11 +224,12 @@ class SingleEvent(Event):
         verbose_name_plural = _("single events")
 
     def __str__(self):
+        if self.concept and self.concept.name and self.starting_at:
+            return f"{self.concept.name} {self.starting_at.date()}"
+
         if self.name:
             return f"{self.name}"
 
-        if self.concept and self.concept.name and self.starting_at:
-            return f"{self.concept.name} {self.starting_at.date()}"
         return super().__str__()
 
     @property
