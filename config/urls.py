@@ -10,6 +10,7 @@ from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView
 from drf_spectacular.views import SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
+from scaleos.users.views import custom_set_password
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
@@ -21,15 +22,37 @@ urlpatterns = [
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
-    path("users/", include("scaleos.users.urls", namespace="users")),
-    path("accounts/", include("allauth.urls")),
+    path("user/", include("scaleos.users.urls", namespace="users")),
+    path(
+        "account/email/password/set/",
+        custom_set_password,
+        name="custom_account_password_set",
+    ),
+    path("account/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
     # Oele
     path(
         "organization/",
         include("scaleos.organizations.urls", namespace="organizations"),
     ),
+    path(
+        "htmx/event/",
+        include("scaleos.events.urls_htmx", namespace="events_htmx"),
+    ),
+    path(
+        "event/",
+        include("scaleos.events.urls", namespace="events"),
+    ),
+    path(
+        "reservation/",
+        include("scaleos.reservations.urls", namespace="reservations"),
+    ),
+    path(
+        "htmx/reservation/",
+        include("scaleos.reservations.urls_htmx", namespace="reservations_htmx"),
+    ),
     # Media files
+    path("system/health/", include("health_check.urls")),
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]
 if settings.DEBUG:
