@@ -9,6 +9,7 @@ alias devshell='docker compose -f docker-compose-postgis.local.yml run --rm djan
 alias manage='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py'
 
 # Documentation
+alias docsbuild="docker compose -f docker-compose.docs.yml build"
 alias docsup="docker compose -f docker-compose.docs.yml up -d"
 alias docsopen="docsup && chromium-browser http://localhost:9000/"
 
