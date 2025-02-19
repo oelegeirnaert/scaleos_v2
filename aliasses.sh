@@ -11,7 +11,7 @@ alias manage='docker compose -f docker-compose-postgis.local.yml run --rm django
 # Documentation
 alias docsbuild="docker compose -f docker-compose.docs.yml build"
 alias docsup="docker compose -f docker-compose.docs.yml up -d"
-alias docsopen="docsup && chromium-browser http://localhost:9000/"
+alias docsopen="docsup && chromium-browser http://localhost:9000/ &"
 
 # Testing
 alias generate_test_report='docker compose -f docker-compose-postgis.local.yml run --rm django coverage html'
@@ -28,10 +28,10 @@ alias devtrans='manage makemessages -a'
 alias devtranscompile="manage compilemessages"
 
 # WebPages
-alias wpmail="chromium-browser http://localhost:8025"
-alias wpflower="chromium-browser http://localhost:5555"
-alias wpdjangoadmin="chromium-browser http://localhost:8000/admin"
-alias wpsite="chromium-browser http://localhost:8000"
+alias wpmail="chromium-browser http://localhost:8025 &"
+alias wpflower="chromium-browser http://localhost:5555 &"
+alias wpdjangoadmin="chromium-browser http://localhost:8000/admin &"
+alias wpsite="chromium-browser http://localhost:8000 &"
 
 # Tailwind
 alias tw='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py tailwind watch'
