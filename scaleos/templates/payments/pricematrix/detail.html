@@ -1,0 +1,11 @@
+{% load i18n %}
+
+<ul>
+  {% for pricematrixitem in pricematrix.prices.all %}
+    <li>
+      {{ price }}
+      {% if event_reservation %}<div class="flex flex-col gap-1"></div>{% endif %}
+    </li>
+    {% include "staff.html" with obj=price %}
+  {% endfor %}
+</ul>

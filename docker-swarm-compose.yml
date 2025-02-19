@@ -11,71 +11,127 @@
 
 
 volumes:
-  production_postgres_data: {}
-  production_postgres_data_backups: {}
   production_traefik: {}
   production_django_media: {}
-
   production_redis_data: {}
+  scaleos_production_postgis_data2:
+  scaleos_production_postgis_data_backups2:
 
 
 
 services:
-  django: &django
-    image: ghcr.io/oelegeirnaert/scaleos_production_django:latest
-    volumes:
-      - production_django_media:/app/scaleos/media
-    depends_on:
-      - postgres
-      - redis
-    env_file:
-      - .env
-    command: /start
 
-  postgres:
-    image: ghcr.io/oelegeirnaert/scaleos_production_postgres:latest
-    volumes:
-      - production_postgres_data:/var/lib/postgresql/data
-      - production_postgres_data_backups:/backups
-    env_file:
-      - .env
-
-  traefik:
-    image: ghcr.io/oelegeirnaert/scaleos_production_traefik:latest
-    depends_on:
-      - django
-    volumes:
-      - production_traefik:/etc/traefik/acme
+  postgis:
+    image: postgis/postgis:latest
+    restart: always
     ports:
-      - '0.0.0.0:80:80'
-      - '0.0.0.0:443:443'
-      - '0.0.0.0:5555:5555'
+      - "5432:5432"
+    env_file:
+      - .env
+    volumes:
+      - scaleos_production_postgis_data2:/var/lib/postgresql/data
+      - scaleos_production_postgis_data_backups2:/backups
+    healthcheck:
+      # It is not necessary to supply correct user name, password, or database name values to obtain the server status; however, if incorrect values are provided, the server will log a failed connection attempt.
+      # https://www.postgresql.org/docs/current/app-pg-isready.html
+      test: ["CMD-SHELL", "pg_isready -d scaleos -U debug"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: docker.io/redis:6
-
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
     volumes:
       - production_redis_data:/data
+    env_file:
+      - .env
+
+
+  django:
+    image: ghcr.io/oelegeirnaert/scaleos_production_django:latest
+    ports:
+      - "5000:5000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.django.rule=Host(`scaleos.net`, `waerboom.be`, `eenscherm.be`, `eenspringkasteel.be`)"
+      - "traefik.http.routers.django.entrypoints=websecure"
+      - "traefik.http.routers.django.tls.certresolver=myresolver"
+    volumes:
+      - production_django_media:/app/scaleos/media
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:5000"]
+      interval: 15s
+      timeout: 5s
+      retries: 2
+    command: sh -c "
+                  echo 'Collect static files and start gunicorn'
+                  && python /app/manage.py collectstatic --noinput
+                  && exec /usr/local/bin/gunicorn config.asgi --bind 0.0.0.0:5000 --chdir=/app -k uvicorn_worker.UvicornWorker
+                  && echo 'Go my bro!'
+                  "
+
+  traefik:
+    image: traefik:v2.10
+    restart: always
+
 
 
   celeryworker:
-    <<: *django
-    image: ghcr.io/oelegeirnaert/scaleos_production_celeryworker:latest
+    image: ghcr.io/oelegeirnaert/scaleos_production_django:latest
+    env_file:
+      - .env
+    links:
+      - redis
     command: /start-celeryworker
 
   celerybeat:
-    <<: *django
-    image: ghcr.io/oelegeirnaert/scaleos_production_celerybeat:latest
+    image: ghcr.io/oelegeirnaert/scaleos_production_django:latest
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - postgis
     command: /start-celerybeat
 
+
+  init_db:
+    image: ghcr.io/oelegeirnaert/scaleos_production_django:latest
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - postgis
+    command: sh -c "
+                  echo 'checkig for new migrations or translations'
+                  && python manage.py makemigrations
+                  && python manage.py migrate
+                  && python manage.py compilemessages
+                  && echo 'Done. Tired, going to sleep for 5 days...'
+                  && sleep 5d
+                  "
+
+
+
   flower:
-    <<: *django
-    image: ghcr.io/oelegeirnaert/scaleos_production_flower:latest
+    image: ghcr.io/oelegeirnaert/scaleos_production_django:latest
+    links:
+      - redis
+    env_file:
+      - .env
+    restart: always
     command: /start-flower
 
   nginx:
     image: ghcr.io/oelegeirnaert/scaleos_production_nginx:latest
-    depends_on:
-      - django
+    restart: always
+    env_file:
+      - .env
     volumes:
       - production_django_media:/usr/share/nginx/media:ro

@@ -1,9 +1,9 @@
 echo "
 ################################################################################################################################
-# AppCreation File: {{model_name}}
+# AppCreation File: {{ model_name }}
 #
 # Install Command:
-# curl {{ request.build_absolute_uri }} -o {{shell_file_name}}  && bash {{shell_file_name}}
+# curl {{ request.build_absolute_uri }} -o {{ shell_file_name }}  && bash {{ shell_file_name }}
 #
 #
 # Designed by OeleGeirnaert.be
@@ -11,20 +11,16 @@ echo "
 #
 ################################################################################################################################
 "
-
-docker compose -f docker-compose.local.yml run --rm django python manage.py startapp {{app_label}} &&
-sudo chown -R $USER {{app_label}}/ &&
-
-DIRECTORY="{{destination_directory}}"
+docker compose -f docker-compose.local.yml run --rm django python manage.py startapp {{ app_label }} &&
+sudo chown -R $USER {{ app_label }}/ &&
+DIRECTORY="{{ destination_directory }}"
 if [ -d "$DIRECTORY" ]; then
-  echo "$DIRECTORY does exist."
-  return
+echo "$DIRECTORY does exist."
+return
 fi
-
-mv {{app_label}} {{destination_directory}}
-
+mv {{ app_label }} {{ destination_directory }}
 echo "
 # NEXT STEPS:
-# {{app_label}}/apps.py # prefix name with scaleos like: name = 'scaleos.{{app_label}}'
+# {{ app_label }}/apps.py # prefix name with scaleos like: name = 'scaleos.{{ app_label }}'
 # settings/base.py # add app to LOCAL_APPS
 "

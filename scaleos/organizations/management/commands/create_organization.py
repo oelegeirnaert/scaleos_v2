@@ -44,11 +44,13 @@ class Command(BaseCommand):
         waerboom.slug = "waerboom"
         waerboom.save()
 
-        brunch_prices_matrix, created = (
+        brunch_age_prices_matrix, created = (
             payment_models.AgePriceMatrix.objects.get_or_create(
-                name="Gastronomisch buffet prijzen",
+                public_key="14a9b5ab-9560-4d9a-81cb-43892daaa66c",
             )
         )
+        brunch_age_prices_matrix.name = "Gastronomisch buffet prijzen"
+        brunch_age_prices_matrix.save()
 
         baby_price, created = payment_models.Price.objects.get_or_create(
             public_key="d28c6bdd-3013-46c8-9753-386745bf7c08",
@@ -59,7 +61,7 @@ class Command(BaseCommand):
             payment_models.AgePriceMatrixItem.objects.get_or_create(
                 from_age=0,
                 till_age=4,
-                age_price_matrix_id=brunch_prices_matrix.pk,
+                age_price_matrix_id=brunch_age_prices_matrix.pk,
                 price_id=baby_price.pk,
             )
         )
@@ -73,7 +75,7 @@ class Command(BaseCommand):
             payment_models.AgePriceMatrixItem.objects.get_or_create(
                 from_age=5,
                 till_age=12,
-                age_price_matrix_id=brunch_prices_matrix.pk,
+                age_price_matrix_id=brunch_age_prices_matrix.pk,
                 price_id=children_price.pk,
             )
         )
@@ -87,7 +89,7 @@ class Command(BaseCommand):
             payment_models.AgePriceMatrixItem.objects.get_or_create(
                 from_age=13,
                 till_age=16,
-                age_price_matrix_id=brunch_prices_matrix.pk,
+                age_price_matrix_id=brunch_age_prices_matrix.pk,
                 price_id=adolescent_price.pk,
             )
         )
@@ -100,7 +102,7 @@ class Command(BaseCommand):
         adult_price_item, created = (
             payment_models.AgePriceMatrixItem.objects.get_or_create(
                 from_age=17,
-                age_price_matrix_id=brunch_prices_matrix.pk,
+                age_price_matrix_id=brunch_age_prices_matrix.pk,
                 price_id=adult_price.pk,
             )
         )
@@ -111,7 +113,15 @@ class Command(BaseCommand):
         )
         brunch_concept.default_starting_time = datetime.time(12, 0)
         brunch_concept.default_ending_time = datetime.time(23, 0)
+        brunch_concept.card_description = """Het gastronomisch buffet is de uitgetekende gelegenheid om te genieten op gastronomisch niveau. Een diversiteit aan kwaliteitsvolle gerechten en mooi gepresenteerd. Dit is een unieke gelegenheid om in klein aantal ook een gastronomisch feest op hoog niveau te kunnen vieren."""  # noqa: E501
         brunch_concept.save()
+
+        brunch_prices_matrix, created = (
+            event_models.ConceptPriceMatrix.objects.get_or_create(
+                concept_id=brunch_concept.pk,
+                price_matrix_id=brunch_age_prices_matrix.pk,
+            )
+        )
 
         from_date = datetime.date(
             year=2025,
@@ -132,6 +142,8 @@ class Command(BaseCommand):
                 name="Dinner & Dance",
             )
         )
+        dinner_and_dance_concept.card_description = """Beleef een onvergetelijke avond vol smaak en sfeer bij Dance & Dine Events! Wij combineren heerlijk dineren met een sprankelende danservaring op exclusieve locaties. Geniet van culinaire hoogstandjes, live muziek en een dansvloer waar je de avond weg swingt. Perfect voor een romantisch uitje, een feest met vrienden of een speciale gelegenheid."""  # noqa: E501
+        dinner_and_dance_concept.save()
         reception, reception_created = (
             event_models.ReceptionEvent.objects.get_or_create(
                 concept_id=dinner_and_dance_concept.pk,

@@ -1,0 +1,44 @@
+{# generated via manage create_html_scripts #}
+{% load i18n %}
+
+<form hx-post="{% url 'reservations_htmx:event_reservation_total_price' event_reservation.public_key %}"
+      hx-target="#{{ event_reservation.html_id }}.total.price"
+      hx-trigger="load, every 2s">
+  <ul style="text-align: left;">
+    {% for reservationline in event_reservation.lines.all %}
+      <li>{% include reservationline.detail_template %}</li>
+    {% endfor %}
+  </ul>
+</form>
+<div style="text-align: left;">
+  <div class="mt-5 font-bold">
+    <span id="{{ event_reservation.html_id }}" class="total price">Loading total price</span>
+  </div>
+  <form class="mt-5"
+        hx-post="{% url 'reservations_htmx:finish_reservation' event_reservation.public_key %}">
+    <div>
+      <label for="UserEmail" class="block text-xs font-medium text-gray-700">
+        {% trans 'please, provide your email address for your confirmation mail'|capfirst %}.
+      </label>
+      <input type="email"
+             id="confirmation_email_address"
+             name="confirmation_email_address"
+             value="{{ request.user.email }}"
+             placeholder="{{ request.user.email|default:'your-email@address.com' }}"
+             class="mt-1 p-2 bg-neutral-50/50 w-full rounded-md border-gray-200 shadow-xs" />
+    </div>
+    <button type="submit"
+            class="mt-5 inline-flex w-full items-center gap-2 rounded-sm border border-gray-600 bg-gray-600 px-8 py-3 text-white hover:bg-transparent hover:text-lime-500 focus:ring-3 focus:outline-hidden">
+      <svg xmlns="http://www.w3.org/2000/svg"
+           fill="none"
+           viewBox="0 0 24 24"
+           stroke-width="1.5"
+           stroke="currentColor"
+           class="size-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+      </svg>
+      <span class="text-sm font-medium">{% trans 'request reservation'|upper %}</span>
+    </button>
+  </form>
+</div>
+{% include 'staff.html' with obj=event_reservation %}

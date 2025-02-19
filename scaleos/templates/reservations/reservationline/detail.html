@@ -1,0 +1,18 @@
+{# generated via manage create_html_scripts #}
+{% load i18n %}
+
+<form id="{{ reservationline.html_public_key }}" class="mt-2 text-left">
+  <input hx-post="{% url 'reservations_htmx:update_reservation_line' reservationline.public_key %}"
+         hx-target="#{{ reservationline.html_public_key }}"
+         hx-trigger="change"
+         value="{{ reservationline.amount }}"
+         id="amount"
+         name="amount"
+         type="number"
+         class="h-10 w-10 rounded-sm border-neutral-300 bg-neutral-50/50 text-right text-neutral-900"
+         min="0" />
+  <span class="font-bold">x</span>
+  {{ reservationline.price_matrix_item }}
+  <span class="font-bold">=</span>
+  {{ reservationline.total_price }}
+</form>

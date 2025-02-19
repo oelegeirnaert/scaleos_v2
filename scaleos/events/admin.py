@@ -54,6 +54,7 @@ class BrunchConceptAdmin(PolymorphicInlineSupportMixin, PolymorphicChildModelAdm
     base_model = event_models.BrunchConcept  # Explicitly set here!
     # define custom features here
     inlines = [ConceptPriceMatrixInlineAdmin, EventInlineAdmin]
+    readonly_fields = ["public_key"]
 
 
 @admin.register(event_models.DinnerAndDanceConcept)
@@ -79,17 +80,20 @@ class ConceptAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
 
 @admin.register(event_models.BrunchEvent)
 class BrunchEventAdmin(PolymorphicChildModelAdmin):
-    from scaleos.reservations.admin import BrunchReservationInlineAdmin
+    from scaleos.reservations.admin import EventReservationAdmin
 
     base_model = event_models.SingleEvent  # Explicitly set here!
     # define custom features here
-    inlines = [BrunchReservationInlineAdmin]
+
     readonly_fields = [
         "free_spots",
         "free_percentage",
         "reserved_spots",
         "reserved_percentage",
         "over_reserved_spots",
+        "slug",
+        "current_price_matrix",
+        "public_key",
     ]
 
 
@@ -115,7 +119,8 @@ class DanceEventAdmin(PolymorphicChildModelAdmin):
 class SingleEventAdmin(PolymorphicChildModelAdmin):
     base_model = event_models.Event  # Explicitly set here!
     # define custom features here
-    readonly_fields = ["free_spots", "free_percentage"]
+    readonly_fields = ["free_spots", "free_percentage", "slug"]
+    list_display = ["__str__", "slug"]
 
 
 @admin.register(event_models.Event)

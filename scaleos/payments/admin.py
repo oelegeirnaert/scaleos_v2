@@ -48,6 +48,7 @@ class AgePriceMatrixAdmin(PolymorphicChildModelAdmin):
     base_model = payment_models.AgePriceMatrix  # Explicitly set here!
     # define custom features here
     inlines = [AgePriceMatrixItemInlineAdmin]
+    readonly_fields = ["public_key"]
 
 
 @admin.register(payment_models.BulkPriceMatrix)
@@ -66,6 +67,7 @@ class PriceMatrixAdmin(PolymorphicParentModelAdmin):
         payment_models.BulkPriceMatrix,
     ]
     list_filter = [PolymorphicChildModelFilter]
+    readonly_fields = ["public_key"]
 
 
 @admin.register(payment_models.AgePriceMatrixItem)

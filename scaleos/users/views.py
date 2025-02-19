@@ -1,7 +1,12 @@
 #!/usr/bin/env python
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import QuerySet
+from django.shortcuts import redirect
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView
@@ -45,3 +50,31 @@ class UserRedirectView(LoginRequiredMixin, RedirectView):
 
 
 user_redirect_view = UserRedirectView.as_view()
+
+
+@login_required
+def custom_set_password(request):
+    """Allow users to set a new password without requiring the current password."""
+    if request.method == "POST":
+        form = SetPasswordForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your password has been set successfully!")
+            return redirect("/")  # Redirect to homepage or dashboard
+    else:
+        form = SetPasswordForm(user=request.user)
+
+    return render(request, "account/set_password.html", {"form": form})
+
+
+@login_required
+def reservations(request):
+    from scaleos.reservations.models import Reservation
+
+    user = request.user
+    reservations = Reservation.objects.filter(user_id=user.pk)
+    return render(
+        request,
+        user.page_template,
+        {"user": user, "reservations": reservations},
+    )

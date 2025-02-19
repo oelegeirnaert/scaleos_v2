@@ -19,6 +19,11 @@ class SingleEventFactory(DjangoModelFactory[event_models.SingleEvent]):
         model = event_models.SingleEvent
 
 
+class ConceptPriceMatrixFactory(DjangoModelFactory[event_models.ConceptPriceMatrix]):
+    class Meta:
+        model = event_models.ConceptPriceMatrix
+
+
 class BrunchConceptFactory(DjangoModelFactory[event_models.BrunchConcept]):
     class Meta:
         model = event_models.BrunchConcept

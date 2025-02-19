@@ -1,0 +1,132 @@
+{% block subject %} {{subject}} {% endblock %}
+
+{% block plain %}
+Hi {{ user.first_name|default:user.email }},
+
+Welcome to {{ site_name }}! Your email has been successfully verified, and you’re ready to get started.
+
+Click the link below to set your password and log in:
+https://yourwebsite.com/login
+
+Need help? Contact us at {{ support_email }}.
+
+Best,
+The {{ site_name }} Team
+{% endblock %}
+
+{% block html %}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+            margin: auto;
+            text-align: center;
+        }
+        .logo {
+            width: 150px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #222;
+            font-size: 24px;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 20px auto;
+            box-shadow: 0px 4px 6px rgba(0, 123, 255, 0.2);
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #777;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+        .social-icons img {
+            width: 30px;
+            margin: 10px 5px;
+        }
+        .unsubscribe {
+            font-size: 12px;
+            color: #555;
+            margin-top: 10px;
+        }
+        /* Dark Mode */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #222;
+                color: white;
+            }
+            .container {
+                background: #333;
+                color: white;
+                box-shadow: none;
+            }
+            h2, p, .footer, .unsubscribe {
+                color: white;
+            }
+            .button {
+                background-color: #0d6efd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Logo -->
+        <img src="https://yourwebsite.com/static/logo.png" alt="{{ site_name }} Logo" class="logo">
+
+        <h2>Welcome, {{ user.first_name|default:user.email }}! 🎉</h2>
+        <p>We're thrilled to have you at <strong>{{ site_name }}</strong>. Your email has been verified, and you’re all set!</p>
+        <p>Click below to set your password and log in:</p>
+
+        <!-- Call-to-Action Button -->
+        <p><a href="https://yourwebsite.com/login" class="button">Set Password & Log In</a></p>
+
+        <p>If you have any questions, contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+        <div class="footer">
+            <p>Best regards,</p>
+            <p><strong>The {{ site_name }} Team</strong></p>
+            <p>
+                <span class="social-icons">
+                    <a href="https://facebook.com/yourpage"><img src="https://img.icons8.com/color/48/facebook.png" alt="Facebook"></a>
+                    <a href="https://twitter.com/yourhandle"><img src="https://img.icons8.com/color/48/twitter.png" alt="Twitter"></a>
+                    <a href="https://instagram.com/yourprofile"><img src="https://img.icons8.com/color/48/instagram-new.png" alt="Instagram"></a>
+                </span>
+            </p>
+            <p class="unsubscribe">
+                <a href="https://yourwebsite.com/unsubscribe" style="color: #777;">Unsubscribe</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+{% endblock %}

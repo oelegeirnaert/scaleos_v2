@@ -1,0 +1,122 @@
+{% block subject %} Confirm Your Email for {{ site_name }} and {{reservation}} ✅ {% endblock %}
+
+{% block plain %}
+Hi {{ user.first_name|default:user.email }},
+
+Thank you for signing up at {{ site_name }}! To get started, please confirm your email address by clicking the link below:
+
+{{ confirmation_url }}
+
+If you did not request this, you can safely ignore this email.
+
+Best,
+The {{ site_name }} Team
+{% endblock %}
+
+{% block html %}
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+            margin: auto;
+            text-align: center;
+        }
+        .logo {
+            width: 150px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #222;
+            font-size: 24px;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 20px auto;
+            box-shadow: 0px 4px 6px rgba(40, 167, 69, 0.2);
+        }
+        .button:hover {
+            background-color: #218838;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #777;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+        .unsubscribe {
+            font-size: 12px;
+            color: #555;
+            margin-top: 10px;
+        }
+        /* Dark Mode */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #222;
+                color: white;
+            }
+            .container {
+                background: #333;
+                color: white;
+                box-shadow: none;
+            }
+            h2, p, .footer, .unsubscribe {
+                color: white;
+            }
+            .button {
+                background-color: #2ecc71;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Logo -->
+        <img src="https://yourwebsite.com/static/logo.png" alt="{{ site_name }} Logo" class="logo">
+
+        <h2>Confirm Your Email ✅</h2>
+        <p>Thank you for signing up at <strong>{{ site_name }}</strong>! To activate your account, please confirm your email by clicking the button below:</p>
+
+        <!-- Call-to-Action Button -->
+        <p><a href="{{ confirmation_url }}" class="button">Confirm Email</a></p>
+
+        <p>If the button doesn’t work, copy and paste this link into your browser:</p>
+        <p><a href="{{ confirmation_url }}">{{ confirmation_url }}</a></p>
+
+        <p>If you did not request this, you can ignore this email.</p>
+
+        <div class="footer">
+            <p>Best regards,</p>
+            <p><strong>The {{ site_name }} Team</strong></p>
+            <p class="unsubscribe">
+                <a href="https://yourwebsite.com/unsubscribe" style="color: #777;">Unsubscribe</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+{% endblock %}

@@ -110,7 +110,13 @@ class PriceHistory(LogInfoFields):
         ordering = ["-created_on"]
 
 
-class PriceMatrix(PolymorphicModel, LogInfoFields, AdminLinkMixin, NameField):
+class PriceMatrix(
+    PolymorphicModel,
+    LogInfoFields,
+    AdminLinkMixin,
+    NameField,
+    PublicKeyField,
+):
     pass
 
 
@@ -122,7 +128,11 @@ class BulkPriceMatrix(PriceMatrix):
     pass
 
 
-class AgePriceMatrixItem(AdminLinkMixin):
+class PriceMatrixItem(PolymorphicModel, AdminLinkMixin, PublicKeyField):
+    pass
+
+
+class AgePriceMatrixItem(PriceMatrixItem):
     age_price_matrix = models.ForeignKey(
         AgePriceMatrix,
         related_name="prices",
@@ -164,10 +174,16 @@ class AgePriceMatrixItem(AdminLinkMixin):
             and self.price
         ):
             return f"{self.age_price_matrix.name} ({self.from_age}-...): {self.price}"
+
+        if self.age_price_matrix and self.age_price_matrix.name and self.till_age:
+            return (
+                f"{self.age_price_matrix.name} (0-{self.till_age}): {_('free').title()}"
+            )
+
         return super().__str__()
 
 
-class BulkPriceMatrixItem(AdminLinkMixin, OrderableModel):
+class BulkPriceMatrixItem(PriceMatrixItem, OrderableModel):
     bulk_price_matrix = models.ForeignKey(
         BulkPriceMatrix,
         related_name="prices",

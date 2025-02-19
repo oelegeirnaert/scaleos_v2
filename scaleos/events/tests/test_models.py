@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.utils.translation import activate
 
@@ -24,7 +25,7 @@ def test_brunch_has_free_capacity(faker):
     activate("nl")
     brunch_event = event_factories.BrunchEventFactory.create()
 
-    assert brunch_event.free_spots == "ongelimiteerd"
+    assert brunch_event.free_spots == "∞"
 
     brunch_event.maximum_number_of_guests = 100
 
@@ -33,35 +34,35 @@ def test_brunch_has_free_capacity(faker):
     assert brunch_event.reserved_percentage == 0
     assert brunch_event.reserved_spots == 0
 
-    brunch_reservations = reservation_factories.BrunchReservationFactory.create_batch(
+    event_reservations = reservation_factories.EventReservationFactory.create_batch(
         4,
-        brunch_event_id=brunch_event.pk,
+        event_id=brunch_event.pk,
     )
-    brunch_reservations[0].amount = 30
-    brunch_reservations[0].save()
+    event_reservations[0].amount = 30
+    event_reservations[0].save()
     assert brunch_event.free_spots == 70
     assert brunch_event.free_percentage == 70
     assert brunch_event.reserved_percentage == 30
     assert brunch_event.reserved_spots == 30
 
-    brunch_reservations[1].amount = 10
-    brunch_reservations[1].save()
+    event_reservations[1].amount = 10
+    event_reservations[1].save()
     assert brunch_event.free_spots == 60
     assert brunch_event.free_percentage == 60
     assert brunch_event.reserved_percentage == 40
     assert brunch_event.reserved_spots == 40
     assert brunch_event.over_reserved_spots == 0
 
-    brunch_reservations[2].amount = 60
-    brunch_reservations[2].save()
+    event_reservations[2].amount = 60
+    event_reservations[2].save()
     assert brunch_event.free_spots == 0
     assert brunch_event.free_percentage == 0
     assert brunch_event.reserved_percentage == 100
     assert brunch_event.reserved_spots == 100
     assert brunch_event.over_reserved_spots == 0
 
-    brunch_reservations[3].amount = 10
-    brunch_reservations[3].save()
+    event_reservations[3].amount = 10
+    event_reservations[3].save()
     assert brunch_event.free_spots == 0
     assert brunch_event.free_percentage == 0
     assert brunch_event.reserved_percentage == 100
@@ -168,3 +169,76 @@ def test_status_of_single_event(faker):
     single_event.ending_on = tomorrow
     status = single_event.get_status(its_now=the_now)
     assert status == event_models.SingleEvent.STATUS.ONGOING
+
+
+@pytest.mark.django_db
+def test_event_has_a_current_price_matrix(faker):
+    from scaleos.payments.tests import model_factories as payment_factories
+
+    today = timezone.make_aware(
+        datetime.datetime(
+            year=2025,
+            month=3,
+            day=6,
+            hour=11,
+            minute=00,
+            second=00,
+        ),
+        timezone.get_default_timezone(),
+    )
+    two_years_ago = today - relativedelta(years=2)
+    last_year = today - relativedelta(years=1)
+    next_year = today + relativedelta(years=1)
+    in_two_years = today + relativedelta(years=2)
+    concept = event_factories.ConceptFactory()
+    price_matrixes = payment_factories.PriceMatrixFactory.create_batch(6)
+    event = event_factories.EventFactory(concept_id=concept.pk)
+
+    assert hasattr(event, "current_price_matrix")
+    assert event.current_price_matrix is None
+
+    always_valid_price_matrix = event_factories.ConceptPriceMatrixFactory.create(
+        concept_id=concept.pk,
+        price_matrix_id=price_matrixes[0].pk,
+    )
+    assert hasattr(event, "current_price_matrix")
+    assert event.current_price_matrix.id == always_valid_price_matrix.price_matrix.pk
+
+    event_factories.ConceptPriceMatrixFactory.create(
+        concept_id=concept.pk,
+        price_matrix_id=price_matrixes[1].pk,
+    )
+
+    assert event.current_price_matrix is None, (
+        "because we do not know which one to choose"
+    )
+
+    as_from_last_year_price_matrix = event_factories.ConceptPriceMatrixFactory.create(
+        concept_id=concept.pk,
+        valid_from=two_years_ago,
+        price_matrix_id=price_matrixes[2].pk,
+    )
+    assert hasattr(event, "current_price_matrix")
+    assert (
+        event.current_price_matrix.id == as_from_last_year_price_matrix.price_matrix.pk
+    )
+
+    event_factories.ConceptPriceMatrixFactory.create(
+        concept_id=concept.pk,
+        valid_from=two_years_ago,
+        valid_till=last_year,
+        price_matrix_id=price_matrixes[3].pk,
+    )
+    current_concept_price_matrix = event_factories.ConceptPriceMatrixFactory.create(
+        concept_id=concept.pk,
+        valid_from=last_year,
+        valid_till=next_year,
+        price_matrix_id=price_matrixes[4].pk,
+    )
+    event_factories.ConceptPriceMatrixFactory.create(
+        concept_id=concept.pk,
+        valid_from=next_year,
+        valid_till=in_two_years,
+        price_matrix_id=price_matrixes[5].pk,
+    )
+    assert event.current_price_matrix.id == current_concept_price_matrix.price_matrix.pk

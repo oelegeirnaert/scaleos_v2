@@ -26,7 +26,7 @@ DEBUG = env.bool("DJANGO_DEBUG", False)
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # though not all of them may be available with every OS.
 # In Windows, this must be set to your system time zone.
-TIME_ZONE = "Europe/Brussels"
+TIME_ZONE = "UTC"
 # https://docs.djangoproject.com/en/dev/ref/settings/#language-code
 LANGUAGE_CODE = "en-us"
 # https://docs.djangoproject.com/en/dev/ref/settings/#languages
@@ -96,9 +96,20 @@ THIRD_PARTY_APPS = [
     "phonenumber_field",
     "djmoney",
     "leaflet",
+    "health_check",  # required for swarm
+    "health_check.db",  # stock Django health checkers
+    "health_check.cache",
+    "health_check.storage",
+    "health_check.contrib.migrations",
+    "health_check.contrib.celery",  # requires celery
+    "health_check.contrib.celery_ping",
+    "django_tailwind_cli",
+    "django_htmx",
+    # "templated_email",
 ]
 
 LOCAL_APPS = [
+    "scaleos.core",
     "scaleos.users",
     "scaleos.organizations",
     "scaleos.events",
@@ -164,6 +175,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
 ]
 
 # STATIC
@@ -383,3 +395,12 @@ LEAFLET_CONFIG = {
     "MIN_ZOOM": 3,
     "SCALE": "both",
 }
+
+
+TEMPLATED_EMAIL_BACKEND = "templated_email.backends.vanilla_django"
+TEMPLATED_EMAIL_TEMPLATE_DIR = "email_templates/"  # Path inside the templates folder
+TEMPLATED_EMAIL_FILE_EXTENSION = "email"
+ACCOUNT_EMAIL_CONFIRMATION_EMAIL = "scaleos.core.tasks.send_custom_templated_email"
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+ACCOUNT_EMAIL_CONFIRMATION_HMAC = True

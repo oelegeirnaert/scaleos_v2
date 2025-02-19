@@ -6,7 +6,8 @@
                       {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
                       {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
                       {% if attrs.type %}type="{{ attrs.type }}"{% endif %}
-                      class="btn
+                      class="inline-block rounded-sm border border-lime-600 bg-lime-600 px-12 py-3 text-sm font-medium text-white hover:bg-transparent hover:text-gray-600 focus:ring-3 focus:outline-hidden
+                      btn
 {% if 'success' in attrs.tags %}btn-success
 {% elif 'warning' in attrs.tags %}btn-warning
 {% elif 'secondary' in attrs.tags %}btn-secondary

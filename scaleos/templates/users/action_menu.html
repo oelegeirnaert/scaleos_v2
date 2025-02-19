@@ -1,0 +1,54 @@
+{% load i18n %}
+
+<div class="hidden md:relative md:block" x-data="{ showDropdown: false }">
+  <button @click="showDropdown = !showDropdown"
+          type="button"
+          class="overflow-hidden rounded-full border border-gray-300 shadow-inner">
+    <span class="sr-only">Toggle dashboard menu</span>
+    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+         alt=""
+         class="size-10 object-cover" />
+  </button>
+  <div x-cloak
+       x-show="showDropdown"
+       class="absolute end-0 z-10 mt-0.5 w-56 divide-y divide-gray-100 rounded-md border border-gray-100 bg-white shadow-lg"
+       role="menu">
+    <div class="p-2">
+      {% if request.user.is_authenticated %}
+        <a class="block rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+           role="menuitem"
+           href="{% url 'users:detail' request.user.pk %}">{% translate "My Profile" %}</a>
+      {% else %}
+        {# URL provided by django-allauth/account/urls.py #}
+        <a id="log-in-link"
+           class="block rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+           role="menuitem"
+           href="{% url 'account_login' %}">{% translate "sign in"|title %}</a>
+        {% if ACCOUNT_ALLOW_REGISTRATION %}
+          {# URL provided by django-allauth/account/urls.py #}
+          <a id="sign-up-link"
+             class="block rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+             role="menuitem"
+             href="{% url 'account_signup' %}">{% translate "register"|capfirst %}</a>
+        {% endif %}
+      {% endif %}
+    </div>
+    {% if request.user.is_authenticated %}
+      <div class="p-2">
+        <a class="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+           role="menuitem"
+           href="{% url 'account_logout' %}">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               fill="none"
+               viewBox="0 0 24 24"
+               stroke-width="1.5"
+               stroke="currentColor"
+               class="size-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+          </svg>
+          {% translate "Logout" %}
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>

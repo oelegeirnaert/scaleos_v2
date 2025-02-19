@@ -2,23 +2,23 @@ import logging
 
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
-from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import never_cache
 
 from scaleos.organizations import models as organization_models
 
 logger = logging.getLogger(__name__)
 
 
-@cache_page(60 * 15)  # in seconds: 15 min cached
+@never_cache
 def concepts(request, organization_slug):
+    context = {}
     organization = get_object_or_404(
         organization_models.Organization,
         slug=organization_slug,
     )
+    context["organization"] = organization
     return render(
         request,
         organization.page_template,
-        {
-            "organization": organization,
-        },
+        context,
     )

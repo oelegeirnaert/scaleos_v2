@@ -1,0 +1,11 @@
+{# generated via manage create_html_scripts #}
+{% extends 'page.html' %}
+
+{% load i18n %}
+
+{% block content %}
+  hi {{ user }}
+  {% if reservations %}
+    {% include "card_list.html" with cards=reservations.all %}
+  {% endif %}
+{% endblock content %}

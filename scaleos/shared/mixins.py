@@ -1,10 +1,14 @@
 import datetime
+import logging
+from uuid import uuid4
 
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
+
+logger = logging.getLogger(__name__)
 
 ITS_NOW = timezone.make_aware(datetime.datetime.now(), timezone.get_default_timezone())  # noqa: DTZ005
 
@@ -33,17 +37,22 @@ class AdminLinkMixin(models.Model):
         )
         return mark_safe(  # noqa: S308
             f"""
-            <a class="btn btn-secondary btn-sm"
+            <a class="mt-2 inline-block rounded-sm border border-gray-600
+            bg-gray-600 px-12 py-3 text-sm font-medium text-white
+            hover:bg-transparent hover:text-gray-600
+            focus:ring-3 focus:outline-hidden"
             href="{url}"
             target="_blank">
-            Edit {self.model_name}
+            Edit {self.verbose_name}
             </a>
             """,
         )
 
     @cached_property
-    def card_template(self):
-        return f"{self.app_label}/{self.model_name}/card.html"
+    def card_list_template(self):
+        msg = "Use: include 'card_list.html' "
+        raise Exception(msg)  # noqa: TRY002
+        return f"{self.app_label}/{self.model_name}/card_list.html"
 
     @cached_property
     def action_menu(self):
@@ -52,6 +61,41 @@ class AdminLinkMixin(models.Model):
     @cached_property
     def page_template(self):
         return f"{self.app_label}/{self.model_name}/page.html"
+
+    @cached_property
+    def page_button(self):
+        try:
+            url = reverse(
+                f"{self.app_label}:{self.model_name}",
+                args=[self.public_key],
+            )
+            return mark_safe(  # noqa: S308
+                f"""
+                <a class="mt-2 inline-block rounded-sm border
+                border-gray-600 bg-gray-600 px-12 py-3
+                text-sm font-medium text-white
+                hover:bg-transparent hover:text-gray-600
+                focus:ring-3 focus:outline-hidden"
+                href="{url}"
+                target="_blank">
+                open {self.verbose_name}
+                </a>
+                """,
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.info(e)
+
+    @cached_property
+    def title_template(self):
+        return f"{self.app_label}/{self.model_name}/title.html"
+
+    @cached_property
+    def detail_template(self):
+        return f"{self.app_label}/{self.model_name}/detail.html"
+
+    @cached_property
+    def html_id(self):
+        return f"htmlID{str(uuid4()).replace('-', '')}"
 
     @classmethod
     def list_template(cls):

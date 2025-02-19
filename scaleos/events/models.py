@@ -7,8 +7,10 @@ from django.utils.translation import gettext_lazy as _
 from polymorphic.models import PolymorphicModel
 
 from scaleos.shared.fields import NameField
+from scaleos.shared.fields import PublicKeyField
 from scaleos.shared.mixins import ITS_NOW
 from scaleos.shared.mixins import AdminLinkMixin
+from scaleos.shared.models import CardModel
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +19,7 @@ logger = logging.getLogger(__name__)
 MAX_PERCENTAGE = 100
 
 
-class Concept(PolymorphicModel, NameField, AdminLinkMixin):
+class Concept(PolymorphicModel, NameField, AdminLinkMixin, CardModel, PublicKeyField):
     organizer = models.ForeignKey(
         "organizations.Organization",
         related_name="concepts",
@@ -30,13 +32,51 @@ class Concept(PolymorphicModel, NameField, AdminLinkMixin):
         verbose_name = _("concept")
         verbose_name_plural = _("concepts")
 
+    @property
+    def current_price_matrix(self):
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Trying to get the current price matrix for concept %s", self.id)
+        if self.price_matrixes.count() == 0:
+            logger.info("We cannot find a current price matrix for concept %s", self.id)
+            return None
+
+        logger.debug("Checking for date-based price matrixes...")
+        results = self.price_matrixes.filter(
+            valid_from__lte=ITS_NOW,
+            valid_till__gte=ITS_NOW,
+        )
+        count_results = results.count()
+        if count_results == 1:
+            logger.debug("One price matrix found on valid from and till")
+            return results.first().price_matrix
+
+        results = self.price_matrixes.filter(valid_from__lte=ITS_NOW)
+        count_results = results.count()
+        if count_results == 1:
+            logger.debug("One price matrix found ONLY on valid from property")
+            return results.first().price_matrix
+
+        results = self.price_matrixes.filter()
+        count_results = results.count()
+        if count_results == 1:
+            logger.debug("One price matrix found without any date based properties")
+            return results.first().price_matrix
+
+        msg = (
+            "We don't know which price matrix is currently valid for concept id %s",
+            self.id,
+        )
+        logger.warning(msg)
+        return None
+
 
 class ConceptPriceMatrix(AdminLinkMixin):
     concept = models.ForeignKey(
         Concept,
         on_delete=models.CASCADE,
+        related_name="price_matrixes",
         null=False,
-        blank=True,
+        blank=False,
     )
     price_matrix = models.OneToOneField(
         "payments.PriceMatrix",
@@ -136,7 +176,7 @@ class DinnerAndDanceConcept(Concept):
         return True
 
 
-class Event(PolymorphicModel, NameField, AdminLinkMixin):
+class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField):
     concept = models.ForeignKey(
         Concept,
         related_name="events",
@@ -155,7 +195,7 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin):
     @property
     def free_spots(self):
         if self.maximum_number_of_guests is None:
-            return _("unlimited")
+            return _("∞")
 
         if hasattr(self, "reserved_spots") and self.reserved_spots is not None:
             the_result = self.maximum_number_of_guests - self.reserved_spots
@@ -192,6 +232,10 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin):
             return (self.maximum_number_of_guests - self.reserved_spots) * -1
 
         return 0
+
+    @property
+    def current_price_matrix(self):
+        return self.concept.current_price_matrix
 
 
 class SingleEvent(Event):
@@ -308,11 +352,11 @@ class BrunchEvent(SingleEvent):
     def reserved_spots(self):
         from django.core.exceptions import FieldError
 
-        from scaleos.reservations.models import BrunchReservation
+        from scaleos.reservations.models import EventReservation
 
         try:
-            the_result = BrunchReservation.objects.filter(
-                brunch_event_id=self.pk,
+            the_result = EventReservation.objects.filter(
+                event_id=self.pk,
             ).aggregate(total=Sum("amount"))["total"]
             if the_result is not None:
                 return the_result

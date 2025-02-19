@@ -7,10 +7,12 @@ from django.db.models import EmailField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from scaleos.shared.mixins import AdminLinkMixin
+
 from .managers import UserManager
 
 
-class User(AbstractUser):
+class User(AbstractUser, AdminLinkMixin):
     """
     Default custom user model for ScaleOS.
     If adding fields that need to be filled at user signup,
