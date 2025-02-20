@@ -13,7 +13,7 @@ Welcome to ScaleOS's documentation!
    howto
    users
    production_stack
-   front_end
+   usefull_links
    test_mail
 
 
