@@ -21,53 +21,72 @@ def test_brunchconcept_can_generate_events(faker):
 
 
 @pytest.mark.django_db
-def test_brunch_has_free_capacity(faker):
+def test_event_has_free_capacity(faker):
     activate("nl")
-    brunch_event = event_factories.BrunchEventFactory.create()
+    event = event_factories.EventFactory.create()
 
-    assert brunch_event.free_spots == "∞"
+    assert event.free_spots == "∞"
 
-    brunch_event.maximum_number_of_guests = 100
+    event.maximum_number_of_guests = 100
 
-    assert brunch_event.free_spots == 100
-    assert brunch_event.free_percentage == 100
-    assert brunch_event.reserved_percentage == 0
-    assert brunch_event.reserved_spots == 0
+    assert event.free_spots == 100
+    assert event.free_percentage == 100
+    assert event.reserved_percentage == 0
+    assert event.reserved_spots == 0
 
-    event_reservations = reservation_factories.EventReservationFactory.create_batch(
-        4,
-        event_id=brunch_event.pk,
+    event_reservation1_reservation_lines = (
+        reservation_factories.ReservationLineFactory.create(
+            amount=30,
+        )
     )
-    event_reservations[0].amount = 30
-    event_reservations[0].save()
-    assert brunch_event.free_spots == 70
-    assert brunch_event.free_percentage == 70
-    assert brunch_event.reserved_percentage == 30
-    assert brunch_event.reserved_spots == 30
+    event_reservation1 = reservation_factories.EventReservationFactory.create(
+        event_id=event.pk,
+    )
+    event_reservation1.lines.set(event_reservation1_reservation_lines)
+    assert event.reservations.count() == 1
+    assert event.free_spots == 70
+    assert event.free_percentage == 70
+    assert event.reserved_percentage == 30
+    assert event.reserved_spots == 30
 
-    event_reservations[1].amount = 10
-    event_reservations[1].save()
-    assert brunch_event.free_spots == 60
-    assert brunch_event.free_percentage == 60
-    assert brunch_event.reserved_percentage == 40
-    assert brunch_event.reserved_spots == 40
-    assert brunch_event.over_reserved_spots == 0
+    event_reservation2_reservation_lines = (
+        reservation_factories.ReservationLineFactory.create_batch(2, amount=5)
+    )
+    event_reservation2 = reservation_factories.EventReservationFactory.create(
+        event_id=event.pk,
+    )
+    event_reservation2.lines.set(event_reservation2_reservation_lines)
+    assert event.free_spots == 60
+    assert event.free_percentage == 60
+    assert event.reserved_percentage == 40
+    assert event.reserved_spots == 40
+    assert event.over_reserved_spots == 0
 
-    event_reservations[2].amount = 60
-    event_reservations[2].save()
-    assert brunch_event.free_spots == 0
-    assert brunch_event.free_percentage == 0
-    assert brunch_event.reserved_percentage == 100
-    assert brunch_event.reserved_spots == 100
-    assert brunch_event.over_reserved_spots == 0
+    event_reservation3_reservation_lines = (
+        reservation_factories.ReservationLineFactory.create_batch(6, amount=10)
+    )
+    event_reservation3 = reservation_factories.EventReservationFactory.create(
+        event_id=event.pk,
+    )
+    event_reservation3.lines.set(event_reservation3_reservation_lines)
+    assert event.free_spots == 0
+    assert event.free_percentage == 0
+    assert event.reserved_percentage == 100
+    assert event.reserved_spots == 100
+    assert event.over_reserved_spots == 0
 
-    event_reservations[3].amount = 10
-    event_reservations[3].save()
-    assert brunch_event.free_spots == 0
-    assert brunch_event.free_percentage == 0
-    assert brunch_event.reserved_percentage == 100
-    assert brunch_event.reserved_spots == 110
-    assert brunch_event.over_reserved_spots == 10
+    event_reservation4_reservation_lines = (
+        reservation_factories.ReservationLineFactory.create_batch(5, amount=2)
+    )
+    event_reservation4 = reservation_factories.EventReservationFactory.create(
+        event_id=event.pk,
+    )
+    event_reservation4.lines.set(event_reservation4_reservation_lines)
+    assert event.free_spots == 0
+    assert event.free_percentage == 0
+    assert event.reserved_percentage == 100
+    assert event.reserved_spots == 110
+    assert event.over_reserved_spots == 10
 
 
 @pytest.mark.django_db

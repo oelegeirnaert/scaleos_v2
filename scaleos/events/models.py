@@ -197,13 +197,37 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField):
         if self.maximum_number_of_guests is None:
             return _("∞")
 
+        logger.debug(
+            "Max guests of event (%s): %s",
+            self.id,
+            self.maximum_number_of_guests,
+        )
+
         if hasattr(self, "reserved_spots") and self.reserved_spots is not None:
             the_result = self.maximum_number_of_guests - self.reserved_spots
             if the_result <= 0:
                 return 0
             return the_result
 
+        logger.info("""We dont know how much reserved spots,
+                     so we don't know how to calculated the free spots""")
+
         return self.maximum_number_of_guests
+
+    @property
+    def reserved_spots(self):
+        from scaleos.reservations.models import ReservationLine
+
+        reservation_ids = self.reservations.values_list("id", flat=True)
+        logger.debug("Reservation ids: %s", reservation_ids)
+
+        the_result = ReservationLine.objects.filter(
+            reservation_id__in=reservation_ids,
+        ).aggregate(total=Sum("amount"))["total"]
+        if the_result is not None:
+            return the_result
+
+        return 0
 
     @property
     def free_percentage(self):
@@ -347,23 +371,6 @@ class BrunchEvent(SingleEvent):
     class Meta:
         verbose_name = _("brunch event")
         verbose_name_plural = _("brunch events")
-
-    @property
-    def reserved_spots(self):
-        from django.core.exceptions import FieldError
-
-        from scaleos.reservations.models import EventReservation
-
-        try:
-            the_result = EventReservation.objects.filter(
-                event_id=self.pk,
-            ).aggregate(total=Sum("amount"))["total"]
-            if the_result is not None:
-                return the_result
-        except FieldError:
-            logger.warning("we cannot calculate the used spots")
-
-        return 0
 
 
 class BrunchEventPrice(AdminLinkMixin):

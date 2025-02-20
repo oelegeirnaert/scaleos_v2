@@ -8,8 +8,10 @@ from moneyed import EUR
 from moneyed import Money
 from polymorphic.models import PolymorphicModel
 
+from scaleos.reservations.tasks import send_reservation_confirmation
 from scaleos.shared.fields import LogInfoFields
 from scaleos.shared.fields import PublicKeyField
+from scaleos.shared.mixins import ITS_NOW
 from scaleos.shared.mixins import AdminLinkMixin
 from scaleos.shared.models import CardModel
 
@@ -104,6 +106,11 @@ class Reservation(
             return _("needs verification")
 
         return _("unknown")
+
+    def confirm(self):
+        self.confirmed_on = ITS_NOW
+        send_reservation_confirmation.delay(self.id)
+        raise NotImplementedError
 
 
 class EventReservation(Reservation):

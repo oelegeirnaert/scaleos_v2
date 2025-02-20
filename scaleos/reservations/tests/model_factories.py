@@ -1,3 +1,4 @@
+from factory import SubFactory
 from factory.django import DjangoModelFactory
 
 from scaleos.reservations import models as reservation_models
@@ -17,8 +18,17 @@ class BrunchReservationFactory(
         model = reservation_models.EventReservation
 
 
+class ReservationFactory(
+    DjangoModelFactory[reservation_models.Reservation],
+):
+    class Meta:
+        model = reservation_models.Reservation
+
+
 class ReservationLineFactory(
     DjangoModelFactory[reservation_models.ReservationLine],
 ):
+    reservation = SubFactory(ReservationFactory)
+
     class Meta:
         model = reservation_models.ReservationLine
