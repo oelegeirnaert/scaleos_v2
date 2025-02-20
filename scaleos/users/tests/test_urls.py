@@ -5,15 +5,15 @@ from scaleos.users.models import User
 
 
 def test_detail(user: User):
-    assert reverse("users:detail", kwargs={"pk": user.pk}) == f"/users/{user.pk}/"
-    assert resolve(f"/users/{user.pk}/").view_name == "users:detail"
+    assert reverse("users:detail", kwargs={"pk": user.pk}) == f"/user/{user.pk}/"
+    assert resolve(f"/user/{user.pk}/").view_name == "users:detail"
 
 
 def test_update():
-    assert reverse("users:update") == "/users/~update/"
-    assert resolve("/users/~update/").view_name == "users:update"
+    assert reverse("users:update") == "/user/~update/"
+    assert resolve("/user/~update/").view_name == "users:update"
 
 
 def test_redirect():
-    assert reverse("users:redirect") == "/users/~redirect/"
-    assert resolve("/users/~redirect/").view_name == "users:redirect"
+    assert reverse("users:redirect") == "/user/~redirect/"
+    assert resolve("/user/~redirect/").view_name == "users:redirect"

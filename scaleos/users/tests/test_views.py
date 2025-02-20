@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from uuid import uuid4
 
 import pytest
 from django.conf import settings
@@ -40,7 +41,7 @@ class TestUserUpdateView:
         request.user = user
 
         view.request = request
-        assert view.get_success_url() == f"/users/{user.pk}/"
+        assert view.get_success_url() == f"/user/{user.pk}/"
 
     def test_get_object(self, user: User, rf: RequestFactory):
         view = UserUpdateView()
@@ -79,7 +80,7 @@ class TestUserRedirectView:
         request.user = user
 
         view.request = request
-        assert view.get_redirect_url() == f"/users/{user.pk}/"
+        assert view.get_redirect_url() == f"/user/{user.pk}/"
 
 
 class TestUserDetailView:
@@ -99,3 +100,18 @@ class TestUserDetailView:
         assert isinstance(response, HttpResponseRedirect)
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == f"{login_url}?next=/fake-url/"
+
+
+@pytest.mark.django_db
+def test_user_can_see_his_reservations(admin_client):
+    # inspired by: https://djangostars.com/blog/django-pytest-testing/
+    from scaleos.reservations.tests.model_factories import ReservationFactory
+
+    public_key = uuid4()
+    ReservationFactory(public_key=public_key)
+
+    url = reverse(
+        "users:reservations",
+    )
+    response = admin_client.get(url)
+    assert response.status_code == 200
