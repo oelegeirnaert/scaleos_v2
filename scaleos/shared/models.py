@@ -3,20 +3,19 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 
-def model_directory_path(instance, filename):
-    # file will be uploaded to MEDIA_ROOT / images / ...
-    return f"images/{instance.model_name}/{filename}"
-
-
 class CardModel(models.Model):
-    card_image = models.ImageField(
+    def model_directory_path(self, filename):
+        # file will be uploaded to MEDIA_ROOT / images / ...
+        return f"images/{self.model_name}/{filename}"
+
+    card_image = models.ImageField(  # noqa: DJ012
         _("card image"),
         upload_to=model_directory_path,
         null=True,
     )
     card_description = models.TextField(_("card description"), default="")
 
-    class Meta:
+    class Meta:  # noqa: DJ012
         abstract = True
 
     @cached_property
