@@ -35,8 +35,9 @@ def test_event_has_free_capacity(faker):
     assert event.reserved_spots == 0
 
     event_reservation1_reservation_lines = (
-        reservation_factories.ReservationLineFactory.create(
-            amount=30,
+        reservation_factories.ReservationLineFactory.create_batch(
+            2,
+            amount=15,
         )
     )
     event_reservation1 = reservation_factories.EventReservationFactory.create(
