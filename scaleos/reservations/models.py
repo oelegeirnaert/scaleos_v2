@@ -158,6 +158,17 @@ class ReservationLine(AdminLinkMixin, PublicKeyField):
 
     @property
     def maximum_amount(self):
+        if hasattr(self.reservation, "event") and hasattr(
+            self.reservation.event,
+            "free_spots",
+        ):
+            free_spots = self.reservation.event.free_spots
+            if free_spots == "∞":
+                return None
+            if self.price_matrix_item and self.price_matrix_item.maximum_persons:
+                if self.price_matrix_item.maximum_persons > free_spots:
+                    return free_spots
+
         if self.price_matrix_item and self.price_matrix_item.maximum_persons:
             return self.price_matrix_item.maximum_persons
         return 10

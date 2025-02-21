@@ -146,6 +146,60 @@ def test_brunch_reservationline_for_waerboom_has_min_max_persons(faker):
     assert maximum == reservation_line.maximum_amount
 
 
+@pytest.mark.django_db
+def test_brunch_reservationline_for_waerboom_cannot_exceed_total_availble_places(faker):
+    from scaleos.payments.tests.model_factories import AgePriceMatrixItemFactory
+
+    max_spots = 100
+    line_max = 5
+    brunch = event_factories.BrunchEventFactory.create(
+        maximum_number_of_guests=max_spots,
+    )
+    assert max_spots == brunch.free_spots
+    age_price_matrix_item = AgePriceMatrixItemFactory.create(
+        maximum_persons=line_max,
+    )
+    event_reservation = reservation_factories.EventReservationFactory(
+        event_id=brunch.pk,
+    )
+    reservation_line = reservation_factories.ReservationLineFactory.create(
+        price_matrix_item_id=age_price_matrix_item.pk,
+        reservation_id=event_reservation.pk,
+    )
+    assert line_max == reservation_line.maximum_amount
+
+    max_spots = 3
+    small_brunch = event_factories.BrunchEventFactory.create(
+        maximum_number_of_guests=max_spots,
+    )
+    very_large_event_reservation = reservation_factories.EventReservationFactory(
+        event_id=small_brunch.pk,
+    )
+    reservation_line = reservation_factories.ReservationLineFactory.create(
+        price_matrix_item_id=age_price_matrix_item.pk,
+        reservation_id=very_large_event_reservation.pk,
+    )
+    assert max_spots == small_brunch.free_spots
+    assert max_spots == reservation_line.maximum_amount, (
+        f"because we only have {brunch.free_spots} free spots in the event"
+    )
+
+    brunch_unlimited_seats = event_factories.BrunchEventFactory.create(
+        maximum_number_of_guests=None,
+    )
+    unlimited_event_reservation = reservation_factories.EventReservationFactory(
+        event_id=brunch_unlimited_seats.pk,
+    )
+    reservation_line = reservation_factories.ReservationLineFactory.create(
+        price_matrix_item_id=age_price_matrix_item.pk,
+        reservation_id=unlimited_event_reservation.pk,
+    )
+    assert brunch_unlimited_seats.free_spots == "∞"
+    assert reservation_line.maximum_amount is None, (
+        "because we only have unlimited free spots in the event"
+    )
+
+
 # @pytest.mark.django_db
 # def test_event_can_have_other_pricematrix_than_concept(faker):
 #    assert False, "implement me"
