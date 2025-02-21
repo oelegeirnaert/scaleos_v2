@@ -21,6 +21,7 @@ alias testreport='devtest && generate_test_report && open_test_report'
 
 # Data
 alias mkwaerboom='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py create_organization waerboom'
+alias mkscaleos='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py create_organization scaleos'
 alias mkpersons='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py create_persons'
 
 #i18n

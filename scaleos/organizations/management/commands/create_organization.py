@@ -29,7 +29,7 @@ class Command(BaseCommand):
         if result is None:
             self.stdout.write(self.style.ERROR("invalid organization"))
 
-    def create_organisation_brunch(self, organisation):
+    def create_organization_brunch(self, organization):
         brunch_age_prices_matrix, created = (
             payment_models.AgePriceMatrix.objects.get_or_create(
                 public_key="14a9b5ab-9560-4d9a-81cb-43892daaa66c",
@@ -102,7 +102,7 @@ class Command(BaseCommand):
         adult_price_item.save()
 
         brunch_concept, created = event_models.BrunchConcept.objects.get_or_create(
-            organizer_id=organisation.pk,
+            organizer_id=organization.pk,
             name="Gastronomisch buffet op zondag",
         )
         brunch_concept.default_starting_time = datetime.time(12, 0)
@@ -130,10 +130,10 @@ class Command(BaseCommand):
         weekday = 7
         brunch_concept.generate(from_date=from_date, to_date=to_date, weekday=weekday)
 
-    def create_organisation_dinner_and_dance(self, organisation):
+    def create_organization_dinner_and_dance(self, organization):
         dinner_and_dance_concept, created = (
             event_models.DinnerAndDanceConcept.objects.get_or_create(
-                organizer_id=organisation.pk,
+                organizer_id=organization.pk,
                 name="Dinner & Dance",
             )
         )
@@ -160,7 +160,7 @@ class Command(BaseCommand):
         dance.save()
 
     def waerboom(self):
-        logger.info("Create or update waerboom")
+        logger.info("Create or update Waerboom")
         waerboom, created = organization_models.Enterprise.objects.get_or_create(
             registered_country="BE",
             registration_id="0460822848",
@@ -174,7 +174,24 @@ class Command(BaseCommand):
         waerboom.slug = "waerboom"
         waerboom.save()
 
-        self.create_organisation_brunch(waerboom)
-        self.create_organisation_dinner_and_dance(waerboom)
+        self.create_organization_brunch(waerboom)
+        self.create_organization_dinner_and_dance(waerboom)
+
+        return True
+
+    def scaleos(self):
+        logger.info("Create or update ScaleOS")
+        organization, created = organization_models.Enterprise.objects.get_or_create(
+            registered_country="BE",
+            registration_id="0770914131",
+        )
+        if created:
+            self.stdout.write(self.style.SUCCESS(f"{organization} created"))
+        else:  # pragma: no cover
+            self.stdout.write(self.style.WARNING(f"updating {organization}"))
+
+        organization.name = "ScaleOS"
+        organization.slug = "scaleos"
+        organization.save()
 
         return True
