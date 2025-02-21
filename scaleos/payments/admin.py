@@ -32,14 +32,14 @@ class PriceAdmin(admin.ModelAdmin):
     readonly_fields = [
         "created_on",
         "modified_on",
-        "price_text",
+        "text",
         "previous_price",
         "price",
-        "price_vat_included",
-        "price_vat_excluded",
+        "vat_included",
+        "vat_excluded",
         "public_key",
     ]
-    list_display = ["price_text"]
+    list_display = ["text"]
     inlines = [PriceHistoryInlineAdmin]
 
 

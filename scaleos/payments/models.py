@@ -4,7 +4,6 @@ from admin_ordering.models import OrderableModel
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
-from moneyed import Money
 from polymorphic.models import PolymorphicModel
 
 from scaleos.shared.fields import LogInfoFields
@@ -32,10 +31,14 @@ class Price(LogInfoFields, AdminLinkMixin, PublicKeyField):
         return f"{self.current_price}"
 
     @property
-    def price_text(self):
-        if self.current_price == Money(0.00, "EUR"):
+    def text(self):
+        if self.current_price is None:
             return _("free")
-        return f"{self.current_price}"
+
+        if int(self.current_price.amount) == 0:
+            return _("free")
+
+        return str(self.current_price).replace("\xa0", "")
 
     @property
     def previous_price(self):
@@ -51,20 +54,23 @@ class Price(LogInfoFields, AdminLinkMixin, PublicKeyField):
         return "no previous price."
 
     @property
-    def price(self):
-        return self.current_price
+    def vat_excluded(self):
+        if self.current_price is None:
+            return None
 
-    @property
-    def price_vat_excluded(self):
-        try:
-            return self.current_price - self.current_price * (self.vat_percentage / 100)
-        except Exception:
-            msg = "Cannot get the VAT excluded price"
-            logger.exception(msg)
+        if not self.includes_vat:
             return self.current_price
 
+        if self.current_price:
+            return self.current_price - self.current_price * (self.vat_percentage / 100)
+
+        return None
+
     @property
-    def price_vat_included(self):
+    def vat_included(self):
+        if self.current_price is None:
+            return None
+
         if self.includes_vat:
             return self.current_price
 
@@ -94,7 +100,7 @@ class Price(LogInfoFields, AdminLinkMixin, PublicKeyField):
 class PriceHistory(LogInfoFields):
     price = models.ForeignKey(
         Price,
-        related_name="price_history",
+        related_name="history",
         on_delete=models.SET_NULL,
         null=True,
     )
@@ -177,21 +183,23 @@ class AgePriceMatrixItem(PriceMatrixItem):
             and self.price
         ):
             return f"{self.age_price_matrix.name} \
-                ({self.from_age}-{self.till_age}): {self.price}"
+({self.from_age}-{self.till_age}): {self.price.text}"
         if (
             self.age_price_matrix
             and self.age_price_matrix.name
             and self.from_age
             and self.price
         ):
-            return f"{self.age_price_matrix.name} ({self.from_age}-...): {self.price}"
+            return (
+                f"{self.age_price_matrix.name} ({self.from_age}-...): {self.price.text}"
+            )
 
         if self.age_price_matrix and self.age_price_matrix.name and self.till_age:
             return (
                 f"{self.age_price_matrix.name} (0-{self.till_age}): {_('free').title()}"
             )
 
-        return super().__str__()
+        return super().__str__()  # pragma: no cover
 
 
 class BulkPriceMatrixItem(PriceMatrixItem, OrderableModel):
