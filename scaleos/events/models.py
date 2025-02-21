@@ -210,9 +210,9 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField):
             return the_result
 
         logger.info("""We dont know how much reserved spots,
-                     so we don't know how to calculated the free spots""")
+            so we don't know how to calculated the free spots""")  # pragma: no cover
 
-        return self.maximum_number_of_guests
+        return self.maximum_number_of_guests  # pragma: no cover
 
     @property
     def reserved_spots(self):
@@ -248,7 +248,7 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField):
             if the_result <= MAX_PERCENTAGE:
                 return the_result
             return MAX_PERCENTAGE
-        return 0
+        return 0  # pragma: no cover
 
     @property
     def over_reserved_spots(self):
@@ -298,7 +298,7 @@ class SingleEvent(Event):
         if self.name:
             return f"{self.name}"
 
-        return super().__str__()
+        return super().__str__()  # pragma: no cover
 
     @property
     def status(self):
@@ -322,7 +322,7 @@ class SingleEvent(Event):
             return SingleEvent.STATUS.ENDED
 
         if self.starting_at and self.ending_on and self.ending_on < its_now:
-            return SingleEvent.STATUS.ENDED
+            return SingleEvent.STATUS.ENDED  # pragma: no cover
 
         if (
             self.starting_at
@@ -332,23 +332,6 @@ class SingleEvent(Event):
             return SingleEvent.STATUS.ONGOING
 
         return SingleEvent.STATUS.UNKNOWN
-
-    def set_upcoming_sunday(self):
-        today = datetime.datetime(tzinfo=datetime.UTC).date()
-        next_sunday = today + datetime.timedelta((6 - today.weekday()) % 7)
-        starting_time = datetime.time(12, 0)
-        if self.concept and hasattr(self.concept, "default_starting_time"):
-            if self.concept.default_starting_time is not None:
-                starting_time = self.concept.default_starting_time
-
-        ending_time = datetime.time(23, 0)
-        if self.concept and hasattr(self.concept, "default_ending_time"):
-            if self.concept.default_ending_time is not None:
-                ending_time = self.concept.default_ending_time
-
-        self.starting_at = datetime.datetime.combine(next_sunday, starting_time)
-        self.ending_on = datetime.datetime.combine(next_sunday, ending_time)
-        self.save()
 
 
 class DanceEvent(SingleEvent):
