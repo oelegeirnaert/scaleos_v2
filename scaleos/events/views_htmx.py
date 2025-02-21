@@ -11,10 +11,10 @@ logger = logging.getLogger("scaleos")
 
 
 @never_cache
-def concept(request, public_key):
+def concept(request, concept_public_key):
     shared_htmx.do_htmx_get_checks(request)
 
-    concept = get_object_or_404(event_models.Concept, public_key=public_key)
+    concept = get_object_or_404(event_models.Concept, public_key=concept_public_key)
     used_template = concept.detail_template
     logging.info("Template used: %s", used_template)
     return_string = get_template(used_template).render(

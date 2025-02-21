@@ -6,7 +6,7 @@ app_name = "events_htmx"
 
 urlpatterns = [
     path(
-        "concept/<str:public_key>/",
+        "concept/<str:concept_public_key>/",
         vw_htmx.concept,
         name="concept",
     ),
