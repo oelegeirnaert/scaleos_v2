@@ -10,11 +10,11 @@ logger = logging.getLogger(__name__)
 
 
 @cache_page(60 * 15)
-def reservation(request, public_key):
+def reservation(request, reservation_public_key):
     context = {}
     reservation = get_object_or_404(
-        reservation_models.Event,
-        public_key=public_key,
+        reservation_models.Reservation,
+        public_key=reservation_public_key,
     )
     context["reservation"] = reservation
     template_used = reservation.page_template
@@ -27,14 +27,14 @@ def reservation(request, public_key):
 
 
 @cache_page(60 * 15)
-def eventreservation(request, public_key):
+def eventreservation(request, eventreservation_public_key):
     context = {}
-    reservation = get_object_or_404(
-        reservation_models.Reservation,
-        public_key=public_key,
+    eventreservation = get_object_or_404(
+        reservation_models.EventReservation,
+        public_key=eventreservation_public_key,
     )
-    context["reservation"] = reservation
-    template_used = reservation.page_template
+    context["eventreservation"] = eventreservation
+    template_used = eventreservation.page_template
     logger.debug("Templated used: %s", template_used)
     return render(
         request,
