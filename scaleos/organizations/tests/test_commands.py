@@ -13,6 +13,14 @@ class CommandsTestCase(TestCase):
         call_command("create_organization", *args, **opts)
         assert organization_models.Enterprise.objects.get(registration_id="0460822848")
 
+    def test_create_scaleos_management_command(self):
+        "Test my custom command."
+
+        args = ["scaleos"]
+        opts = {}
+        call_command("create_organization", *args, **opts)
+        assert organization_models.Enterprise.objects.get(registration_id="0770914131")
+
     def test_create_unknown_enterprise_management_command(self):
         "Test my custom command."
 
