@@ -63,4 +63,4 @@ class ReservationAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmi
 
 @admin.register(reservation_models.ReservationLine)
 class ReservationLineAdmin(admin.ModelAdmin):
-    readonly_fields = ["total_price"]
+    readonly_fields = ["total_price", "minimum_amount", "maximum_amount"]

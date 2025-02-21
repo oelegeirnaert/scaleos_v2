@@ -10,7 +10,8 @@
          name="amount"
          type="number"
          class="h-10 w-10 rounded-sm border-neutral-300 bg-neutral-50/50 text-right text-neutral-900"
-         min="0" />
+         min="{{ reservationline.mininum_amount }}"
+         max="{{ reservationline.maximum_amount }}" />
   <span class="font-bold">x</span>
   {{ reservationline.price_matrix_item }}
   <span class="font-bold">=</span>

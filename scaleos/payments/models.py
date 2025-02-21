@@ -157,6 +157,17 @@ class AgePriceMatrixItem(PriceMatrixItem):
         help_text="will pay",
     )
 
+    minimum_persons = models.IntegerField(
+        null=True,
+        blank=True,
+        default=0,
+    )
+    maximum_persons = models.IntegerField(
+        null=True,
+        blank=True,
+        default=30,
+    )
+
     def __str__(self):
         if (
             self.age_price_matrix

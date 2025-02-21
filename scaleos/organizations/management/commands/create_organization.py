@@ -29,21 +29,7 @@ class Command(BaseCommand):
         if result is None:
             self.stdout.write(self.style.ERROR("invalid organization"))
 
-    def waerboom(self):
-        logger.info("Create or update waerboom")
-        waerboom, created = organization_models.Enterprise.objects.get_or_create(
-            registered_country="BE",
-            registration_id="0460822848",
-        )
-        if created:
-            self.stdout.write(self.style.SUCCESS(f"{waerboom} created"))
-        else:  # pragma: no cover
-            self.stdout.write(self.style.WARNING(f"updating {waerboom}"))
-
-        waerboom.name = "BRUSSELS WAERBOOM EVENT"
-        waerboom.slug = "waerboom"
-        waerboom.save()
-
+    def create_organisation_brunch(self, organisation):
         brunch_age_prices_matrix, created = (
             payment_models.AgePriceMatrix.objects.get_or_create(
                 public_key="14a9b5ab-9560-4d9a-81cb-43892daaa66c",
@@ -65,6 +51,8 @@ class Command(BaseCommand):
                 price_id=baby_price.pk,
             )
         )
+        baby_price_item.maximum_persons = 10
+        baby_price_item.save()
 
         children_price, created = payment_models.Price.objects.get_or_create(
             public_key="a7d8f7e4-f14e-4827-82f0-cb135b5b17bf",
@@ -79,6 +67,8 @@ class Command(BaseCommand):
                 price_id=children_price.pk,
             )
         )
+        children_price_item.maximum_persons = 10
+        children_price_item.save()
 
         adolescent_price, created = payment_models.Price.objects.get_or_create(
             public_key="35d67aad-7b29-45a7-9792-828af48330a6",
@@ -93,6 +83,8 @@ class Command(BaseCommand):
                 price_id=adolescent_price.pk,
             )
         )
+        adolescent_price_item.maximum_persons = 10
+        adolescent_price_item.save()
 
         adult_price, created = payment_models.Price.objects.get_or_create(
             public_key="1fd1ce26-6eef-4c32-ab0b-18cff9d07de8",
@@ -106,9 +98,11 @@ class Command(BaseCommand):
                 price_id=adult_price.pk,
             )
         )
+        adult_price_item.maximum_persons = 30
+        adult_price_item.save()
 
         brunch_concept, created = event_models.BrunchConcept.objects.get_or_create(
-            organizer_id=waerboom.pk,
+            organizer_id=organisation.pk,
             name="Gastronomisch buffet op zondag",
         )
         brunch_concept.default_starting_time = datetime.time(12, 0)
@@ -136,9 +130,10 @@ class Command(BaseCommand):
         weekday = 7
         brunch_concept.generate(from_date=from_date, to_date=to_date, weekday=weekday)
 
+    def create_organisation_dinner_and_dance(self, organisation):
         dinner_and_dance_concept, created = (
             event_models.DinnerAndDanceConcept.objects.get_or_create(
-                organizer_id=waerboom.pk,
+                organizer_id=organisation.pk,
                 name="Dinner & Dance",
             )
         )
@@ -163,5 +158,23 @@ class Command(BaseCommand):
         )
         dance.name = f"Dance {dinner_and_dance_concept.name}"
         dance.save()
+
+    def waerboom(self):
+        logger.info("Create or update waerboom")
+        waerboom, created = organization_models.Enterprise.objects.get_or_create(
+            registered_country="BE",
+            registration_id="0460822848",
+        )
+        if created:
+            self.stdout.write(self.style.SUCCESS(f"{waerboom} created"))
+        else:  # pragma: no cover
+            self.stdout.write(self.style.WARNING(f"updating {waerboom}"))
+
+        waerboom.name = "BRUSSELS WAERBOOM EVENT"
+        waerboom.slug = "waerboom"
+        waerboom.save()
+
+        self.create_organisation_brunch(waerboom)
+        self.create_organisation_dinner_and_dance(waerboom)
 
         return True

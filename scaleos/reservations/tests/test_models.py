@@ -127,6 +127,25 @@ def test_brunch_reservation_for_waerboom(faker):
     )
 
 
+@pytest.mark.django_db
+def test_brunch_reservationline_for_waerboom_has_min_max_persons(faker):
+    from scaleos.payments.tests.model_factories import AgePriceMatrixItemFactory
+
+    minimum = 8
+    maximum = 13
+    age_price_matrix_item = AgePriceMatrixItemFactory.create(
+        minimum_persons=minimum,
+        maximum_persons=maximum,
+    )
+    reservation_line = reservation_factories.ReservationLineFactory.create(
+        price_matrix_item_id=age_price_matrix_item.pk,
+    )
+    assert hasattr(reservation_line, "minimum_amount")
+    assert hasattr(reservation_line, "maximum_amount")
+    assert minimum == reservation_line.minimum_amount
+    assert maximum == reservation_line.maximum_amount
+
+
 # @pytest.mark.django_db
 # def test_event_can_have_other_pricematrix_than_concept(faker):
 #    assert False, "implement me"

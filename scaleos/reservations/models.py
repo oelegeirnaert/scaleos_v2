@@ -149,3 +149,15 @@ class ReservationLine(AdminLinkMixin, PublicKeyField):
         except Exception as e:  # noqa: BLE001
             logger.warning(e)
         return None
+
+    @property
+    def minimum_amount(self):
+        if self.price_matrix_item and self.price_matrix_item.minimum_persons:
+            return self.price_matrix_item.minimum_persons
+        return 0
+
+    @property
+    def maximum_amount(self):
+        if self.price_matrix_item and self.price_matrix_item.maximum_persons:
+            return self.price_matrix_item.maximum_persons
+        return 10
