@@ -10,11 +10,11 @@ logger = logging.getLogger(__name__)
 
 
 @cache_page(60 * 15)
-def event(request, public_key):
+def event(request, event_public_key):
     context = {}
     event = get_object_or_404(
         event_models.Event,
-        public_key=public_key,
+        public_key=event_public_key,
     )
     context["event"] = event
     template_used = event.page_template
