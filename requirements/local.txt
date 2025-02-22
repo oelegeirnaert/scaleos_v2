@@ -12,6 +12,9 @@ django-stubs[compatible-mypy]==5.1.2  # https://github.com/typeddjango/django-st
 pytest==8.3.4  # https://github.com/pytest-dev/pytest
 pytest-sugar==1.0.0  # https://github.com/Frozenball/pytest-sugar
 djangorestframework-stubs==3.15.2  # https://github.com/typeddjango/djangorestframework-stubs
+playwright==1.50.0  # https://pypi.org/project/playwright/
+pytest-playwright==0.7.0  #https://pypi.org/project/pytest-playwright/
+
 
 # Documentation
 # ------------------------------------------------------------------------------

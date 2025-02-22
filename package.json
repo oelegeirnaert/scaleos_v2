@@ -1,0 +1,26 @@
+{
+  "name": "scaleos",
+  "version": "1.0.0",
+  "description": "+ [![cov](https://oelegeirnaert.github.io/scaleos_v2/badges/coverage.svg)](https://github.com/oelegeirnaert/scaleos_v2/actions)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oelegeirnaert/scaleos_v2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/oelegeirnaert/scaleos_v2/issues"
+  },
+  "homepage": "https://github.com/oelegeirnaert/scaleos_v2#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.50.1",
+    "@types/node": "^22.13.5"
+  }
+}

@@ -20,7 +20,6 @@ COPY ./requirements .
 RUN pip wheel --wheel-dir /usr/src/app/wheels  \
   -r ${BUILD_ENVIRONMENT}.txt
 
-
 # Python 'run' stage
 FROM python AS python-run-stage
 
@@ -93,5 +92,8 @@ RUN chmod +x /start-flower
 
 # copy application code to WORKDIR
 COPY . ${APP_HOME}
+
+# Oele
+RUN playwright install && playwright install-deps
 
 ENTRYPOINT ["/entrypoint"]
