@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from django.utils.translation import activate
 from moneyed import EUR
@@ -65,14 +67,6 @@ def test_price_vat_excluded(faker):
     )
     assert price.vat_excluded is None
 
-    a_price = Money(106, EUR)
-    price = payment_factories.PriceFactory.create(
-        current_price=a_price,
-        includes_vat=True,
-        vat_percentage=6,
-    )
-    assert Money(99.64, "EUR") == price.vat_excluded
-
     a_price = Money(100, EUR)
     price = payment_factories.PriceFactory.create(
         current_price=a_price,
@@ -80,6 +74,46 @@ def test_price_vat_excluded(faker):
         vat_percentage=6,
     )
     assert Money(100, "EUR") == price.vat_excluded
+
+
+@pytest.mark.django_db
+def test_price_vat_excercices(faker):
+    # Based on: https://vatcalculator.eu/belgium-vat-calculator/
+    price = payment_factories.PriceFactory.create(
+        current_price=Money(25, EUR),
+        includes_vat=False,
+        vat_percentage=21,
+    )
+    assert price.vat_excluded == Money(25, EUR)
+    assert price.vat == Money(5.25, EUR)
+    assert price.vat_included == Money(30.25, EUR)
+
+    price = payment_factories.PriceFactory.create(
+        current_price=Money(100, EUR),
+        includes_vat=True,
+        vat_percentage=21,
+    )
+    assert round(Decimal("82.64"), 2) == round(price.vat_excluded.amount, 2)
+    assert round(Decimal("17.36"), 2) == round(price.vat.amount, 2)
+    assert round(Decimal("100.00"), 2) == round(price.vat_included.amount, 2)
+
+    price = payment_factories.PriceFactory.create(
+        current_price=Money(75.33, EUR),
+        includes_vat=False,
+        vat_percentage=6,
+    )
+    assert round(Decimal("75.33"), 2) == round(price.vat_excluded.amount, 2)
+    assert round(Decimal("4.52"), 2) == round(price.vat.amount, 2)
+    assert round(Decimal("79.85"), 2) == round(price.vat_included.amount, 2)
+
+    price = payment_factories.PriceFactory.create(
+        current_price=Money(2049.16, EUR),
+        includes_vat=True,
+        vat_percentage=6,
+    )
+    assert round(Decimal("1933.17"), 2) == round(price.vat_excluded.amount, 2)
+    assert round(Decimal("115.99"), 2) == round(price.vat.amount, 2)
+    assert round(Decimal("2049.16"), 2) == round(price.vat_included.amount, 2)
 
 
 @pytest.mark.django_db

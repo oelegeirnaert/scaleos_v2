@@ -15,7 +15,41 @@ logger = logging.getLogger(__name__)
 
 
 # Create your models here.
-class Price(LogInfoFields, AdminLinkMixin, PublicKeyField):
+
+
+class PriceModel(LogInfoFields, AdminLinkMixin, PublicKeyField):
+    vat = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency="EUR",
+        null=True,
+        editable=False,
+    )
+
+    vat_included = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency="EUR",
+        null=True,
+        editable=False,
+    )
+
+    vat_excluded = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency="EUR",
+        null=True,
+        editable=False,
+    )
+
+    vat_percentage = models.IntegerField(default=21)
+
+    class Meta:
+        abstract = True
+        ordering = ["-created_on"]
+
+
+class Price(PriceModel):
     current_price = MoneyField(
         max_digits=15,
         decimal_places=2,
@@ -25,10 +59,55 @@ class Price(LogInfoFields, AdminLinkMixin, PublicKeyField):
     )
 
     includes_vat = models.BooleanField(default=True)
-    vat_percentage = models.IntegerField(default=21)
+
+    def create_history_record(self):
+        item = PriceHistory.objects.create(
+            created_by=self.created_by,
+            vat=self.vat,
+            vat_included=self.vat_included,
+            vat_excluded=self.vat_excluded,
+            price_id=self.id,
+        )
+
+        msg = "new PriceHistory record created with id: %s", item.pk
+        logger.debug(msg)
+
+    def save(self, *args, **kwargs):
+        self.vat_included = self.get_vat_included()
+        self.vat_excluded = self.get_vat_excluded()
+        self.vat = self.get_vat()
+        if self.pk is None:
+            msg = _("save first")
+            logger.debug(msg)
+
+        if (
+            self.previous_price
+            and self.vat_included != self.previous_price.vat_included
+        ):
+            msg = "The price changed"
+            logger.debug(msg)
+            self.create_history_record()
+
+        if self.previous_price is None:
+            msg = "no historical record yet, create one..."
+            logger.debug(msg)
+            self.create_history_record()
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.current_price}"
+
+    @property
+    def previous_price(self):
+        if self.pk is None:
+            logger.debug("save first")
+            return None
+
+        if self.history.count() > 0:
+            return self.history.all()[1]
+
+        return None
 
     @property
     def text(self):
@@ -40,34 +119,16 @@ class Price(LogInfoFields, AdminLinkMixin, PublicKeyField):
 
         return str(self.current_price).replace("\xa0", "")
 
-    @property
-    def previous_price(self):
-        if self.pk is None:
-            logger.debug("save first")
-            return None
-
-        try:
-            return self.price_history.all()[1].old_price
-        except Exception:
-            logger.exception("cannot get a previous price")
-
-        return "no previous price."
-
-    @property
-    def vat_excluded(self):
+    def get_vat_excluded(self):
         if self.current_price is None:
             return None
 
         if not self.includes_vat:
             return self.current_price
 
-        if self.current_price:
-            return self.current_price - self.current_price * (self.vat_percentage / 100)
+        return self.current_price / (1 + self.vat_percentage / 100)
 
-        return None
-
-    @property
-    def vat_included(self):
+    def get_vat_included(self):
         if self.current_price is None:
             return None
 
@@ -76,40 +137,19 @@ class Price(LogInfoFields, AdminLinkMixin, PublicKeyField):
 
         return self.current_price + self.current_price * (self.vat_percentage / 100)
 
-    def save(self, *args, **kwargs):
-        if self.pk is None:
-            msg = _("save first")
-            logger.debug(msg)
-        if self.current_price != self.previous_price:
-            msg = "The price changed"
-            (
-                new_price_history,
-                new_price_history_created,
-            ) = PriceHistory.objects.get_or_create(
-                created_on=self.modified_on,
-                old_price=self.current_price,
-                price_id=self.id,
-            )
-            if new_price_history_created:
-                logger.debug("New price history created.")
-            logger.debug(msg)
+    def get_vat(self):
+        if self.vat_included and self.vat_excluded:
+            return self.vat_included - self.vat_excluded
 
-        super().save(*args, **kwargs)
+        return None
 
 
-class PriceHistory(LogInfoFields):
+class PriceHistory(PriceModel):
     price = models.ForeignKey(
         Price,
         related_name="history",
         on_delete=models.SET_NULL,
         null=True,
-    )
-    old_price = MoneyField(
-        max_digits=15,
-        decimal_places=2,
-        default_currency="EUR",
-        null=True,
-        blank=True,
     )
 
     class Meta:

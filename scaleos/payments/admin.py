@@ -12,7 +12,10 @@ class PriceHistoryInlineAdmin(admin.TabularInline):
     model = payment_models.PriceHistory
     extra = 0
     show_change_link = True
-    readonly_fields = ["created_on"]
+    readonly_fields = ["vat_included", "vat_excluded", "vat", "modified_on"]
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 class AgePriceMatrixItemInlineAdmin(admin.TabularInline):
@@ -34,7 +37,6 @@ class PriceAdmin(admin.ModelAdmin):
         "modified_on",
         "text",
         "previous_price",
-        "price",
         "vat_included",
         "vat_excluded",
         "public_key",
