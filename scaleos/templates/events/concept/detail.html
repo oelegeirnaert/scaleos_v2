@@ -14,7 +14,7 @@
         {% for event in concept.events.all %}
           <div class="mt-3 flex flex-col bg-gray-200 rounded shadow-md mb-2">
             <div @click="opened_tab = opened_tab == {{ forloop.counter }} ? null : {{ forloop.counter }} "
-                 hx-get="{% url 'reservations_htmx:reservation' event.public_key %}"
+                 hx-get="{% url 'reservations_htmx:event_reservation' event.public_key %}"
                  hx-target="#{{ event.html_public_key }}"
                  hx-trigger="click"
                  hx-swap="innerHTML"

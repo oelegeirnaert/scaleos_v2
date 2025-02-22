@@ -6,7 +6,7 @@
 {% block content %}
   {{ event }}
   <button class="w-full inline-flex items-center gap-2 rounded-sm border border-lime-500 bg-lime-500 px-8 py-3 text-white hover:bg-transparent hover:text-gray-600 focus:ring-3 focus:outline-hidden"
-          hx-get="{% url 'reservations_htmx:reservation' event.public_key %}"
+          hx-get="{% url 'reservations_htmx:event_reservation' event.public_key %}"
           hx-target="#{{ event.html_public_key }}"
           hx-swap="innerHTML">
     <span class="text-sm font-bold">{% trans 'subscribe'|capfirst %}</span>

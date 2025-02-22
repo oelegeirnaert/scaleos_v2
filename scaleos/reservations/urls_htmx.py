@@ -8,7 +8,7 @@ urlpatterns = [
     path(
         "event/<uuid:event_public_key>/",
         vw_htmx.event_reservation,
-        name="reservation",
+        name="event_reservation",
     ),
     path(
         "line/<uuid:reservation_line_public_key>/",
