@@ -104,7 +104,7 @@ class Price(PriceModel):
             logger.debug("save first")
             return None
 
-        if self.history.count() > 0:
+        if self.history.count() > 1:
             return self.history.all()[1]
 
         return None

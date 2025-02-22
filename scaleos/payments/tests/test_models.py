@@ -117,6 +117,26 @@ def test_price_vat_excercices(faker):
 
 
 @pytest.mark.django_db
+def test_price_history(faker):
+    price = payment_factories.PriceFactory.create()
+
+    assert price.history.count() == 0
+    price.current_price = Money(30, EUR)
+    price.save()
+    assert price.history.count() == 1
+
+    price.current_price = Money(35, EUR)
+    price.save()
+    assert price.history.count() == 2
+    assert price.previous_price
+
+    price.current_price = Money(40, EUR)
+    price.save()
+    assert price.history.count() == 3
+    assert price.previous_price
+
+
+@pytest.mark.django_db
 def test_age_price_matrix_item_to_string(faker):
     matrix = payment_factories.AgePriceMatrixFactory(name="brunch prijzen 2024")
     baby = payment_factories.AgePriceMatrixItemFactory(
