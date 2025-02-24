@@ -242,7 +242,26 @@ def test_reservation_is_not_human_verified(faker):
 def test_reservation_finish(faker):
     an_email = "my_reservation_finish@hotmail.com"
     reservation = reservation_factories.ReservationFactory()
-    reservation.finish(request=None, confirmation_email_address=an_email)
+    assert reservation.finish(request=None, confirmation_email_address=an_email)
+    assert not (
+        reservation.finish(request=None, confirmation_email_address=an_email)
+    ), "because it is already finished"
+
+
+@pytest.mark.django_db
+def test_reservation_verificate(faker):
+    reservation = reservation_factories.ReservationFactory()
+    reservation.verificate()
+    assert reservation.verified_on
+    assert not reservation.verificate()
+
+
+@pytest.mark.django_db
+def test_reservation_confirmation(faker):
+    reservation = reservation_factories.ReservationFactory()
+    reservation.confirm()
+    assert reservation.confirmed_on
+    assert not reservation.confirm()
 
 
 @pytest.mark.django_db
@@ -262,6 +281,9 @@ def test_reservation_is_statusses(faker):
     assert (
         reservation.status == reservation_models.Reservation.STATUS.NEEDS_VERIFICATION
     )
+    reservation.verified_on = ITS_NOW
+    assert reservation.confirmed_on is None
+    assert reservation.status == reservation_models.Reservation.STATUS.TO_BE_CONFIRMED
 
 
 # @pytest.mark.django_db

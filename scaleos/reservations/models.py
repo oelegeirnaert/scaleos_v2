@@ -121,6 +121,10 @@ class Reservation(
         return self.STATUS.UNKNOWN  # pragma: no cover
 
     def finish(self, request, confirmation_email_address):
+        if self.finished_on:
+            logger.info("The reservation %s is already finished", self.pk)
+            return False
+
         user, user_created = User.objects.get_or_create(
             email=confirmation_email_address,
         )
@@ -151,19 +155,25 @@ class Reservation(
                 self.verified_on = ITS_NOW
 
         self.save()
+        return True
 
     def confirm(self):
+        if self.confirmed_on:
+            logger.info("The reservation %s is already confirmed", self.pk)
+            return False
+
         self.confirmed_on = ITS_NOW
         send_reservation_confirmation.delay(self.id)
-        raise NotImplementedError
+        self.save()
+        return True
 
-    def verify(self):
+    def verificate(self):
         if self.verified_on:
             logger.info("This reseravtion is already verified")
-            return
+            return False
 
         self.verified_on = ITS_NOW
-        raise NotImplementedError
+        return True
 
 
 class EventReservation(Reservation):

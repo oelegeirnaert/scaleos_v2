@@ -1,10 +1,12 @@
 from http import HTTPStatus
+from urllib.parse import urlencode
 from uuid import uuid4
 
 import pytest
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages import get_messages
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpRequest
@@ -115,3 +117,39 @@ def test_user_can_see_his_reservations(admin_client):
     )
     response = admin_client.get(url)
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_user_custom_set_password(client, django_user_model):
+    email = "joske_vermeulen@hotmail.com"
+    password = "bar"  # noqa: S105
+    user = django_user_model.objects.create_user(email=email, password=password)
+    # Use this:
+
+    a_password = "Kls3#$df03a/"  # noqa: S105
+    url = reverse(
+        "custom_account_password_set",
+    )
+
+    data = urlencode({"new_password1": a_password, "new_password2": a_password})
+    client.force_login(user)
+
+    get_response = client.get(
+        url,
+    )
+    assert "set your password" in str(get_response.content).lower()
+
+    response = client.post(
+        url,
+        data,
+        content_type="application/x-www-form-urlencoded",
+    )
+
+    assert response.status_code == 302
+    assert response.url == "/"
+    # Check success message
+    messages = list(get_messages(response.wsgi_request))
+    assert any("Your password has been set successfully!" in str(m) for m in messages)
+
+    user.refresh_from_db()
+    assert user.check_password(a_password) is True
