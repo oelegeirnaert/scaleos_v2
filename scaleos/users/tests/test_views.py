@@ -15,7 +15,7 @@ from django.utils.translation import gettext_lazy as _
 
 from scaleos.users.forms import UserAdminChangeForm
 from scaleos.users.models import User
-from scaleos.users.tests.factories import UserFactory
+from scaleos.users.tests.model_factories import UserFactory
 from scaleos.users.views import UserRedirectView
 from scaleos.users.views import UserUpdateView
 from scaleos.users.views import user_detail_view

@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from typing import Any
 
+from allauth.account.models import EmailAddress
 from factory import Faker
 from factory import post_generation
 from factory.django import DjangoModelFactory
@@ -38,3 +39,13 @@ class UserFactory(DjangoModelFactory[User]):
     class Meta:
         model = User
         django_get_or_create = ["email"]
+
+
+class EmailAddressFactory(DjangoModelFactory):
+    class Meta:
+        model = EmailAddress
+
+    email = Faker("email")
+    verified = True
+    primary = True
+    user = None  # This will be assigned in the test

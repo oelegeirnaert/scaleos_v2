@@ -21,3 +21,15 @@ class AgePriceMatrixFactory(DjangoModelFactory[payment_models.AgePriceMatrix]):
 class PriceFactory(DjangoModelFactory[payment_models.Price]):
     class Meta:
         model = payment_models.Price
+
+
+class BulkPriceMatrixFactory(DjangoModelFactory[payment_models.BulkPriceMatrix]):
+    class Meta:
+        model = payment_models.BulkPriceMatrix
+
+
+class BulkPriceMatrixItemFactory(
+    DjangoModelFactory[payment_models.BulkPriceMatrixItem],
+):
+    class Meta:
+        model = payment_models.BulkPriceMatrixItem

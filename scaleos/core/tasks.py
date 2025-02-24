@@ -31,7 +31,7 @@ def send_custom_templated_email(request, emailconfirmation, reservation=None):
 
     # Generate confirmation URL
     confirmation_url = "http://ScaleOS.net"
-    if request is not None:
+    if request:
         confirmation_url = request.build_absolute_uri(
             reverse("account_confirm_email", args=[emailconfirmation.key]),
         )

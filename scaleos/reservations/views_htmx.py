@@ -1,20 +1,15 @@
 import logging
 
-from allauth.account.models import EmailAddress
-from allauth.account.models import EmailConfirmation
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 
-from scaleos.core.tasks import send_custom_templated_email
 from scaleos.events import models as event_models
 from scaleos.reservations import models as reservation_models
 from scaleos.shared import views_htmx as shared_htmx
-from scaleos.shared.mixins import ITS_NOW
 from scaleos.shared.views_htmx import htmx_response
-from scaleos.users.models import User
 
 logger = logging.getLogger("scaleos")
 
@@ -95,7 +90,12 @@ def update_reservation_line(request, reservation_line_public_key):
         reservation_models.ReservationLine,
         public_key=reservation_line_public_key,
     )
-    the_amount = int(request.POST.get("amount", 0))
+    the_amount = request.POST.get("amount", 0)
+    logger.info("The amount we got: %s", the_amount)
+    if len(the_amount) == 0:
+        the_amount = 0
+
+    the_amount = int(the_amount)
     logger.debug("Update amount to: %s", the_amount)
     if the_amount < 0:
         logger.info("The amount is lower than ZERO, force setting it to 0")
@@ -139,29 +139,10 @@ def finish_reservation(request, reservation_public_key):
         public_key=reservation_public_key,
     )
 
-    user, user_created = User.objects.get_or_create(email=confirmation_email_address)
-
-    if user_created:
-        user.username = confirmation_email_address.split("@")[0]
-        email_address, email_created = EmailAddress.objects.get_or_create(
-            user=user,
-            email=confirmation_email_address,
-            primary=True,
-        )
-        if email_created:
-            email_confirmation = EmailConfirmation.create(email_address)
-            logger.info("new user created for a reservation")
-            send_custom_templated_email(
-                request,
-                email_confirmation,
-                reservation=reservation,
-            )
-
-    reservation.user_id = user.pk
-    reservation.finished_on = ITS_NOW
-    if request.user.is_authenticated:
-        reservation.created_by_id = request.user.pk
-    reservation.save()
+    reservation.finish(
+        request=request,
+        confirmation_email_address=confirmation_email_address,
+    )
 
     if isinstance(reservation, reservation_models.Reservation):
         request.session[EVENT_RESERVATION_ID_KEY] = None

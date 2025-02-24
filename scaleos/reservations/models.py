@@ -1,19 +1,23 @@
 import logging
 
 from allauth.account.models import EmailAddress
+from allauth.account.models import EmailConfirmation
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Sum
 from django.utils.translation import gettext_lazy as _
 from moneyed import EUR
 from moneyed import Money
 from polymorphic.models import PolymorphicModel
 
+from scaleos.core.tasks import send_custom_templated_email
 from scaleos.reservations.tasks import send_reservation_confirmation
 from scaleos.shared.fields import LogInfoFields
 from scaleos.shared.fields import PublicKeyField
 from scaleos.shared.mixins import ITS_NOW
 from scaleos.shared.mixins import AdminLinkMixin
 from scaleos.shared.models import CardModel
+from scaleos.users.models import User
 
 # Create your models here.
 logger = logging.getLogger(__name__)
@@ -29,6 +33,7 @@ class Reservation(
     class STATUS(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", _("in progress")
         NEEDS_VERIFICATION = "NEEDS_VERIFICATION", _("needs verification")
+        TO_BE_CONFIRMED = "TO_BE_CONFIRMED", _("to be confirmed")
         WAITING_FOR_PAYMENT = "WAITING_FOR_PAYMENT", _("waiting for payment")
         CONFIRMED = "CONFIRMED", _("confirmed")
         PARTIALLY_USED = "PARTIALLY_USED", _("partially used")
@@ -85,31 +90,79 @@ class Reservation(
 
     @property
     def total_amount(self):
-        total_amount = 0
-        for line in self.lines.all():
-            total_amount += line.amount
+        the_result = self.lines.all().aggregate(total=Sum("amount"))["total"]
+        if the_result:
+            return the_result
 
-        return total_amount
+        return None
 
     @property
-    def verified_email(self):
-        try:
-            return EmailAddress.objects.get(email=self.user.email, verified=True)
-        except AttributeError:
-            return None
+    def verified_email_address(self):
+        if self.user:
+            try:
+                return EmailAddress.objects.get(
+                    email=self.user.email,
+                    verified=True,
+                ).email
+            except EmailAddress.DoesNotExist:
+                return None
+
+        return None  # pragma: no cover
 
     @property
     def status(self):
         if self.finished_on is None:
             return self.STATUS.IN_PROGRESS
         if self.verified_on is None:
-            return _("needs verification")
+            return self.STATUS.NEEDS_VERIFICATION
+        if self.confirmed_on is None:
+            return self.STATUS.TO_BE_CONFIRMED
 
-        return _("unknown")
+        return self.STATUS.UNKNOWN  # pragma: no cover
+
+    def finish(self, request, confirmation_email_address):
+        user, user_created = User.objects.get_or_create(
+            email=confirmation_email_address,
+        )
+
+        if user_created:
+            user.username = confirmation_email_address.split("@")[0]
+            email_address, email_created = EmailAddress.objects.get_or_create(
+                user=user,
+                email=confirmation_email_address,
+                primary=True,
+            )
+            if email_created:
+                email_confirmation = EmailConfirmation.create(email_address)
+                logger.info("new user created for a reservation")
+                send_custom_templated_email(
+                    request,
+                    email_confirmation,
+                    reservation=self,
+                )
+
+        self.user_id = user.pk
+        self.finished_on = ITS_NOW
+
+        if request and request.user.is_authenticated:
+            self.created_by_id = request.user.pk
+
+            if user.pk == request.user.pk:
+                self.verified_on = ITS_NOW
+
+        self.save()
 
     def confirm(self):
         self.confirmed_on = ITS_NOW
         send_reservation_confirmation.delay(self.id)
+        raise NotImplementedError
+
+    def verify(self):
+        if self.verified_on:
+            logger.info("This reseravtion is already verified")
+            return
+
+        self.verified_on = ITS_NOW
         raise NotImplementedError
 
 

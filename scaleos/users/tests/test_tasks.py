@@ -2,7 +2,7 @@ import pytest
 from celery.result import EagerResult
 
 from scaleos.users.tasks import get_users_count
-from scaleos.users.tests.factories import UserFactory
+from scaleos.users.tests.model_factories import UserFactory
 
 pytestmark = pytest.mark.django_db
 

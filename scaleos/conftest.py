@@ -1,7 +1,7 @@
 import pytest
 
 from scaleos.users.models import User
-from scaleos.users.tests.factories import UserFactory
+from scaleos.users.tests.model_factories import UserFactory
 
 
 @pytest.fixture(autouse=True)

@@ -20,6 +20,8 @@ class SingleEventFactory(DjangoModelFactory[event_models.SingleEvent]):
 
 
 class ConceptPriceMatrixFactory(DjangoModelFactory[event_models.ConceptPriceMatrix]):
+    concept = SubFactory(ConceptFactory)
+
     class Meta:
         model = event_models.ConceptPriceMatrix
 
@@ -34,6 +36,21 @@ class BrunchEventFactory(DjangoModelFactory[event_models.BrunchEvent]):
 
     class Meta:
         model = event_models.BrunchEvent
+
+
+class ReceptionEventFactory(DjangoModelFactory[event_models.ReceptionEvent]):
+    class Meta:
+        model = event_models.ReceptionEvent
+
+
+class DinnerEventFactory(DjangoModelFactory[event_models.DinnerEvent]):
+    class Meta:
+        model = event_models.DinnerEvent
+
+
+class DanceEventFactory(DjangoModelFactory[event_models.DanceEvent]):
+    class Meta:
+        model = event_models.DanceEvent
 
 
 class WeddingConceptFactory(DjangoModelFactory[event_models.WeddingConcept]):

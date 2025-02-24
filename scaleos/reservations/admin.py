@@ -57,7 +57,7 @@ class ReservationAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmi
         "finished_on",
         "total_price",
         "total_amount",
-        "verified_email",
+        "verified_email_address",
     ]
 
 

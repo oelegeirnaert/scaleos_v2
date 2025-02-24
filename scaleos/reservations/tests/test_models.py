@@ -6,7 +6,9 @@ from moneyed import Money
 
 from scaleos.events.tests import model_factories as event_factories
 from scaleos.hr.tests import model_factories as hr_factories
+from scaleos.reservations import models as reservation_models
 from scaleos.reservations.tests import model_factories as reservation_factories
+from scaleos.shared.mixins import ITS_NOW
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +199,68 @@ def test_brunch_reservationline_for_waerboom_cannot_exceed_total_availble_places
     assert brunch_unlimited_seats.free_spots == "∞"
     assert reservation_line.maximum_amount is None, (
         "because we only have unlimited free spots in the event"
+    )
+
+
+@pytest.mark.django_db
+def test_reservation_has_total_amount(faker):
+    reservation = reservation_factories.ReservationFactory.create()
+    assert reservation.total_amount is None
+    reservation_factories.ReservationLineFactory.create_batch(
+        3,
+        reservation_id=reservation.pk,
+        amount=3,
+    )
+    assert reservation.total_amount == 9
+
+
+@pytest.mark.django_db
+def test_reservation_is_human_verified(faker):
+    the_email = "my_email@hotmail.com"
+    from scaleos.users.tests import model_factories as user_factories
+
+    user = user_factories.UserFactory(email=the_email)
+    user_factories.EmailAddressFactory(user=user, email=user.email)
+
+    reservation = reservation_factories.ReservationFactory(user=user)
+    assert reservation.verified_email_address == the_email
+
+
+@pytest.mark.django_db
+def test_reservation_is_not_human_verified(faker):
+    from scaleos.users.tests import model_factories as user_factories
+
+    the_email = "my_email@hotmail.com"
+
+    user = user_factories.UserFactory(email=the_email)
+
+    reservation = reservation_factories.ReservationFactory(user=user)
+    assert reservation.verified_email_address is None
+
+
+@pytest.mark.django_db
+def test_reservation_finish(faker):
+    an_email = "my_reservation_finish@hotmail.com"
+    reservation = reservation_factories.ReservationFactory()
+    reservation.finish(request=None, confirmation_email_address=an_email)
+
+
+@pytest.mark.django_db
+def test_reservation_is_statusses(faker):
+    from scaleos.users.tests import model_factories as user_factories
+
+    the_email = "my_email@hotmail.com"
+
+    user = user_factories.UserFactory(email=the_email)
+
+    reservation = reservation_factories.ReservationFactory(user=user)
+    assert reservation.verified_email_address is None
+
+    assert reservation.finished_on is None
+    assert reservation.status == reservation_models.Reservation.STATUS.IN_PROGRESS
+    reservation.finished_on = ITS_NOW
+    assert (
+        reservation.status == reservation_models.Reservation.STATUS.NEEDS_VERIFICATION
     )
 
 
