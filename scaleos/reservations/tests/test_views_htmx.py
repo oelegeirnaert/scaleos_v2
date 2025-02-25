@@ -7,6 +7,7 @@ from django.urls import reverse
 from scaleos.events.tests import model_factories as event_factories
 from scaleos.reservations import models as reservation_models
 from scaleos.reservations.tests import model_factories as reservation_factories
+from scaleos.users.tests import model_factories as user_factories
 
 
 @pytest.mark.django_db
@@ -52,7 +53,7 @@ def test_htmx_finish_reservation_reservation_is_successfull(client):
     assert len(mail.outbox) == 0
     a_uuid = "c221ac76-3829-4e3d-975a-3504e3332ccc"
     to_email = "my_email@hotmail.com"
-    reservation_factories.ReservationFactory(public_key=a_uuid)
+    a_reservation = reservation_factories.ReservationFactory(public_key=a_uuid)
     headers = {"HTTP_HX-Request": "true"}
     url = reverse(
         "reservations_htmx:finish_reservation",
@@ -68,6 +69,33 @@ def test_htmx_finish_reservation_reservation_is_successfull(client):
     assert response.status_code == 200
     assert len(mail.outbox) == 1
     assert mail.outbox[0].to == [to_email]
+    assert not a_reservation.requester_confirmed
+
+
+@pytest.mark.django_db
+def test_htmx_finish_reservation_reservation_is_successfull_as_authenticated(client):
+    a_uuid = "c221ac76-3829-4e3d-975a-3504e3332ccc"
+    to_email = "my_email@hotmail.com"
+    a_password = "slen)3ij2"  # noqa: S105
+    user = user_factories.UserFactory(email=to_email, password=a_password)
+    reservation_factories.ReservationFactory(
+        user_id=user.pk,
+        public_key=a_uuid,
+    )
+    headers = {"HTTP_HX-Request": "true"}
+    url = reverse(
+        "reservations_htmx:finish_reservation",
+        kwargs={"reservation_public_key": a_uuid},
+    )
+    data = urlencode({"confirmation_email_address": to_email})
+    client.login(username=to_email, password=a_password)
+    response = client.post(
+        url,
+        data,
+        content_type="application/x-www-form-urlencoded",
+        **headers,
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db

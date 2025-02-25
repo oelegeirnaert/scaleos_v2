@@ -55,7 +55,7 @@ class Reservation(
         blank=True,
         help_text=_("the moment the reservation has been made"),
     )
-    verified_on = models.DateTimeField(
+    requester_confirmed_on = models.DateTimeField(
         null=True,
         blank=True,
         help_text=_(
@@ -63,7 +63,7 @@ class Reservation(
             by the user who made the reservation""",
         ),
     )
-    confirmed_on = models.DateTimeField(
+    organization_confirmed_on = models.DateTimeField(
         null=True,
         blank=True,
         help_text=_("the moment the employee has confirmed the reservation"),
@@ -113,9 +113,9 @@ class Reservation(
     def status(self):
         if self.finished_on is None:
             return self.STATUS.IN_PROGRESS
-        if self.verified_on is None:
+        if self.requester_confirmed_on is None:
             return self.STATUS.NEEDS_VERIFICATION
-        if self.confirmed_on is None:
+        if self.organization_confirmed_on is None:
             return self.STATUS.TO_BE_CONFIRMED
 
         return self.STATUS.UNKNOWN  # pragma: no cover
@@ -152,27 +152,50 @@ class Reservation(
             self.created_by_id = request.user.pk
 
             if user.pk == request.user.pk:
-                self.verified_on = ITS_NOW
+                logger.info(
+                    "The requester for the event is the same as the loggedin user",
+                )
+                self.requester_confirm()
 
         self.save()
         return True
 
-    def confirm(self):
-        if self.confirmed_on:
-            logger.info("The reservation %s is already confirmed", self.pk)
+    @property
+    def organization_confirmed(self):
+        return self.organization_confirmed_on is not None
+
+    def organization_confirm(self):
+        if self.organization_confirmed_on:
+            logger.info(
+                "The reservation %s is already confirmed by the organization",
+                self.pk,
+            )
             return False
 
-        self.confirmed_on = ITS_NOW
+        the_now = ITS_NOW
+        logger.info("Organization confirmed on: %s", the_now)
+        self.organization_confirmed_on = the_now
+        self.save()
+
         send_reservation_confirmation.delay(self.id)
-        self.save()
         return True
 
-    def verificate(self):
-        if self.verified_on:
-            logger.info("This reseravtion is already verified")
+    @property
+    def requester_confirmed(self):
+        return self.requester_confirmed_on is not None
+
+    def requester_confirm(self):
+        if self.requester_confirmed_on:
+            logger.info(
+                "The reseravtion %s is already confirmed by the requester",
+                self.pk,
+            )
             return False
 
-        self.verified_on = ITS_NOW
+        the_now = ITS_NOW
+        logger.info("Requester confirmed on: %s", the_now)
+        self.requester_confirmed_on = the_now
+        self.save()
         return True
 
 

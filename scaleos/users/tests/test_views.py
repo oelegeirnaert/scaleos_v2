@@ -122,8 +122,7 @@ def test_user_can_see_his_reservations(admin_client):
 @pytest.mark.django_db
 def test_user_custom_set_password(client, django_user_model):
     email = "joske_vermeulen@hotmail.com"
-    password = "bar"  # noqa: S105
-    user = django_user_model.objects.create_user(email=email, password=password)
+    user = django_user_model.objects.create_user(email=email, password=None)
     # Use this:
 
     a_password = "Kls3#$df03a/"  # noqa: S105

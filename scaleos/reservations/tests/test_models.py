@@ -9,6 +9,7 @@ from scaleos.hr.tests import model_factories as hr_factories
 from scaleos.reservations import models as reservation_models
 from scaleos.reservations.tests import model_factories as reservation_factories
 from scaleos.shared.mixins import ITS_NOW
+from scaleos.users.tests import model_factories as user_factories
 
 logger = logging.getLogger(__name__)
 
@@ -217,7 +218,6 @@ def test_reservation_has_total_amount(faker):
 @pytest.mark.django_db
 def test_reservation_is_human_verified(faker):
     the_email = "my_email@hotmail.com"
-    from scaleos.users.tests import model_factories as user_factories
 
     user = user_factories.UserFactory(email=the_email)
     user_factories.EmailAddressFactory(user=user, email=user.email)
@@ -228,8 +228,6 @@ def test_reservation_is_human_verified(faker):
 
 @pytest.mark.django_db
 def test_reservation_is_not_human_verified(faker):
-    from scaleos.users.tests import model_factories as user_factories
-
     the_email = "my_email@hotmail.com"
 
     user = user_factories.UserFactory(email=the_email)
@@ -249,25 +247,23 @@ def test_reservation_finish(faker):
 
 
 @pytest.mark.django_db
-def test_reservation_verificate(faker):
+def test_reservation_requester_confirm(faker):
     reservation = reservation_factories.ReservationFactory()
-    reservation.verificate()
-    assert reservation.verified_on
-    assert not reservation.verificate()
+    reservation.requester_confirm()
+    assert reservation.requester_confirmed
+    assert not reservation.requester_confirm(), "because it is already confirmed"
 
 
 @pytest.mark.django_db
-def test_reservation_confirmation(faker):
+def test_reservation_organization_confirm(faker):
     reservation = reservation_factories.ReservationFactory()
-    reservation.confirm()
-    assert reservation.confirmed_on
-    assert not reservation.confirm()
+    reservation.organization_confirm()
+    assert reservation.organization_confirmed
+    assert not reservation.organization_confirm(), "because it is already confirmed"
 
 
 @pytest.mark.django_db
 def test_reservation_is_statusses(faker):
-    from scaleos.users.tests import model_factories as user_factories
-
     the_email = "my_email@hotmail.com"
 
     user = user_factories.UserFactory(email=the_email)
@@ -281,8 +277,8 @@ def test_reservation_is_statusses(faker):
     assert (
         reservation.status == reservation_models.Reservation.STATUS.NEEDS_VERIFICATION
     )
-    reservation.verified_on = ITS_NOW
-    assert reservation.confirmed_on is None
+    reservation.requester_confirmed_on = ITS_NOW
+    assert reservation.organization_confirmed_on is None
     assert reservation.status == reservation_models.Reservation.STATUS.TO_BE_CONFIRMED
 
 
