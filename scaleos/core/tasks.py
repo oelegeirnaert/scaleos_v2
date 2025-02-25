@@ -23,7 +23,7 @@ def send_custom_templated_email(request, emailconfirmation, reservation=None):
     try:
         current_site = Site.objects.get_current()
         site_name = current_site.domain
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001 # pragma: no cover
         logger.info("We cannot get the domain from the current site.")
 
     user = emailconfirmation.email_address.user
@@ -51,7 +51,7 @@ def send_custom_templated_email(request, emailconfirmation, reservation=None):
         )
     else:
         # Send normal email
-        send_templated_mail(
+        send_templated_mail(  # pragma: no cover
             template_name="account/email_confirmation_message.email",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],

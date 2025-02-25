@@ -232,7 +232,7 @@ class ReservationLine(AdminLinkMixin, PublicKeyField):
     def total_price(self):
         try:
             return self.amount * self.price_matrix_item.price.current_price
-        except Exception as e:  # noqa: BLE001
+        except AttributeError as e:
             logger.warning(e)
         return None
 

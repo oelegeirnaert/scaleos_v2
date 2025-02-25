@@ -11,12 +11,12 @@ urlpatterns = [
         name="event_reservation",
     ),
     path(
-        "line/<uuid:reservation_line_public_key>/",
+        "line/<uuid:reservationline_public_key>/",
         vw_htmx.update_reservation_line,
         name="update_reservation_line",
     ),
     path(
-        "event/<uuid:event_reservation_public_key>/total/price/",
+        "event/<uuid:eventreservation_public_key>/total/price/",
         vw_htmx.event_reservation_total_price,
         name="event_reservation_total_price",
     ),

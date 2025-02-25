@@ -109,3 +109,136 @@ def test_htmx_get_event_reservation(client):
     )
     response = client.get(url, **headers)
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_htmx_event_reservation_total_price(client):
+    a_uuid = "c221ac76-3829-4e3d-975a-3504e3332bdd"
+    reservation_factories.EventReservationFactory(public_key=a_uuid)
+    headers = {"HTTP_HX-Request": "true"}
+    url = reverse(
+        "reservations_htmx:event_reservation_total_price",
+        kwargs={"eventreservation_public_key": a_uuid},
+    )
+    response = client.get(url, **headers)
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_htmx_update_reservation_line(client):
+    reservation_line_uuid = "c221ac76-3829-4e3d-975a-3504e5332bdd"
+
+    event = event_factories.EventFactory.create()
+    event_reservation = reservation_factories.EventReservationFactory.create(
+        event_id=event.pk,
+    )
+    reservation_line = reservation_factories.ReservationLineFactory.create(
+        public_key=reservation_line_uuid,
+        reservation_id=event_reservation.pk,
+    )
+
+    # First, access the session
+    session = client.session
+    session["event_reservation_id"] = event_reservation.pk
+    session.save()  # Save the session
+
+    headers = {"HTTP_HX-Request": "true"}
+    data = {"amount": ""}
+    url = reverse(
+        "reservations_htmx:update_reservation_line",
+        kwargs={"reservationline_public_key": reservation_line.public_key},
+    )
+    response = client.post(url, data, **headers)
+    assert response.status_code == 200
+    reservation_line.refresh_from_db()
+    assert reservation_line.amount == 0
+
+
+@pytest.mark.django_db
+def test_htmx_update_reservation_line_with_two(client):
+    reservation_line_uuid = "c221ac76-3829-4e3d-975a-3504e5332bdd"
+
+    event = event_factories.EventFactory.create()
+    event_reservation = reservation_factories.EventReservationFactory.create(
+        event_id=event.pk,
+    )
+    reservation_line = reservation_factories.ReservationLineFactory.create(
+        public_key=reservation_line_uuid,
+        reservation_id=event_reservation.pk,
+    )
+
+    # First, access the session
+    session = client.session
+    session["event_reservation_id"] = event_reservation.pk
+    session.save()  # Save the session
+
+    headers = {"HTTP_HX-Request": "true"}
+    data = {"amount": 2}
+    url = reverse(
+        "reservations_htmx:update_reservation_line",
+        kwargs={"reservationline_public_key": reservation_line.public_key},
+    )
+    response = client.post(url, data, **headers)
+    assert response.status_code == 200
+    reservation_line.refresh_from_db()
+    assert reservation_line.amount == 2
+
+
+@pytest.mark.django_db
+def test_htmx_update_reservation_line_with_negative_amount(client):
+    reservation_line_uuid = "c221ac76-3829-4e3d-975a-3504e5332bdd"
+
+    event = event_factories.EventFactory.create()
+    event_reservation = reservation_factories.EventReservationFactory.create(
+        event_id=event.pk,
+    )
+    reservation_line = reservation_factories.ReservationLineFactory.create(
+        public_key=reservation_line_uuid,
+        reservation_id=event_reservation.pk,
+    )
+
+    # First, access the session
+    session = client.session
+    session["event_reservation_id"] = event_reservation.pk
+    session.save()  # Save the session
+
+    headers = {"HTTP_HX-Request": "true"}
+    data = {"amount": -4}
+    url = reverse(
+        "reservations_htmx:update_reservation_line",
+        kwargs={"reservationline_public_key": reservation_line.public_key},
+    )
+    response = client.post(url, data, **headers)
+    assert response.status_code == 200
+    reservation_line.refresh_from_db()
+    assert reservation_line.amount == 0
+
+
+@pytest.mark.django_db
+def test_htmx_update_reservation_line_with_real_text_amount(client):
+    reservation_line_uuid = "c221ac76-3829-4e3d-975a-3504e5332bdd"
+
+    event = event_factories.EventFactory.create()
+    event_reservation = reservation_factories.EventReservationFactory.create(
+        event_id=event.pk,
+    )
+    reservation_line = reservation_factories.ReservationLineFactory.create(
+        public_key=reservation_line_uuid,
+        reservation_id=event_reservation.pk,
+    )
+
+    # First, access the session
+    session = client.session
+    session["event_reservation_id"] = event_reservation.pk
+    session.save()  # Save the session
+
+    headers = {"HTTP_HX-Request": "true"}
+    data = {"amount": "i am text"}
+    url = reverse(
+        "reservations_htmx:update_reservation_line",
+        kwargs={"reservationline_public_key": reservation_line.public_key},
+    )
+    response = client.post(url, data, **headers)
+    assert response.status_code == 200
+    reservation_line.refresh_from_db()
+    assert reservation_line.amount == 0

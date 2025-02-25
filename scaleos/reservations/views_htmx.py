@@ -77,25 +77,38 @@ def event_reservation(request, event_public_key):
     return htmx_response(request, html_fragment)
 
 
-def update_reservation_line(request, reservation_line_public_key):
+def update_reservation_line(request, reservationline_public_key):
+    logger.setLevel(logging.DEBUG)
     shared_htmx.do_htmx_post_checks(request)
 
     event_reservation_id = request.session.get(EVENT_RESERVATION_ID_KEY, None)
+    logger.debug("Searching for event reservation: %s", event_reservation_id)
     get_object_or_404(
         reservation_models.EventReservation,
         id=event_reservation_id,
     )
+    logger.debug("Event reservation found")
 
+    logger.debug(
+        "Searching for reservation line with public key: %s",
+        reservationline_public_key,
+    )
     reservationline = get_object_or_404(
         reservation_models.ReservationLine,
-        public_key=reservation_line_public_key,
+        public_key=reservationline_public_key,
     )
+
     the_amount = request.POST.get("amount", 0)
     logger.info("The amount we got: %s", the_amount)
-    if len(the_amount) == 0:
+    if isinstance(the_amount, str) and len(the_amount) == 0:
         the_amount = 0
 
-    the_amount = int(the_amount)
+    try:
+        the_amount = int(the_amount)
+    except ValueError:
+        logger.warning("We cannot convert '%s' to an integer", the_amount)
+        the_amount = 0
+
     logger.debug("Update amount to: %s", the_amount)
     if the_amount < 0:
         logger.info("The amount is lower than ZERO, force setting it to 0")
@@ -111,14 +124,15 @@ def update_reservation_line(request, reservation_line_public_key):
         },
         request=request,
     )
+    logger.debug("Return the response")
     return htmx_response(request, html_fragment)
 
 
-def event_reservation_total_price(request, event_reservation_public_key):
-    logger.info("The Public Key: %s", event_reservation_public_key)
+def event_reservation_total_price(request, eventreservation_public_key):
+    logger.info("The Public Key: %s", eventreservation_public_key)
     event_reservation = get_object_or_404(
         reservation_models.EventReservation,
-        public_key=event_reservation_public_key,
+        public_key=eventreservation_public_key,
     )
     return_msg = _("total price for %(amount)s persons: %(price)s") % {
         "amount": event_reservation.total_amount,

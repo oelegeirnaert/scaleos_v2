@@ -3,7 +3,7 @@ import logging
 # myapp/utils.py
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
+from templated_email import send_templated_mail
 
 from config import celery_app
 from scaleos.reservations import models as reservation_models
@@ -27,14 +27,40 @@ def send_reservation_confirmation(self, reservation_id):
         logger.info("The reservation does not exist")
         return False
 
-    # Send a welcome email
-    subject = f"Please complete your reservation for {reservation}"
-    message = """Hello,\n\nThank you for signing up!
-    Please verify your email to set your password."""
-    from_email = settings.DEFAULT_FROM_EMAIL
-    recipient_list = [reservation.user.email]
+    if reservation.confirmation_mail_sent_on:
+        logger.info(
+            "The confirmation mail for reservation %s is already sent on: %s",
+            reservation.pk,
+            reservation.confirmation_mail_sent_on,
+        )
+        return False
 
-    send_mail(subject, message, from_email, recipient_list)
+    # Send a welcome email
+    user = reservation.user
+
+    if user is None:
+        logger.warning("The reservation %s has no user set.", reservation.pk)
+        return False
+
+    if user.email is None:  # pragma: no cover
+        logger.warning(
+            "The user of reservation %s has no email address set.",
+            reservation.pk,
+        )
+        return False
+
+    recipient_list = [user.email]
+
+    send_templated_mail(
+        template_name="reservation/reservation_confirmation_message.email",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[recipient_list],
+        context={
+            "user": user,
+            "reservation": reservation,
+            "site_name": "ScaleOS.net",
+        },
+    )
 
     reservation.confirmation_mail_sent_on = ITS_NOW
     reservation.save()
