@@ -1,3 +1,6 @@
+from django.conf import settings
+
+
 def body_classes(request):
     return {
         "app_name": request.resolver_match.app_name,
@@ -23,4 +26,24 @@ def hideable_page_parts(request):
     return {
         "show_header": show_header,
         "show_footer": show_footer,
+    }
+
+
+def theme_colors(request):
+    """
+    Adds Tailwind theme colors to the context.
+    """
+    default_colors = {
+        "primary": "lime-500",
+        "secondary": "gray-500",
+        "accent": "blue-500",
+        "danger": "red-500",
+    }
+
+    return {
+        "TAILWIND_THEME_COLORS": getattr(
+            settings,
+            "TAILWIND_THEME_COLORS",
+            default_colors,
+        ),
     }

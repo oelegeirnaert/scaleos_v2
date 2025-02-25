@@ -20,7 +20,7 @@
   <button hx-get="{% url 'events_htmx:concept' card.public_key %}?popup"
           hx-target=".modal.content"
           hx-swap-oob="true"
-          class="group mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-lime-500 px-5 py-3 text-white transition focus:ring-3 focus:ring-yellow-400 focus:outline-hidden sm:mt-0 sm:w-auto">
+          class="group mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-{{ TAILWIND_THEME_COLORS.primary }} px-5 py-3 text-white transition focus:ring-3 focus:ring-yellow-400 focus:outline-hidden sm:mt-0 sm:w-auto">
     <svg xmlns="http://www.w3.org/2000/svg"
          viewBox="0 0 20 20"
          fill="currentColor"

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load account %}
+
+{% block title %}
+  {% trans "confirm your email" %}
+{% endblock title %}
+{% block content %}
+  <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 max-w-md w-full">
+    <h2 class="text-2xl font-semibold text-{{ TAILWIND_THEME_COLORS.primary }} dark:text-{{ TAILWIND_THEME_COLORS.accent }} text-center">
+      Confirm Your Email
+    </h2>
+    {% if confirmation %}
+      {% if confirmation.email_address.user == request.user %}
+        <p class="mt-4 text-gray-600 dark:text-gray-300 text-center">
+          Please confirm that you want to use <strong>{{ confirmation.email_address.email }}</strong> as your email address.
+        </p>
+        <form method="post"
+              action="{% url 'account_confirm_email' confirmation.key %}"
+              class="mt-6">
+          {% csrf_token %}
+          <button type="submit"
+                  class="w-full bg-{{ TAILWIND_THEME_COLORS.primary }} text-white py-2 px-4 rounded-lg hover:bg-opacity-80">
+            Confirm Email
+          </button>
+        </form>
+      {% else %}
+        <p class="mt-4 text-red-500 text-center">This confirmation link is invalid or expired.</p>
+      {% endif %}
+    {% else %}
+      <p class="mt-4 text-red-500 text-center">Invalid confirmation request.</p>
+    {% endif %}
+    <div class="mt-6 text-center">
+      <a href="{% url 'account_login' %}"
+         class="text-{{ TAILWIND_THEME_COLORS.accent }} hover:underline">Back to Login</a>
+    </div>
+  </div>
+{% endblock content %}

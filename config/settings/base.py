@@ -225,6 +225,7 @@ TEMPLATES = [
                 # Oele
                 "scaleos.utils.context_processors.body_classes",
                 "scaleos.utils.context_processors.hideable_page_parts",
+                "scaleos.utils.context_processors.theme_colors",
             ],
         },
     },
@@ -404,3 +405,11 @@ ACCOUNT_EMAIL_CONFIRMATION_EMAIL = "scaleos.core.tasks.send_custom_templated_ema
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
 ACCOUNT_EMAIL_CONFIRMATION_HMAC = True
+
+
+TAILWIND_THEME_COLORS = {
+    "primary": "lime-500",
+    "secondary": "gray-500",
+    "accent": "blue-500",
+    "danger": "red-500",
+}
