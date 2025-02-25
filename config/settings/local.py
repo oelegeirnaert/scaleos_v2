@@ -23,7 +23,7 @@ SECRET_KEY = env(
     default="8Y50FknlugcaQRQ6nzxALcLxsy9i3d7LbjxvSawzpr57qwodYXPwEK95Lz7ppbbi",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1", "django"]  # noqa: S104
+ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1", "django", ".drum-vimba.ts.net"]  # noqa: S104
 
 # CACHES
 # ------------------------------------------------------------------------------
