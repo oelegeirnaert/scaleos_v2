@@ -57,7 +57,7 @@ class Person(
 
     @property
     def age(self):
-        self.get_age()
+        return self.get_age()
 
     def get_age(self, today=None):
         if today is None:
