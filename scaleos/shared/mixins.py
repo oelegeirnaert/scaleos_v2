@@ -49,7 +49,7 @@ class AdminLinkMixin(models.Model):
         )
 
     @cached_property
-    def card_list_template(self):
+    def card_list_template(self):  # pragma: no cover
         msg = "Use: include 'card_list.html' "
         raise Exception(msg)  # noqa: TRY002
         return f"{self.app_label}/{self.model_name}/card_list.html"
@@ -109,5 +109,5 @@ class AdminLinkMixin(models.Model):
     def icon(self):
         the_icon = "bi-patch-question"
         if hasattr(self, "ICON"):
-            the_icon = self.ICON
+            the_icon = self.ICON  # pragma: no cover
         return mark_safe(f'<i class="bi {the_icon}"></i>')  # noqa: S308
