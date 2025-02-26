@@ -116,6 +116,7 @@ LOCAL_APPS = [
     "scaleos.hr",
     "scaleos.reservations",
     "scaleos.payments",
+    "scaleos.geography",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
