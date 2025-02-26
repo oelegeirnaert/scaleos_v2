@@ -71,3 +71,19 @@ class Person(
             )
 
         return None
+
+
+class PersonAddress(AdminLinkMixin):
+    person = models.ForeignKey(
+        Person,
+        related_name="addresses",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+    )
+    address = models.OneToOneField(
+        "geography.Address",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
