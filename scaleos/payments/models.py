@@ -272,3 +272,43 @@ class BulkPriceMatrixItem(PriceMatrixItem, OrderableModel):
     class Meta(OrderableModel.Meta):
         verbose_name = _("bulk price matrix item")
         verbose_name_plural = _("bulk price matrix items")
+
+
+class Payment(
+    PolymorphicModel,
+    AdminLinkMixin,
+    PublicKeyField,
+    LogInfoFields,
+):
+    amount_paid = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency="EUR",
+        null=True,
+    )
+    confirmed_on = models.DateTimeField(null=True, blank=True)
+
+
+class PaymentRequest(AdminLinkMixin, LogInfoFields):
+    to_pay = models.OneToOneField(Price, on_delete=models.SET_NULL, null=True)
+
+
+class PaymentRequestPayment(AdminLinkMixin, LogInfoFields):
+    payment_request = models.ForeignKey(
+        PaymentRequest,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    payment = models.ForeignKey(
+        Payment,
+        related_name="payments",
+        on_delete=models.CASCADE,
+        null=True,
+    )
+
+    @property
+    def confirmed_on(self):
+        if self.payment and self.payment.confirmed_on:
+            return self.payment.confirmed_on
+
+        return _("not yet confirmed")

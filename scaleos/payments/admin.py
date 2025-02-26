@@ -80,3 +80,8 @@ class AgePriceMatrixItemAdmin(admin.ModelAdmin):
 @admin.register(payment_models.BulkPriceMatrixItem)
 class BulkPriceMatrixItemAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(payment_models.PaymentRequest)
+class PaymentRequestAdmin(admin.ModelAdmin):
+    pass

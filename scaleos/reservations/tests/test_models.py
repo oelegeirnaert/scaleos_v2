@@ -6,6 +6,7 @@ from moneyed import Money
 
 from scaleos.events.tests import model_factories as event_factories
 from scaleos.hr.tests import model_factories as hr_factories
+from scaleos.payments.tests import model_factories as payment_factories
 from scaleos.reservations import models as reservation_models
 from scaleos.reservations.tests import model_factories as reservation_factories
 from scaleos.shared.mixins import ITS_NOW
@@ -280,6 +281,46 @@ def test_reservation_is_statusses(faker):
     reservation.requester_confirmed_on = ITS_NOW
     assert reservation.organization_confirmed_on is None
     assert reservation.status == reservation_models.Reservation.STATUS.TO_BE_CONFIRMED
+
+
+@pytest.mark.django_db
+def test_reservation_payment_request(faker):
+    hundred_euro = Money(100, EUR)
+    price = payment_factories.PriceFactory.create(
+        current_price=hundred_euro,
+        includes_vat=False,
+        vat_percentage=21,
+    )
+    assert Money(121.00, "EUR") == price.vat_included
+
+    age_price_matrix = payment_factories.AgePriceMatrixFactory()
+    age_price_matrix_item = payment_factories.AgePriceMatrixItemFactory(
+        age_price_matrix_id=age_price_matrix.pk,
+        price_id=price.pk,
+    )
+    brunch_concept = event_factories.BrunchConceptFactory()
+    event_factories.ConceptPriceMatrixFactory(
+        price_matrix_id=age_price_matrix.pk,
+        concept_id=brunch_concept.pk,
+    )
+    brunch_event = event_factories.BrunchEventFactory(concept_id=brunch_concept.pk)
+    assert brunch_event.current_price_matrix
+
+    reservation = reservation_factories.EventReservationFactory(
+        event_id=brunch_event.pk,
+    )
+    reservation_factories.ReservationLineFactory(
+        reservation_id=reservation.pk,
+        amount=1,
+        price_matrix_item_id=age_price_matrix_item.pk,
+    )
+    assert reservation.lines.count() == 1
+
+    assert reservation.total_price_vat_included.amount == 121
+    reservation.organization_confirm()
+    assert reservation.payment_request
+    assert reservation.payment_request.to_pay
+    assert reservation.payment_request.to_pay.vat_included.amount == 121
 
 
 # @pytest.mark.django_db

@@ -266,3 +266,16 @@ def test_htmx_update_reservation_line_with_real_text_amount(client):
     assert response.status_code == 200
     reservation_line.refresh_from_db()
     assert reservation_line.amount == 0
+
+
+@pytest.mark.django_db
+def test_htmx_confirm_reservation(client):
+    reservation = reservation_factories.ReservationFactory()
+
+    headers = {"HTTP_HX-Request": "true"}
+    url = reverse(
+        "reservations_htmx:confirm_reservation",
+    )
+    data = {"reservation_public_key": reservation.public_key}
+    response = client.post(url, data, **headers)
+    assert response.status_code == 200

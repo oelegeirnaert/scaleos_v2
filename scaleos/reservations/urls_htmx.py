@@ -25,4 +25,9 @@ urlpatterns = [
         vw_htmx.finish_reservation,
         name="finish_reservation",
     ),
+    path(
+        "organization/confirm/",
+        vw_htmx.organization_confirm_reservation,
+        name="confirm_reservation",
+    ),
 ]

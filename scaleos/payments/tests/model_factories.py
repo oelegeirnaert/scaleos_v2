@@ -33,3 +33,10 @@ class BulkPriceMatrixItemFactory(
 ):
     class Meta:
         model = payment_models.BulkPriceMatrixItem
+
+
+class PaymentRequestFactory(
+    DjangoModelFactory[payment_models.PaymentRequest],
+):
+    class Meta:
+        model = payment_models.PaymentRequest

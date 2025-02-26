@@ -75,6 +75,12 @@ class Reservation(
             "the moment the confirmation email of the reservation has been sent",
         ),
     )
+    payment_request = models.OneToOneField(
+        "payments.PaymentRequest",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _("reservation")
@@ -85,6 +91,14 @@ class Reservation(
         total_price = Money(0, EUR)
         for line in self.lines.all():
             total_price += line.total_price
+
+        return total_price
+
+    @property
+    def total_price_vat_included(self):
+        total_price = Money(0, EUR)
+        for line in self.lines.all():
+            total_price += line.total_price_vat_included
 
         return total_price
 
@@ -176,7 +190,7 @@ class Reservation(
         logger.info("Organization confirmed on: %s", the_now)
         self.organization_confirmed_on = the_now
         self.save()
-
+        self.update_payment_request()
         send_reservation_confirmation.delay(self.id)
         return True
 
@@ -197,6 +211,32 @@ class Reservation(
         self.requester_confirmed_on = the_now
         self.save()
         return True
+
+    def update_payment_request(self):
+        from scaleos.payments.models import PaymentRequest
+        from scaleos.payments.models import Price
+
+        if self.payment_request is None:
+            payment_request = PaymentRequest.objects.create()
+            self.payment_request_id = payment_request.pk
+            self.save()
+        else:
+            payment_request = PaymentRequest.objects.get(id=self.payment_request_id)
+
+        if payment_request.to_pay is None:
+            price = Price.objects.create(
+                current_price=self.total_price_vat_included,
+                includes_vat=True,
+            )
+            payment_request.to_pay_id = price.pk
+            payment_request.save()
+        else:
+            price = Price.objects.get(id=payment_request.to_pay.pk)
+            price.current_price = self.total_price_vat_included
+            price.includes_vat = True
+            price.save()
+            payment_request.to_pay_id = price.pk
+            payment_request.save()
 
 
 class EventReservation(Reservation):
@@ -232,6 +272,14 @@ class ReservationLine(AdminLinkMixin, PublicKeyField):
     def total_price(self):
         try:
             return self.amount * self.price_matrix_item.price.current_price
+        except AttributeError as e:
+            logger.warning(e)
+        return None
+
+    @property
+    def total_price_vat_included(self):
+        try:
+            return self.amount * self.price_matrix_item.price.vat_included
         except AttributeError as e:
             logger.warning(e)
         return None

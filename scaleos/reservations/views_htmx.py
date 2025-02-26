@@ -161,3 +161,17 @@ def finish_reservation(request, reservation_public_key):
     if isinstance(reservation, reservation_models.Reservation):
         request.session[EVENT_RESERVATION_ID_KEY] = None
     return HttpResponse(_("reservation requested"))
+
+
+def organization_confirm_reservation(request):
+    shared_htmx.do_htmx_post_checks(request)
+    reservation_public_key = request.POST.get("reservation_public_key", None)
+    if reservation_public_key is None:
+        logger.error("no reservation public key in post request")
+        return HttpResponse(_("we cannot confirm this reservation"))
+    reservation = get_object_or_404(
+        reservation_models.Reservation,
+        public_key=reservation_public_key,
+    )
+    reservation.organization_confirm()
+    return HttpResponse(_("reservation confirmed"))
