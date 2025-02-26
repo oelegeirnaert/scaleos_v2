@@ -3,7 +3,6 @@ import datetime
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
-from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from scaleos.shared.fields import NameField
@@ -27,8 +26,6 @@ class Person(
     middle_name = models.CharField(default="", blank=True)
 
     nationality = models.CharField(default="", blank=True)
-    gender = models.CharField(default="", blank=True)
-    country = CountryField(null=True, blank=True)
 
     """
     primary_address = models.ForeignKey(
