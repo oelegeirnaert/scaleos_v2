@@ -58,7 +58,7 @@ class GPSFields(models.Model):
                 logger.info("GPS Point set!")
                 return True
 
-        return False
+        return False  # pragma: no cover
 
 
 class Address(GPSFields, LogInfoFields, AdminLinkMixin):
