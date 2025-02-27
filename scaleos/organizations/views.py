@@ -22,3 +22,17 @@ def concepts(request, organization_slug):
         organization.page_template,
         context,
     )
+
+
+def organization(request, organization_slug):
+    context = {}
+    organization = get_object_or_404(
+        organization_models.Organization,
+        slug=organization_slug,
+    )
+    context["organization"] = organization
+    return render(
+        request,
+        organization.page_template,
+        context,
+    )

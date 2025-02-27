@@ -6,8 +6,10 @@ from moneyed import EUR
 from moneyed import Money
 
 from scaleos.events import models as event_models
+from scaleos.hr import models as hr_models
 from scaleos.organizations import models as organization_models
 from scaleos.payments import models as payment_models
+from scaleos.users import models as user_models
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +161,22 @@ class Command(BaseCommand):
         dance.name = f"Dance {dinner_and_dance_concept.name}"
         dance.save()
 
+    def create_waerboom_owners(self, organization):
+        user_tamara, created = user_models.User.objects.get_or_create(
+            email="tamara.coppens@waerboom.com",
+        )
+        person_tamara, created = hr_models.Person.objects.get_or_create(
+            user_id=user_tamara.pk,
+        )
+        person_tamara.name = "Tamara"
+        person_tamara.family_name = "Coppens"
+        person_tamara.save()
+
+        organization_models.OrganizationOwner.objects.get_or_create(
+            organization_id=organization.pk,
+            person_id=person_tamara.pk,
+        )
+
     def waerboom(self):
         logger.info("Create or update Waerboom")
         waerboom, created = organization_models.Enterprise.objects.get_or_create(
@@ -176,6 +194,7 @@ class Command(BaseCommand):
 
         self.create_organization_brunch(waerboom)
         self.create_organization_dinner_and_dance(waerboom)
+        self.create_waerboom_owners(waerboom)
 
         return True
 

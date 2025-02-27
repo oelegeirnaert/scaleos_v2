@@ -108,7 +108,7 @@ class Reservation(
         if the_result:
             return the_result
 
-        return None
+        return 0
 
     @property
     def verified_email_address(self):

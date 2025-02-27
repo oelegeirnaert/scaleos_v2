@@ -32,6 +32,10 @@ urlpatterns = [
     # Your stuff: custom urls includes go here
     # Oele
     path(
+        "hr/",
+        include("scaleos.hr.urls", namespace="hr"),
+    ),
+    path(
         "organization/",
         include("scaleos.organizations.urls", namespace="organizations"),
     ),

@@ -110,6 +110,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "scaleos.core",
+    "scaleos.shared",
     "scaleos.users",
     "scaleos.organizations",
     "scaleos.events",

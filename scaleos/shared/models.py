@@ -28,7 +28,7 @@ class CardModel(models.Model):
         because the actual model can also have an image
         """
         if self.card_image:
-            return self.card_image.url
+            return self.card_image.url  # pragma: no cover
         if hasattr(self, "CARD_IMAGE"):
             return self.CARD_IMAGE
 

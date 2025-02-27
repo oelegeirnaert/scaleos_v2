@@ -76,8 +76,7 @@ class AdminLinkMixin(models.Model):
                 text-sm font-medium text-white
                 hover:bg-transparent hover:text-gray-600
                 focus:ring-3 focus:outline-hidden"
-                href="{url}"
-                target="_blank">
+                href="{url}">
                 open {self.verbose_name}
                 </a>
                 """,

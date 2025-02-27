@@ -28,6 +28,6 @@ urlpatterns = [
     path(
         "organization/confirm/",
         vw_htmx.organization_confirm_reservation,
-        name="confirm_reservation",
+        name="organization_confirm_reservation",
     ),
 ]

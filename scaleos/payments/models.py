@@ -305,10 +305,3 @@ class PaymentRequestPayment(AdminLinkMixin, LogInfoFields):
         on_delete=models.CASCADE,
         null=True,
     )
-
-    @property
-    def confirmed_on(self):
-        if self.payment and self.payment.confirmed_on:
-            return self.payment.confirmed_on
-
-        return _("not yet confirmed")

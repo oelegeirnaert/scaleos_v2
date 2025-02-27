@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from scaleos.hr import models as hr_models
+from scaleos.organizations.admin import OrganizationOwnerInlineAdmin
 
 
 # Register your models here.
@@ -20,4 +21,4 @@ class PersonAdmin(admin.ModelAdmin):
     ]
     readonly_fields = ["age"]
     search_fields = ["name", "national_number"]
-    inlines = [PersonAddressInlineAdmin]
+    inlines = [PersonAddressInlineAdmin, OrganizationOwnerInlineAdmin]

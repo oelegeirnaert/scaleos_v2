@@ -9,10 +9,16 @@ from scaleos.organizations import models as organization_models
 # Register your models here.
 
 
+class OrganizationOwnerInlineAdmin(admin.TabularInline):
+    model = organization_models.OrganizationOwner
+    extra = 0
+    show_change_link = True
+
+
 @admin.register(organization_models.Enterprise)
 class EnterpriseAdmin(LeafletGeoAdminMixin, PolymorphicChildModelAdmin):
     base_model = organization_models.Organization  # Explicitly set here!
-    readonly_fields = ["slug"]
+    readonly_fields = ["slug", "public_key"]
     # define custom features here
 
 

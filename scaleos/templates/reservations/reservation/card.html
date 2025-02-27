@@ -20,4 +20,7 @@
 {% endblock card_details %}
 {% block card_footer %}
   <div>{{ card.page_button }}</div>
+  <button class="group mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-{{ TAILWIND_THEME_COLORS.primary }} px-5 py-3 text-white transition focus:ring-3 focus:ring-yellow-400 focus:outline-hidden sm:mt-0 sm:w-auto"
+          hx-post="{% url 'reservations_htmx:organization_confirm_reservation' %}"
+          hx-vals='{"reservation_public_key": "{{ card.public_key }}"}'>Confirm</button>
 {% endblock card_footer %}

@@ -6,16 +6,40 @@ from django_countries.fields import CountryField
 from polymorphic.models import PolymorphicModel
 
 from scaleos.shared.fields import NameField
+from scaleos.shared.fields import PublicKeyField
 from scaleos.shared.mixins import AdminLinkMixin
+from scaleos.shared.models import CardModel
 
 logger = logging.getLogger(__name__)
 
 
 # Create your models here.
-class Organization(PolymorphicModel, AdminLinkMixin, NameField):
+class Organization(
+    PolymorphicModel,
+    AdminLinkMixin,
+    NameField,
+    CardModel,
+    PublicKeyField,
+):
     class Meta:
         verbose_name = _("organization")
         verbose_name_plural = _("organizations")
+
+
+class OrganizationOwner(AdminLinkMixin):
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+    )
+    person = models.ForeignKey(
+        "hr.Person",
+        related_name="owning_organizations",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+    )
 
 
 class Enterprise(Organization):

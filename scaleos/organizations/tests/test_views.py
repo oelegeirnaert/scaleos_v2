@@ -18,3 +18,15 @@ def test_organization_can_show_concepts(client):
     )
     response = client.get(url)
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_ogranization(client):
+    organization_slug = "waerboom"
+    organization_factories.OrganizationFactory(slug=organization_slug)
+    url = reverse(
+        "organizations:organization",
+        kwargs={"organization_slug": organization_slug},
+    )
+    response = client.get(url)
+    assert response.status_code == 200

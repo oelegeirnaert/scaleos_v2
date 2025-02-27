@@ -49,7 +49,7 @@ def send_reservation_confirmation(self, reservation_id):
         )
         return False
 
-    recipient_list = [user.email]
+    recipient_list = user.email
 
     send_templated_mail(
         template_name="reservation/reservation_confirmation_message.email",

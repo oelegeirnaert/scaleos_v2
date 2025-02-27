@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 import pytest
 from django.core import mail
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
 from scaleos.events.tests import model_factories as event_factories
 from scaleos.payments.tests import model_factories as payment_factories
@@ -269,13 +270,31 @@ def test_htmx_update_reservation_line_with_real_text_amount(client):
 
 
 @pytest.mark.django_db
-def test_htmx_confirm_reservation(client):
+def test_htmx_organization_confirm_reservation(client):
     reservation = reservation_factories.ReservationFactory()
 
     headers = {"HTTP_HX-Request": "true"}
     url = reverse(
-        "reservations_htmx:confirm_reservation",
+        "reservations_htmx:organization_confirm_reservation",
     )
     data = {"reservation_public_key": reservation.public_key}
     response = client.post(url, data, **headers)
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_organization_confirm_reservation_no_public_key(client):
+    """
+    Test that organization_confirm_reservation returns an error when no
+    reservation_public_key is provided.
+    """
+    reservation_factories.ReservationFactory()
+
+    headers = {"HTTP_HX-Request": "true"}
+    url = reverse(
+        "reservations_htmx:organization_confirm_reservation",
+    )
+    data = {}
+    response = client.post(url, data, **headers)
+    assert response.status_code == 200
+    assert response.content.decode() == str(_("we cannot confirm this reservation"))

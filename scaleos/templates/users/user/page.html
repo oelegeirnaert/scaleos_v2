@@ -8,4 +8,7 @@
   {% if reservations %}
     {% include "card_list.html" with cards=reservations.all %}
   {% endif %}
+  {% if organizations %}
+    {% include "card_list.html" with cards=organizations.all %}
+  {% endif %}
 {% endblock content %}

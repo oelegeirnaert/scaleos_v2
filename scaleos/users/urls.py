@@ -12,4 +12,5 @@ urlpatterns = [
     path("~update/", view=user_update_view, name="update"),
     path("<int:pk>/", view=user_detail_view, name="detail"),
     path("reservation/", view=user_views.reservations, name="reservations"),
+    path("organizations/", view=user_views.organizations, name="organizations"),
 ]

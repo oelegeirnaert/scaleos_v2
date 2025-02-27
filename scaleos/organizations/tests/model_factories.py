@@ -15,3 +15,10 @@ class OrganizationFactory(
 ):
     class Meta:
         model = organization_models.Organization
+
+
+class OrganizationOwnerFactory(
+    DjangoModelFactory[organization_models.OrganizationOwner],
+):
+    class Meta:
+        model = organization_models.OrganizationOwner

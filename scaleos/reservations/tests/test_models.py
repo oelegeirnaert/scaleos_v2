@@ -6,6 +6,8 @@ from moneyed import Money
 
 from scaleos.events.tests import model_factories as event_factories
 from scaleos.hr.tests import model_factories as hr_factories
+from scaleos.payments.models import PaymentRequest
+from scaleos.payments.models import Price
 from scaleos.payments.tests import model_factories as payment_factories
 from scaleos.reservations import models as reservation_models
 from scaleos.reservations.tests import model_factories as reservation_factories
@@ -207,7 +209,7 @@ def test_brunch_reservationline_for_waerboom_cannot_exceed_total_availble_places
 @pytest.mark.django_db
 def test_reservation_has_total_amount(faker):
     reservation = reservation_factories.ReservationFactory.create()
-    assert reservation.total_amount is None
+    assert reservation.total_amount == 0
     reservation_factories.ReservationLineFactory.create_batch(
         3,
         reservation_id=reservation.pk,
@@ -321,6 +323,49 @@ def test_reservation_payment_request(faker):
     assert reservation.payment_request
     assert reservation.payment_request.to_pay
     assert reservation.payment_request.to_pay.vat_included.amount == 121
+
+
+@pytest.mark.django_db
+def test_update_payment_request_updates_existing_payment_request_and_price(
+    faker,
+):
+    """
+    Test that if there's an existing payment_request, it will update it
+    and the price.
+    """
+    price = payment_factories.PriceFactory(
+        current_price=Money(50, EUR),
+        includes_vat=False,
+    )
+    payment_request = payment_factories.PaymentRequestFactory(to_pay=price)
+    reservation = reservation_factories.ReservationFactory(
+        payment_request=payment_request,
+    )
+    reservation.update_payment_request()
+
+    payment_request.refresh_from_db()
+    price.refresh_from_db()
+
+    assert PaymentRequest.objects.count() == 1
+    assert payment_request.to_pay is not None
+    assert payment_request.to_pay.includes_vat is True
+    assert Price.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_total_price_vat_included_no_price(faker):
+    """
+    Test that total_price_vat_included returns None and logs a warning
+    when there is no price.
+    """
+    age_price_matrix_item = payment_factories.AgePriceMatrixItemFactory(
+        price=None,
+    )
+    reservation_line = reservation_factories.ReservationLineFactory(
+        amount=3,
+        price_matrix_item=age_price_matrix_item,
+    )
+    assert reservation_line.total_price_vat_included is None
 
 
 # @pytest.mark.django_db

@@ -39,3 +39,9 @@ class User(AbstractUser, AdminLinkMixin):
 
         """
         return reverse("users:detail", kwargs={"pk": self.id})
+
+    @property
+    def has_organizations(self):
+        if not hasattr(self, "person"):
+            return False
+        return self.person.owning_organizations.count() > 0

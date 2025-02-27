@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import SetPasswordForm
@@ -14,6 +16,8 @@ from django.views.generic import RedirectView
 from django.views.generic import UpdateView
 
 from scaleos.users.models import User
+
+logger = logging.getLogger(__name__)
 
 
 class UserDetailView(LoginRequiredMixin, DetailView):
@@ -77,4 +81,37 @@ def reservations(request):
         request,
         user.page_template,
         {"user": user, "reservations": reservations},
+    )
+
+
+@login_required
+def organizations(request):
+    from scaleos.organizations.models import Organization
+
+    user = request.user
+
+    if not hasattr(user, "person"):
+        return render(
+            request,
+            user.page_template,
+            {"user": user, "organizations": None},
+        )
+
+    person = user.person
+    organization_ids = person.owning_organizations.all().values_list(
+        "organization_id",
+        flat=True,
+    )
+    logger.info(organization_ids)
+    organizations = Organization.objects.filter(id__in=organization_ids)
+
+    if organizations.count() == 1:
+        organization = organizations.first()
+        request.session["current_organization_id"] = organization.id
+        return redirect("organizations:organization", organization.slug)
+
+    return render(
+        request,
+        user.page_template,
+        {"user": user, "organizations": organizations},
     )
