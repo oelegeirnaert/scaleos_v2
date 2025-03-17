@@ -22,3 +22,10 @@ class OrganizationOwnerFactory(
 ):
     class Meta:
         model = organization_models.OrganizationOwner
+
+
+class OrganizationCustomerFactory(
+    DjangoModelFactory[organization_models.OrganizationCustomer],
+):
+    class Meta:
+        model = organization_models.OrganizationCustomer

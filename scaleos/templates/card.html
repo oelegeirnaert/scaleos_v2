@@ -1,6 +1,6 @@
 {% load i18n static %}
 
-<a href="#"
+<a {{ card.page_url }}
    class="block rounded-lg p-4 shadow-xs shadow-indigo-100 bg-gray-50">
   <img alt=""
        {% if card.card_image_url %} src="{{ card.card_image_url }}" {% else %} src="{% static 'images/cards/events/concept/brunch.jpg' %}" {% endif %}

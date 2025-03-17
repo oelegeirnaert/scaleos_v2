@@ -13,6 +13,14 @@ class OrganizationOwnerInlineAdmin(admin.TabularInline):
     model = organization_models.OrganizationOwner
     extra = 0
     show_change_link = True
+    autocomplete_fields = ["person"]
+
+
+class OrganizationCustomerInlineAdmin(admin.TabularInline):
+    model = organization_models.OrganizationCustomer
+    extra = 0
+    show_change_link = True
+    autocomplete_fields = ["person"]
 
 
 @admin.register(organization_models.Enterprise)
@@ -20,6 +28,7 @@ class EnterpriseAdmin(LeafletGeoAdminMixin, PolymorphicChildModelAdmin):
     base_model = organization_models.Organization  # Explicitly set here!
     readonly_fields = ["slug", "public_key"]
     # define custom features here
+    inlines = [OrganizationOwnerInlineAdmin, OrganizationCustomerInlineAdmin]
 
 
 @admin.register(organization_models.Organization)
@@ -33,3 +42,8 @@ class OrganizationAdmin(LeafletGeoAdminMixin, PolymorphicParentModelAdmin):
     list_display = ["name"]
     search_fields = ["number", "name"]
     readonly_fields = ["slug"]
+
+
+@admin.register(organization_models.OrganizationCustomer)
+class OrganizationCustomerAdmin(admin.ModelAdmin):
+    pass

@@ -32,3 +32,10 @@ class ReservationLineFactory(
 
     class Meta:
         model = reservation_models.ReservationLine
+
+
+class EventReservationSettingsFactory(
+    DjangoModelFactory[reservation_models.EventReservationSettings],
+):
+    class Meta:
+        model = reservation_models.EventReservationSettings

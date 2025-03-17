@@ -1,5 +1,6 @@
 {% load static i18n %}
 {% load tailwind_cli %}
+{% load webpush_notifications %}
 
 <!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
@@ -33,6 +34,7 @@
       <script defer src="{% static 'js/project.js' %}"></script>
       <script defer src="{% static 'js/htmx.min.js' %}"></script>
     {% endblock javascript %}
+    {% webpush_header %}
   </head>
   <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
         class="bg-gray-100 {{ app_name }} {{ view_name }} {% block bodyclass %}{% endblock bodyclass %}">
@@ -54,6 +56,15 @@
                       <a class="text-gray-500 transition hover:text-gray-500/75"
                          href="{% url 'home' %}">Home</a>
                     </li>
+                    {% if request.user.is_staff %}
+                      <li>
+                        <a class="text-gray-500 transition hover:text-gray-500/75"
+                           href="{% url 'organizations:organization' %}">{% trans 'organizations'|capfirst %}</a>
+                      </li>
+                    {% endif %}
+                    {% if organization %}
+                      {% include organization.action_menu %}
+                    {% endif %}
                     <li>
                       <a class="text-gray-500 transition hover:text-gray-500/75"
                          href="{% url 'organizations:concepts' 'waerboom' %}">Waerboom</a>
@@ -97,6 +108,19 @@
     {% block cta %}
     {% endblock cta %}
     {% block body %}
+      {% if user.is_authenticated and not user.webpush_info %}
+        <div class="relative h-64 m-5">
+          <!-- Content to overlay -->
+          <div class="inset-0 flex items-center justify-center text-white z-20">
+            <div class="p-8 bg-gray-300 rounded-lg shadow-lg">
+              <h1 class="text-3xl font-bold mb-4">{% trans 'our application is better with push messaging'|upper %}</h1>
+              <p class="text-lg">
+                {% webpush_button with_class="bg-lime-500 hover:bg-gray-100 text-white font-semibold py-2 px-4 border border-gray-400 rounded shadow" %}
+              </p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
       <div class="rounded-lg bg-white mx-auto max-w-screen-xl space-y-8 px-4 py-16 sm:px-6 lg:space-y-16 lg:px-8">
         {% if messages %}
           <div class="container">
@@ -299,13 +323,13 @@
     {% endif %}
     {% block inline_javascript %}
       {% comment %}
-          Script tags with only code, no src (defer by default). To run
-          with a "defer" so that you run inline code:
-          <script>
-            window.addEventListener('DOMContentLoaded', () => {
-              /* Run whatever you want */
-            });
-          </script>
+  Script tags with only code, no src (defer by default). To run
+  with a "defer" so that you run inline code:
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      /* Run whatever you want */
+    });
+  </script>
       {% endcomment %}
     {% endblock inline_javascript %}
   </body>

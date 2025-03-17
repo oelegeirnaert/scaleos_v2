@@ -16,6 +16,8 @@ class PersonAdmin(admin.ModelAdmin):
     list_display = [
         "__str__",
         "user",
+        "name",
+        "family_name",
         "primary_email_address",
         "primary_telephone_number",
     ]

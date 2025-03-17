@@ -5,6 +5,7 @@ from polymorphic.admin import PolymorphicInlineSupportMixin
 from polymorphic.admin import PolymorphicParentModelAdmin
 
 from scaleos.reservations import models as reservation_models
+from scaleos.shared.admin import LogInfoAdminMixin
 
 
 class ReservationLineInlineAdmin(admin.TabularInline):
@@ -22,17 +23,17 @@ class EventReservationInlineAdmin(admin.TabularInline):
 
 
 @admin.register(reservation_models.EventReservation)
-class EventReservationAdmin(PolymorphicChildModelAdmin):
+class EventReservationAdmin(PolymorphicChildModelAdmin, LogInfoAdminMixin):
     base_model = reservation_models.EventReservation  # Explicitly set here!
     # define custom features here
     readonly_fields = [
-        "created_on",
-        "modified_on",
         "public_key",
         "total_price",
         "total_amount",
+        *LogInfoAdminMixin.readonly_fields,
     ]
     inlines = [ReservationLineInlineAdmin]
+    autocomplete_fields = ["user", *LogInfoAdminMixin.autocomplete_fields]
 
 
 @admin.register(reservation_models.Reservation)
@@ -64,3 +65,8 @@ class ReservationAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmi
 @admin.register(reservation_models.ReservationLine)
 class ReservationLineAdmin(admin.ModelAdmin):
     readonly_fields = ["total_price", "minimum_amount", "maximum_amount"]
+
+
+@admin.register(reservation_models.EventReservationSettings)
+class EventReservationSettingsAdmin(admin.ModelAdmin):
+    pass

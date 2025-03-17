@@ -45,3 +45,10 @@ django-webpush==0.3.6  # https://pypi.org/project/django-webpush/
 django-autoslug==1.9.9  # https://pypi.org/project/django-autoslug/
 django-leaflet==0.29.1  # https://pypi.org/project/django-leaflet/
 django-health-check==3.18.3  # https://pypi.org/project/django-health-check/ - Mainly for docker compose swarm
+openpyxl==3.1.5  # https://pypi.org/project/openpyxl/
+email-validator==2.2.0  # https://pypi.org/project/email-validator/
+disposable-email-domains==0.0.118  # https://pypi.org/project/disposable-email-domains/
+# segno==1.6.1  # https://pypi.org/project/segno/ , included in django qr code
+django-qr-code==4.1.0  # https://pypi.org/project/django-qr-code/
+django-localflavor==4.0  # https://django-localflavor.readthedocs.io/en/latest/
+django-hijack==3.7.1  # https://pypi.org/project/django-hijack/

@@ -31,6 +31,15 @@ urlpatterns = [
     path("account/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
     # Oele
+    path("webpush/", include("webpush.urls")),
+    path(
+        "qr/",
+        include("qr_code.urls", namespace="qr_code"),
+    ),
+    path(
+        "core/",
+        include("scaleos.core.urls", namespace="core"),
+    ),
     path(
         "hr/",
         include("scaleos.hr.urls", namespace="hr"),
@@ -55,6 +64,7 @@ urlpatterns = [
         "htmx/reservation/",
         include("scaleos.reservations.urls_htmx", namespace="reservations_htmx"),
     ),
+    path("hijack/", include("hijack.urls")),
     # Media files
     path("system/health/", include("health_check.urls")),
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),

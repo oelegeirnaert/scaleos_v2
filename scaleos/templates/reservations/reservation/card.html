@@ -1,12 +1,13 @@
 {# generated via manage create_html_scripts #}
 {% extends 'card.html' %}
 
-{% load i18n %}
+{% load i18n qr_code %}
 
 {% block card_title %}
   {{ card.event }}
 {% endblock card_title %}
 {% block card_details %}
+  <img src="{% qr_url_from_text 'Hello World!' %}" alt="Hello World!" />
   <svg xmlns="http://www.w3.org/2000/svg"
        viewBox="0 0 20 20"
        fill="currentColor"
@@ -20,7 +21,18 @@
 {% endblock card_details %}
 {% block card_footer %}
   <div>{{ card.page_button }}</div>
-  <button class="group mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-{{ TAILWIND_THEME_COLORS.primary }} px-5 py-3 text-white transition focus:ring-3 focus:ring-yellow-400 focus:outline-hidden sm:mt-0 sm:w-auto"
-          hx-post="{% url 'reservations_htmx:organization_confirm_reservation' %}"
-          hx-vals='{"reservation_public_key": "{{ card.public_key }}"}'>Confirm</button>
+  {% if card.requester_confirmed_on %}
+    {% trans 'requester confirmed on'|capfirst %}: {{ card.requester_confirmed_on }}
+  {% else %}
+    <button class="group mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-{{ TAILWIND_THEME_COLORS.primary }} px-5 py-3 text-white transition focus:ring-3 focus:ring-yellow-400 focus:outline-hidden sm:mt-0 sm:w-auto"
+            hx-post="{% url 'reservations_htmx:requester_confirm_reservation' %}"
+            hx-vals='{"reservation_public_key": "{{ card.public_key }}"}'>Confirm</button>
+  {% endif %}
+  {% if card.organization_confirmed_on %}
+    {% trans 'organization confirmed on'|capfirst %}: {{ card.organization_confirmed_on }}
+  {% else %}
+    <button class="group mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-{{ TAILWIND_THEME_COLORS.primary }} px-5 py-3 text-white transition focus:ring-3 focus:ring-yellow-400 focus:outline-hidden sm:mt-0 sm:w-auto"
+            hx-post="{% url 'reservations_htmx:organization_confirm_reservation' %}"
+            hx-vals='{"reservation_public_key": "{{ card.public_key }}"}'>Confirm</button>
+  {% endif %}
 {% endblock card_footer %}

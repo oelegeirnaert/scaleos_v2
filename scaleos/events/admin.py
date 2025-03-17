@@ -1,4 +1,7 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 from polymorphic.admin import PolymorphicChildModelAdmin
 from polymorphic.admin import PolymorphicChildModelFilter
 from polymorphic.admin import PolymorphicInlineSupportMixin
@@ -86,6 +89,9 @@ class BrunchEventAdmin(PolymorphicChildModelAdmin):
     # define custom features here
 
     readonly_fields = [
+        "applicable_reservation_settings",
+        "reservations_closed_on",
+        "related_model_link",
         "free_spots",
         "free_percentage",
         "reserved_spots",
@@ -95,6 +101,18 @@ class BrunchEventAdmin(PolymorphicChildModelAdmin):
         "current_price_matrix",
         "public_key",
     ]
+
+    @admin.display(description=_("applicable reservation settings"))
+    def related_model_link(self, obj):
+        url = reverse(
+            "admin:reservations_eventreservationsettings_change",
+            args=[obj.applicable_reservation_settings.id],
+        )
+        return format_html(
+            '<a href="{}">{}</a>',
+            url,
+            obj.applicable_reservation_settings.id,
+        )
 
 
 @admin.register(event_models.ReceptionEvent)

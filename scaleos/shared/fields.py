@@ -8,7 +8,12 @@ from django.utils.translation import gettext_lazy as _
 
 
 class NameField(models.Model):
-    name = models.CharField(verbose_name=_("name"), max_length=100, default="")
+    name = models.CharField(
+        verbose_name=_("name"),
+        max_length=100,
+        default="",
+        blank=True,
+    )
     slug = AutoSlugField(populate_from="name", null=True, unique=True)
 
     class Meta:
@@ -25,6 +30,13 @@ class LogInfoFields(models.Model):
     modified_on = models.DateTimeField(auto_now=True, null=True)
     created_by = models.ForeignKey(
         get_user_model(),
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    modified_by = models.ForeignKey(
+        get_user_model(),
+        related_name="%(class)s_modifications",
         on_delete=models.CASCADE,
         null=True,
         blank=False,

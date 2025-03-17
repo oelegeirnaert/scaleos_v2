@@ -21,6 +21,8 @@ class Organization(
     CardModel,
     PublicKeyField,
 ):
+    published_on = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         verbose_name = _("organization")
         verbose_name_plural = _("organizations")
@@ -36,6 +38,23 @@ class OrganizationOwner(AdminLinkMixin):
     person = models.ForeignKey(
         "hr.Person",
         related_name="owning_organizations",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+    )
+
+
+class OrganizationCustomer(AdminLinkMixin, CardModel):
+    organization = models.ForeignKey(
+        Organization,
+        related_name="customers",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+    )
+    person = models.ForeignKey(
+        "hr.Person",
+        related_name="customer_at_organizations",
         on_delete=models.CASCADE,
         null=True,
         blank=False,

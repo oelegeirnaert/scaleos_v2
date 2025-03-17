@@ -46,5 +46,10 @@
   </section>
 {% endblock cta %}
 {% block content %}
-  {% include "card_list.html" with cards=organization.concepts.all %}
+  {% if concepts %}
+    {% include "card_list.html" with cards=concepts %}
+  {% endif %}
+  {% if customers %}
+    {% include "card_list.html" with cards=customers %}
+  {% endif %}
 {% endblock content %}

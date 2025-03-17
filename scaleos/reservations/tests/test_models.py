@@ -278,11 +278,15 @@ def test_reservation_is_statusses(faker):
     assert reservation.status == reservation_models.Reservation.STATUS.IN_PROGRESS
     reservation.finished_on = ITS_NOW
     assert (
-        reservation.status == reservation_models.Reservation.STATUS.NEEDS_VERIFICATION
+        reservation.status
+        == reservation_models.Reservation.STATUS.TO_BE_CONFIRMED_BY_REQUESTER
     )
     reservation.requester_confirmed_on = ITS_NOW
     assert reservation.organization_confirmed_on is None
-    assert reservation.status == reservation_models.Reservation.STATUS.TO_BE_CONFIRMED
+    assert (
+        reservation.status
+        == reservation_models.Reservation.STATUS.TO_BE_CONFIRMED_BY_ORGANIZATION
+    )
 
 
 @pytest.mark.django_db

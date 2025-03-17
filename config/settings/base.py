@@ -105,6 +105,11 @@ THIRD_PARTY_APPS = [
     "health_check.contrib.celery_ping",
     "django_tailwind_cli",
     "django_htmx",
+    "webpush",
+    "qr_code",
+    "localflavor",
+    "hijack",
+    "hijack.contrib.admin",
     # "templated_email",
 ]
 
@@ -178,6 +183,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
+    "hijack.middleware.HijackUserMiddleware",
 ]
 
 # STATIC
@@ -414,4 +420,10 @@ TAILWIND_THEME_COLORS = {
     "secondary": "gray-500",
     "accent": "blue-500",
     "danger": "red-500",
+}
+
+WEBPUSH_SETTINGS = {
+    "VAPID_PUBLIC_KEY": env("VAPID_PUBLIC_KEY"),
+    "VAPID_PRIVATE_KEY": env("VAPID_PRIVATE_KEY"),
+    "VAPID_ADMIN_EMAIL": env("VAPID_ADMIN_EMAIL"),
 }

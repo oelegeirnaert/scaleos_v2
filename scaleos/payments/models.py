@@ -1,9 +1,13 @@
+import decimal
 import logging
 
 from admin_ordering.models import OrderableModel
 from django.db import models
+from django.db.models import Sum
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
+from localflavor.generic.countries.sepa import IBAN_SEPA_COUNTRIES
+from localflavor.generic.models import IBANField
 from polymorphic.models import PolymorphicModel
 
 from scaleos.shared.fields import LogInfoFields
@@ -274,34 +278,75 @@ class BulkPriceMatrixItem(PriceMatrixItem, OrderableModel):
         verbose_name_plural = _("bulk price matrix items")
 
 
+class PaymentRequest(AdminLinkMixin, LogInfoFields):
+    to_pay = models.OneToOneField(Price, on_delete=models.SET_NULL, null=True)
+
+    @property
+    def already_paid(self):
+        result = (
+            self.payments.all()
+            .aggregate(
+                already_paid=Sum("amount_received"),
+            )
+            .get("already_paid", 0.00)
+        )
+        if result is None:
+            return 0.00
+        return result
+
+    @property
+    def still_to_pay(self):
+        try:
+            return decimal.Decimal(self.to_pay.current_price.amount) - decimal.Decimal(
+                self.already_paid,
+            )
+        except Exception:
+            logger.exception("We cannot get the remaining amount to pay.")
+
+        return 0.0
+
+    @property
+    def fully_paid(self):
+        return self.still_to_pay <= 0.0
+
+
 class Payment(
     PolymorphicModel,
     AdminLinkMixin,
     PublicKeyField,
     LogInfoFields,
 ):
-    amount_paid = MoneyField(
+    payment_request = models.ForeignKey(
+        PaymentRequest,
+        related_name="payments",
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+    amount_to_request = MoneyField(
         max_digits=15,
         decimal_places=2,
         default_currency="EUR",
         null=True,
     )
+    amount_paid = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency="EUR",
+        null=True,
+        blank=True,
+    )
+    paid_on = models.DateTimeField(null=True, blank=True)
+    amount_received = MoneyField(
+        max_digits=15,
+        decimal_places=2,
+        default_currency="EUR",
+        null=True,
+        blank=True,
+    )
+    received_on = models.DateTimeField(null=True, blank=True)
     confirmed_on = models.DateTimeField(null=True, blank=True)
 
 
-class PaymentRequest(AdminLinkMixin, LogInfoFields):
-    to_pay = models.OneToOneField(Price, on_delete=models.SET_NULL, null=True)
-
-
-class PaymentRequestPayment(AdminLinkMixin, LogInfoFields):
-    payment_request = models.ForeignKey(
-        PaymentRequest,
-        on_delete=models.CASCADE,
-        null=True,
-    )
-    payment = models.ForeignKey(
-        Payment,
-        related_name="payments",
-        on_delete=models.CASCADE,
-        null=True,
-    )
+class EPCMoneyTransferPayment(Payment):
+    from_iban = IBANField(include_countries=IBAN_SEPA_COUNTRIES, null=True, blank=True)
+    to_iban = IBANField(include_countries=IBAN_SEPA_COUNTRIES, null=True, blank=False)

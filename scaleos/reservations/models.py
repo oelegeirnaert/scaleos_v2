@@ -2,10 +2,14 @@ import logging
 
 from allauth.account.models import EmailAddress
 from allauth.account.models import EmailConfirmation
+from disposable_email_domains import blocklist
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
 from django.utils.translation import gettext_lazy as _
+from email_validator import EmailNotValidError
+from email_validator import validate_email
 from moneyed import EUR
 from moneyed import Money
 from polymorphic.models import PolymorphicModel
@@ -32,14 +36,23 @@ class Reservation(
 ):
     class STATUS(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", _("in progress")
-        NEEDS_VERIFICATION = "NEEDS_VERIFICATION", _("needs verification")
-        TO_BE_CONFIRMED = "TO_BE_CONFIRMED", _("to be confirmed")
+        TO_BE_CONFIRMED_BY_REQUESTER = (
+            "TO_BE_CONFIRMED_BY_REQUESTER",
+            _(
+                "to be confirmed by requester",
+            ),
+        )
+        TO_BE_CONFIRMED_BY_ORGANIZATION = (
+            "TO_BE_CONFIRMED_BY_ORGANIZATION",
+            _(
+                "to be confirmed by organization",
+            ),
+        )
         WAITING_FOR_PAYMENT = "WAITING_FOR_PAYMENT", _("waiting for payment")
-        CONFIRMED = "CONFIRMED", _("confirmed")
+        PARTIALLY_PAID = "PARTIALLY_PAID", _("partially paid")
         PARTIALLY_USED = "PARTIALLY_USED", _("partially used")
         USED = "USED", _("used")
         EVENT_OVER = "EVENT_OVER", _("event is over")
-
         ENDED = "ENDED", _("ended")
         UNKNOWN = "UNKNOWN", _("unknown")
 
@@ -128,16 +141,52 @@ class Reservation(
         if self.finished_on is None:
             return self.STATUS.IN_PROGRESS
         if self.requester_confirmed_on is None:
-            return self.STATUS.NEEDS_VERIFICATION
+            return self.STATUS.TO_BE_CONFIRMED_BY_REQUESTER
         if self.organization_confirmed_on is None:
-            return self.STATUS.TO_BE_CONFIRMED
+            return self.STATUS.TO_BE_CONFIRMED_BY_ORGANIZATION
+        if self.payment_request:
+            if self.payment_request.payments.count() == 0:
+                return self.STATUS.WAITING_FOR_PAYMENT
+            if not self.payment_request.fully_paid:
+                return self.STATUS.PARTIALLY_PAID
 
         return self.STATUS.UNKNOWN  # pragma: no cover
 
     def finish(self, request, confirmation_email_address):
         if self.finished_on:
-            logger.info("The reservation %s is already finished", self.pk)
+            logger.warning("The reservation %s is already finished", self.pk)
             return False
+
+        if isinstance(self, EventReservation):
+            if self.total_amount == 0:
+                msg = _("for an event reservation, you need at least one person")
+                logger.warning(msg)
+                raise ValidationError(msg)
+
+        logger.info("checking email address: %s", confirmation_email_address)
+        try:
+            # Check that the email address is valid. Turn on check_deliverability
+            # for first-time validations like on account creation pages (but not
+            # login pages).
+            confirmation_email_address = validate_email(
+                confirmation_email_address,
+                check_deliverability=True,
+            )
+
+            # After this point, use only the normalized form of the email address,
+            # especially before going to a database query.
+            confirmation_email_address = confirmation_email_address.normalized
+
+        except EmailNotValidError as e:
+            # The exception message is human-readable explanation of why it's
+            # not a valid (or deliverable) email address.
+            raise ValidationError(e) from EmailNotValidError
+
+        email_domain = confirmation_email_address.split("@")[1]
+        logger.debug("checking if email domain is blacklisted")
+        if email_domain in blocklist:
+            logger.warning("The email domain is blacklisted: %s", email_domain)
+            raise ValidationError(_("this email address is blacklisted"))
 
         user, user_created = User.objects.get_or_create(
             email=confirmation_email_address,
@@ -249,6 +298,43 @@ class EventReservation(Reservation):
     )
 
 
+class EventReservationSettings(AdminLinkMixin):
+    class CloseReservationInterval(models.TextChoices):
+        SECONDS = "seconds", _("seconds")
+        MINUTES = "minutes", _("minutes")
+        HOURS = "hours", _("hour")
+        DAYS = "days", _("days")
+        WEEKS = "weeks", _("weeks")
+        MONTHS = "months", _("months")
+        YEARS = "years", _("years")
+        AT_START = "at_start", _("at start")
+        WHEN_ENDED = "on_end", _("when ended")
+
+    minimum_persons_per_reservation = models.IntegerField(
+        null=True,
+        blank=False,
+        default=1,
+    )
+    maximum_persons_per_reservation = models.IntegerField(
+        null=True,
+        blank=False,
+        default=30,
+    )
+    maximum_reservations_in_waitlist = models.IntegerField(
+        null=True,
+        blank=False,
+        default=60,
+    )
+
+    close_reservation = models.IntegerField(null=True, blank=False, default=2)
+    close_reservation_interval = models.CharField(
+        max_length=50,
+        choices=CloseReservationInterval.choices,
+        default=CloseReservationInterval.DAYS,
+        blank=True,
+    )
+
+
 class ReservationLine(AdminLinkMixin, PublicKeyField):
     reservation = models.ForeignKey(
         Reservation,
@@ -292,17 +378,6 @@ class ReservationLine(AdminLinkMixin, PublicKeyField):
 
     @property
     def maximum_amount(self):
-        if hasattr(self.reservation, "event") and hasattr(
-            self.reservation.event,
-            "free_spots",
-        ):
-            free_spots = self.reservation.event.free_spots
-            if free_spots == "∞":
-                return None
-            if self.price_matrix_item and self.price_matrix_item.maximum_persons:
-                if self.price_matrix_item.maximum_persons > free_spots:
-                    return free_spots
-
         if self.price_matrix_item and self.price_matrix_item.maximum_persons:
             return self.price_matrix_item.maximum_persons
         return 10

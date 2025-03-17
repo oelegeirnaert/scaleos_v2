@@ -42,13 +42,6 @@ class PaymentRequestFactory(
         model = payment_models.PaymentRequest
 
 
-class PaymentRequestPaymentFactory(
-    DjangoModelFactory[payment_models.PaymentRequestPayment],
-):
-    class Meta:
-        model = payment_models.PaymentRequestPayment
-
-
 class PaymentFactory(
     DjangoModelFactory[payment_models.Payment],
 ):

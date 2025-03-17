@@ -103,6 +103,9 @@ class Address(GPSFields, LogInfoFields, AdminLinkMixin):
         if self.street and self.house_number and self.postal_code and self.city:
             return f"{self.street} {self.house_number}, {self.postal_code} {self.city}"
 
+        if self.street and self.postal_code and self.city:
+            return f"{self.street}, {self.postal_code} {self.city}"
+
         return None
 
     def __str__(self):
@@ -110,3 +113,10 @@ class Address(GPSFields, LogInfoFields, AdminLinkMixin):
         if the_address:
             return the_address
         return super().__str__()
+
+    @property
+    def needs_correction(self):
+        if self.modified_by:
+            return False
+
+        return len(self.house_number) == 0

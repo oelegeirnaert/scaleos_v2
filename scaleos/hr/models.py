@@ -5,15 +5,14 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
-from scaleos.shared.fields import NameField
 from scaleos.shared.mixins import AdminLinkMixin
 
 
 # Create your models here.
 class Person(
     AdminLinkMixin,
-    NameField,
 ):
+    name = models.CharField(default="")
     family_name = models.CharField(default="")
     user = models.OneToOneField(
         get_user_model(),

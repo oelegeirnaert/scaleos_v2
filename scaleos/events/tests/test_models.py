@@ -8,6 +8,7 @@ from django.utils.translation import activate
 from scaleos.events import models as event_models
 from scaleos.events.tests import model_factories as event_factories
 from scaleos.reservations.tests import model_factories as reservation_factories
+from scaleos.shared.mixins import ITS_NOW
 
 
 @pytest.mark.django_db
@@ -262,3 +263,15 @@ def test_event_has_a_current_price_matrix(faker):
         price_matrix_id=price_matrixes[5].pk,
     )
     assert event.current_price_matrix.id == current_concept_price_matrix.price_matrix.pk
+
+
+@pytest.mark.django_db
+def test_event_reservations_closed_on(faker):
+    event_reservation_settings = (
+        reservation_factories.EventReservationSettingsFactory.create()
+    )
+    single_event = event_factories.SingleEventFactory.create(
+        reservation_settings_id=event_reservation_settings.pk,
+        starting_at=ITS_NOW,
+    )
+    assert single_event.reservations_closed_on

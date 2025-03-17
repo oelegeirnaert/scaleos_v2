@@ -1,11 +1,13 @@
 import datetime
 import logging
 
+from dateutil.relativedelta import relativedelta
 from django.db import models
 from django.db.models import Sum
 from django.utils.translation import gettext_lazy as _
 from polymorphic.models import PolymorphicModel
 
+from scaleos.reservations.models import EventReservationSettings
 from scaleos.shared.fields import NameField
 from scaleos.shared.fields import PublicKeyField
 from scaleos.shared.mixins import ITS_NOW
@@ -27,6 +29,12 @@ class Concept(PolymorphicModel, NameField, AdminLinkMixin, CardModel, PublicKeyF
         null=True,
     )
     force_event_generation = models.BooleanField
+    reservation_settings = models.ForeignKey(
+        "reservations.EventReservationSettings",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _("concept")
@@ -68,6 +76,13 @@ class Concept(PolymorphicModel, NameField, AdminLinkMixin, CardModel, PublicKeyF
         )
         logger.warning(msg)
         return None
+
+    @property
+    def upcoming_events(self):
+        return self.events.filter(
+            singleevent__starting_at__gte=ITS_NOW,
+            allow_reservations=True,
+        )
 
 
 class ConceptPriceMatrix(AdminLinkMixin):
@@ -187,6 +202,13 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField):
     expected_number_of_guests = models.IntegerField(null=True, blank=True)
     minimum_number_of_guests = models.IntegerField(null=True, blank=True)
     maximum_number_of_guests = models.IntegerField(null=True, blank=True)
+    reservation_settings = models.ForeignKey(
+        "reservations.EventReservationSettings",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    allow_reservations = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = _("event")
@@ -261,6 +283,19 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField):
     def current_price_matrix(self):
         return self.concept.current_price_matrix
 
+    @property
+    def applicable_reservation_settings(self):
+        if self.allow_reservations is False:
+            return None
+
+        if self.reservation_settings:
+            return self.reservation_settings
+
+        if self.concept.reservation_settings:
+            return self.concept.reservation_settings
+
+        return None
+
 
 class SingleEvent(Event):
     class STATUS(models.TextChoices):
@@ -332,6 +367,36 @@ class SingleEvent(Event):
             return SingleEvent.STATUS.ONGOING
 
         return SingleEvent.STATUS.UNKNOWN
+
+    @property
+    def reservations_closed_on(self):
+        if self.applicable_reservation_settings:
+            if (
+                self.applicable_reservation_settings.close_reservation_interval
+                == EventReservationSettings.CloseReservationInterval.AT_START
+            ):
+                return self.starting_at
+
+            if (
+                self.applicable_reservation_settings.close_reservation_interval
+                == EventReservationSettings.CloseReservationInterval.WHEN_ENDED
+            ):
+                return self.ending_on
+
+            amount = self.applicable_reservation_settings.close_reservation
+            interval = self.applicable_reservation_settings.close_reservation_interval
+            starting_datetime = self.starting_at
+
+            return starting_datetime - relativedelta(**{interval: amount})
+
+        return None
+
+    @property
+    def reservations_are_closed(self):
+        if self.allow_reservations is False:
+            return False
+
+        return self.reservations_closed_on < ITS_NOW
 
 
 class DanceEvent(SingleEvent):
