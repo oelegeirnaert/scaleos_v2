@@ -2,12 +2,15 @@ import pytest
 from django.urls import reverse
 
 from scaleos.reservations.tests import model_factories as test_factories
+from scaleos.users.tests import model_factories as user_factories
 
 
 @pytest.mark.django_db
 def test_reservation_has_a_page(client):
     # inspired by: https://djangostars.com/blog/django-pytest-testing/
 
+    user = user_factories.UserFactory()
+    client.force_login(user)
     reservation_public_key = "7534ecdb-3183-4b39-8f84-990261322c51"
     reservation = test_factories.ReservationFactory(public_key=reservation_public_key)
     assert reservation.html_public_key == "htmlPK7534ecdb31834b398f84990261322c51"

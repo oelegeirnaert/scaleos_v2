@@ -7,6 +7,7 @@ alias mm='docker compose -f docker-compose-postgis.local.yml run --rm django pyt
 alias mi='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py migrate'
 alias devshell='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py shell_plus --ipython'
 alias manage='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py'
+alias devruff='ruff check . --fix'
 
 # Documentation
 alias docsbuild="docker compose -f docker-compose.docs.yml build"
@@ -22,6 +23,7 @@ alias testreport='devtest && generate_test_report && open_test_report'
 # Data
 alias mkwaerboom='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py create_organization waerboom'
 alias mkscaleos='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py create_organization scaleos'
+alias mklanec='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py create_organization lane_consulting'
 alias mkpersons='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py create_persons'
 
 #i18n

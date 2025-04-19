@@ -1,67 +1,46 @@
 import logging
 
+from celery.exceptions import SoftTimeLimitExceeded
+
 # myapp/utils.py
-from django.conf import settings
 from django.contrib.auth import get_user_model
-from templated_email import send_templated_mail
+from django.core.exceptions import ObjectDoesNotExist
 
 from config import celery_app
 from scaleos.reservations import models as reservation_models
-from scaleos.shared.mixins import ITS_NOW
 
 User = get_user_model()
 logger = logging.getLogger()
 
 
-# @app.task(queue='queue1')
-@celery_app.task(bind=True, soft_time_limit=60 * 60)  # in seconds
-def send_reservation_confirmation(self, reservation_id):
-    logger.info(
-        "We need to send a reservation confirmation for reservation: %s",
-        reservation_id,
-    )
-
+@celery_app.task(bind=True, soft_time_limit=60 * 60, max_retries=3)
+def send_reservation_update_notification(self, reservation_update_id):
     try:
-        reservation = reservation_models.Reservation.objects.get(id=reservation_id)
-    except reservation_models.Reservation.DoesNotExist:
-        logger.info("The reservation does not exist")
-        return False
-
-    if reservation.confirmation_mail_sent_on:
-        logger.info(
-            "The confirmation mail for reservation %s is already sent on: %s",
-            reservation.pk,
-            reservation.confirmation_mail_sent_on,
+        # This will return the correct subclass!
+        update = reservation_models.ReservationUpdate.objects.get(
+            id=reservation_update_id,
         )
-        return False
 
-    # Send a welcome email
-    user = reservation.user
+        if hasattr(update, "send_notification_logic"):
+            update.send_notification_logic()
+        else:
+            logger.info(
+                "[NOTIFY] %s created for Reservation #%s...",
+                update.model_name,
+                update.reservation.id,
+            )
 
-    if user is None:
-        logger.warning("The reservation %s has no user set.", reservation.pk)
-        return False
-
-    if user.email is None:  # pragma: no cover
-        logger.warning(
-            "The user of reservation %s has no email address set.",
-            reservation.pk,
+    except ObjectDoesNotExist as odne:
+        logger.exception(
+            "[ERROR] ReservationUpdate '%s' with ID %s not found.",
+            update.model_name,
+            reservation_update_id,
         )
-        return False
+        raise self.retry(exc=odne, countdown=60 * (self.request.retries + 1)) from odne
 
-    recipient_list = user.email
+    except SoftTimeLimitExceeded:
+        logger.warning("[TIMEOUT] Task exceeded soft time limit.")
 
-    send_templated_mail(
-        template_name="reservation/reservation_confirmation_message.email",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[recipient_list],
-        context={
-            "user": user,
-            "reservation": reservation,
-            "site_name": "ScaleOS.net",
-        },
-    )
-
-    reservation.confirmation_mail_sent_on = ITS_NOW
-    reservation.save()
-    return True
+    except Exception as e:
+        logger.exception("[RETRY] Task failed: {e}, retrying...")
+        raise self.retry(exc=e, countdown=60 * (self.request.retries + 1)) from e

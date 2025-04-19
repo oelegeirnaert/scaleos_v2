@@ -10,13 +10,21 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
     <title>
       {% block title %}
-        ScaleOS.net - Your next-gen software
+        {% if active_organization %}
+          {{ active_organization.name }} - Powered by ScaleOS.net
+        {% else %}
+          ScaleOS.net - Your next-gen software
+        {% endif %}
       {% endblock title %}
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Your next-gen software..." />
     <meta name="author" content="OeleGeirnaert" />
-    <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}" />
+    {% if active_organization and active_organization.styling and active_organization.styling.fav_icon %}
+      <link rel="icon" href="{{ active_organization.styling.fav_icon.url }}" />
+    {% else %}
+      <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}" />
+    {% endif %}
     {% block css %}
     {% endblock css %}
     {% tailwind_css %}
@@ -46,43 +54,45 @@
               <div class="flex-1 md:flex md:items-center md:gap-12">
                 <a class="block text-teal-600" href="{% url 'home' %}">
                   <span class="sr-only">Home</span>
-                  <img alt="logo" src="{% static '/images/favicons/favicon-32x32.png' %}" />
+                  {% if active_organization and active_organization.styling and active_organization.styling.fav_icon %}
+                    <img alt="logo"
+                         src="{{ active_organization.styling.fav_icon.url }}"
+                         style="max-height: 60px" />
+                  {% else %}
+                    <img alt="logo" src="{% static '/images/favicons/favicon-32x32.png' %}" />
+                  {% endif %}
                 </a>
               </div>
               <div class="md:flex md:items-center md:gap-12">
                 <nav aria-label="Global" class="hidden md:block">
                   <ul class="flex items-center gap-6 text-sm">
-                    <li>
-                      <a class="text-gray-500 transition hover:text-gray-500/75"
-                         href="{% url 'home' %}">Home</a>
-                    </li>
-                    {% if request.user.is_staff %}
+                    {% if active_organization %}
+                      {% include active_organization.action_menu %}
+                    {% else %}
+                      <li>
+                        <a class="text-gray-500 transition hover:text-gray-500/75"
+                           href="{% url 'home' %}">Home</a>
+                      </li>
                       <li>
                         <a class="text-gray-500 transition hover:text-gray-500/75"
                            href="{% url 'organizations:organization' %}">{% trans 'organizations'|capfirst %}</a>
                       </li>
+                      <li>
+                        <a class="text-gray-500 transition hover:text-gray-500/75" href="#">History</a>
+                      </li>
+                      <li>
+                        <a class="text-gray-500 transition hover:text-gray-500/75" href="#">Services</a>
+                      </li>
+                      <li>
+                        <a class="text-gray-500 transition hover:text-gray-500/75" href="#">Projects</a>
+                      </li>
+                      <li>
+                        <a class="text-gray-500 transition hover:text-gray-500/75" href="#">Blog</a>
+                      </li>
                     {% endif %}
-                    {% if organization %}
-                      {% include organization.action_menu %}
-                    {% endif %}
-                    <li>
-                      <a class="text-gray-500 transition hover:text-gray-500/75"
-                         href="{% url 'organizations:concepts' 'waerboom' %}">Waerboom</a>
-                    </li>
-                    <li>
-                      <a class="text-gray-500 transition hover:text-gray-500/75" href="#">History</a>
-                    </li>
-                    <li>
-                      <a class="text-gray-500 transition hover:text-gray-500/75" href="#">Services</a>
-                    </li>
-                    <li>
-                      <a class="text-gray-500 transition hover:text-gray-500/75" href="#">Projects</a>
-                    </li>
-                    <li>
-                      <a class="text-gray-500 transition hover:text-gray-500/75" href="#">Blog</a>
-                    </li>
                   </ul>
                 </nav>
+                {% include "language_selector.html" %}
                 {% include "users/action_menu.html" %}
                 <!-- menu button on smaller screens -->
                 <div class="block md:hidden">
@@ -294,6 +304,16 @@
                     </li>
                     <li>
                       <a href="#" class="text-gray-700 transition hover:opacity-75">Live Chat</a>
+                    </li>
+                    <li>
+                      <form class="text-gray-700 transition hover:opacity-75"
+                            action="{% url 'hijack:acquire' %}"
+                            method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_pk" value="124" />
+                        <button type="submit">Login as Tamara</button>
+                        <input type="hidden" name="next" value="{{ request.path }}" />
+                      </form>
                     </li>
                   </ul>
                 </div>

@@ -15,7 +15,6 @@ def do_htmx_get_checks(request):
 
 
 def do_htmx_post_checks(request):
-    logger.info("Doing POST checks")
     if not request.htmx:
         msg = _("this is not a HTMX request")
         logger.error(msg)

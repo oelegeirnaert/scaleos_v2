@@ -2,3 +2,12 @@
 {% extends 'page.html' %}
 
 {% load i18n %}
+
+{% block content %}
+  {{ concept }}
+  {% if is_organization_employee %}
+    {% for event in concept.events.all %}
+      {% include event.detail_template %}
+    {% endfor %}
+  {% endif %}
+{% endblock content %}

@@ -96,7 +96,9 @@ The {{ site_name }} Team
 <body>
     <div class="container">
         <!-- Logo -->
-        <img src="https://yourwebsite.com/static/logo.png" alt="{{ site_name }} Logo" class="logo">
+        {% if reservation and reservation.organization and reservation.organization.styling and reservation.organization.styling.logo and reservation.organization.styling.logo.url %}
+        <img src="{{reservation.organization.styling.logo.url}}" alt="{{ site_name }} Logo" class="logo">
+        {% endif %}
 
         <h2>Confirm Your Email ✅</h2>
         <p>Thank you for signing up at <strong>{{ site_name }}</strong>! To activate your account, please confirm your email by clicking the button below:</p>

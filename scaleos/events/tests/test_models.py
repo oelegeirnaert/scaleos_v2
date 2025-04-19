@@ -12,20 +12,9 @@ from scaleos.shared.mixins import ITS_NOW
 
 
 @pytest.mark.django_db
-def test_brunchconcept_can_generate_events(faker):
-    brunch_concept = event_factories.BrunchConceptFactory.create()
-    from_date = datetime.date(year=2025, month=2, day=1)
-    to_date = datetime.date(year=2025, month=3, day=1)
-    weekday = 7
-    brunch_concept.generate(from_date, to_date, weekday)
-    assert brunch_concept.events.count() == 4, "4 sundays in feb 2025"
-
-
-@pytest.mark.django_db
-def test_event_has_free_capacity(faker):
+def test_event_has_free_capacity(faker):  # noqa: PLR0915
     activate("nl")
     event = event_factories.EventFactory.create()
-
     assert event.free_spots == "∞"
 
     event.maximum_number_of_guests = 100
@@ -41,15 +30,27 @@ def test_event_has_free_capacity(faker):
             amount=15,
         )
     )
+
     event_reservation1 = reservation_factories.EventReservationFactory.create(
         event_id=event.pk,
     )
     event_reservation1.lines.set(event_reservation1_reservation_lines)
     assert event.reservations.count() == 1
+    assert event.free_spots == 100
+    assert event.free_percentage == 100
+    assert event.reserved_percentage == 0
+    assert event.reserved_spots == 0
+    event_reservation1.requester_confirm()
+    assert event_reservation1.requester_confirmed
+    event_reservation1.organization_confirm()
+    assert event_reservation1.organization_confirmed
+    assert event_reservation1.is_confirmed
+
     assert event.free_spots == 70
     assert event.free_percentage == 70
     assert event.reserved_percentage == 30
     assert event.reserved_spots == 30
+    assert event.over_reserved_spots == 0
 
     event_reservation2_reservation_lines = (
         reservation_factories.ReservationLineFactory.create_batch(2, amount=5)
@@ -58,6 +59,8 @@ def test_event_has_free_capacity(faker):
         event_id=event.pk,
     )
     event_reservation2.lines.set(event_reservation2_reservation_lines)
+    event_reservation2.requester_confirm()
+    event_reservation2.organization_confirm()
     assert event.free_spots == 60
     assert event.free_percentage == 60
     assert event.reserved_percentage == 40
@@ -71,6 +74,8 @@ def test_event_has_free_capacity(faker):
         event_id=event.pk,
     )
     event_reservation3.lines.set(event_reservation3_reservation_lines)
+    event_reservation3.requester_confirm()
+    event_reservation3.organization_confirm()
     assert event.free_spots == 0
     assert event.free_percentage == 0
     assert event.reserved_percentage == 100
@@ -84,6 +89,8 @@ def test_event_has_free_capacity(faker):
         event_id=event.pk,
     )
     event_reservation4.lines.set(event_reservation4_reservation_lines)
+    event_reservation4.requester_confirm()
+    event_reservation4.organization_confirm()
     assert event.free_spots == 0
     assert event.free_percentage == 0
     assert event.reserved_percentage == 100
@@ -106,20 +113,11 @@ def test_if_single_event_has_a_name(faker):
 
 
 @pytest.mark.django_db
-def test_wedding_concept_event_generation(faker):
-    wedding_concept = event_factories.WeddingConceptFactory.create()
-    assert wedding_concept.generate_events()
-
-
-@pytest.mark.django_db
-def test_dinner_and_dance_concept_event_generation(faker):
-    dinner_and_dance_concept = event_factories.DinnerAndDanceConceptFactory.create()
-    assert dinner_and_dance_concept.generate_events()
-
-
-@pytest.mark.django_db
 def test_status_of_single_event(faker):
-    single_event = event_factories.SingleEventFactory.create()
+    single_event = event_factories.SingleEventFactory.create(
+        starting_at=None,
+        ending_on=None,
+    )
     assert single_event.status == event_models.SingleEvent.STATUS.UNKNOWN, (
         "because no dates are set."
     )
@@ -275,3 +273,31 @@ def test_event_reservations_closed_on(faker):
         starting_at=ITS_NOW,
     )
     assert single_event.reservations_closed_on
+
+
+@pytest.mark.django_db
+def test_event_duplicator(faker):
+    starting_at = datetime.datetime(year=2025, month=3, day=30, hour=12, minute=00)
+    brunch_event = event_factories.BrunchEventFactory.create(
+        starting_at=starting_at,
+        ending_on=starting_at + datetime.timedelta(hours=4),
+    )
+    assert brunch_event.pk
+    a_from_date = datetime.date(year=2025, month=3, day=30)
+    a_to_date = datetime.date(year=2025, month=4, day=11)
+    event_duplicator = event_factories.EventDuplicatorFactory.create(
+        event_id=brunch_event.pk,
+        from_date=a_from_date,
+        to_date=a_to_date,
+        amount=1,
+        every_interval=event_models.EventDuplicator.DuplicateInterval.EVERY_WEEK,
+    )
+
+    event_duplicator.duplicate()
+    assert event_duplicator
+    assert (
+        event_models.SingleEvent.objects.filter(
+            duplicator_id=event_duplicator.pk,
+        ).count()
+        == 2
+    )

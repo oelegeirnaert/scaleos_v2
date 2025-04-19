@@ -107,8 +107,7 @@ def organizations(request):
 
     if organizations.count() == 1:
         organization = organizations.first()
-        request.session["current_organization_id"] = organization.id
-        return redirect("organizations:organization", organization.slug)
+        return redirect("organizations:activate_organization", organization.slug)
 
     return render(
         request,

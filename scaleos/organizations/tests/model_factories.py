@@ -29,3 +29,17 @@ class OrganizationCustomerFactory(
 ):
     class Meta:
         model = organization_models.OrganizationCustomer
+
+
+class OrganizationStylingFactory(
+    DjangoModelFactory[organization_models.OrganizationStyling],
+):
+    class Meta:
+        model = organization_models.OrganizationStyling
+
+
+class OrganizationPaymentMethodFactory(
+    DjangoModelFactory[organization_models.OrganizationPaymentMethod],
+):
+    class Meta:
+        model = organization_models.OrganizationPaymentMethod

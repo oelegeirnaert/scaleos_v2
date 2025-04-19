@@ -15,12 +15,10 @@ logger = logging.getLogger(__name__)
 def person(request):
     context = {}
 
-    if hasattr(request.user, "person"):
-        logger.info("Getting a person profile")
-        person = request.user.person
-    else:
-        logger.debug("Creating a person profile")
-        person = hr_models.Person.objects.create(user_id=request.user.pk)
+    if request.user and request.user.is_authenticated:
+        person, created = hr_models.Person.objects.get_or_create(
+            user_id=request.user.pk,
+        )
 
     context["person"] = person
     template_used = person.page_template

@@ -5,6 +5,11 @@ from scaleos.reservations import views as reservation_views
 app_name = "reservations"
 urlpatterns = [
     path(
+        "",
+        view=reservation_views.reservation,
+        name="reservation",
+    ),
+    path(
         "<str:reservation_public_key>/",
         view=reservation_views.reservation,
         name="reservation",

@@ -1,0 +1,31 @@
+{# generated via manage create_html_scripts #}
+{% load i18n %}
+
+<div class="mt-5 flow-root rounded-lg border border-gray-100 py-3 shadow-xs">
+  <dl class="-my-3 divide-y divide-gray-100 text-sm">
+    <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
+      <dt class="font-medium text-gray-900">{% trans "title"|capfirst %}</dt>
+      <dd class="text-gray-700 sm:col-span-2">
+        {{ detail.title }}
+      </dd>
+    </div>
+    <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
+      <dt class="font-medium text-gray-900">{% trans "message"|capfirst %}</dt>
+      <dd class="text-gray-700 sm:col-span-2">
+        {{ detail.message }}
+      </dd>
+    </div>
+    <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
+      <dt class="font-medium text-gray-900">{% trans "created on"|capfirst %}</dt>
+      <dd class="text-gray-700 sm:col-span-2">
+        {{ detail.created_on }}
+      </dd>
+    </div>
+    <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
+      <dt class="font-medium text-gray-900">{% trans "actions"|capfirst %}</dt>
+      <dd class="text-gray-700 sm:col-span-2">
+        $1,000,000+
+      </dd>
+    </div>
+  </dl>
+</div>

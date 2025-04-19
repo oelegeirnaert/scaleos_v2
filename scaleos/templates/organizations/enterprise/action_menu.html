@@ -1,8 +1,23 @@
 {# generated via manage create_html_scripts #}
 {% load i18n %}
 
-<a href="{% url 'organizations:organization' organization.slug %}">{{ organization.name }}</a>
-<a href="{% url 'organizations:concepts' organization.slug %}">{% trans 'concepts'|capfirst %}</a>
-{% if request.user.is_staff %}
-  <a href="{% url 'organizations:import_resengo_excel' organization.slug %}">Import Resengo</a>
+{% if active_organization.slug %}
+  <li>
+    <a class="text-gray-500 transition hover:text-gray-500/75"
+       href="{% url 'organizations:organization' active_organization.slug %}">{{ active_organization.name }}</a>
+  </li>
+  <li>
+    <a class="text-gray-500 transition hover:text-gray-500/75"
+       href="{% url 'organizations:concepts' active_organization.slug %}">{% trans 'concepts'|capfirst %}</a>
+  </li>
+  <li>
+    <a class="text-gray-500 transition hover:text-gray-500/75"
+       href="{% url 'organizations:events' active_organization.slug %}">{% trans 'events'|capfirst %}</a>
+  </li>
+  {% if request.user.is_staff %}
+    <li>
+      <a class="text-gray-500 transition hover:text-gray-500/75"
+         href="{% url 'organizations:import_resengo_excel' active_organization.slug %}">Import Resengo</a>
+    </li>
+  {% endif %}
 {% endif %}

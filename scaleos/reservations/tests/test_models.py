@@ -2,16 +2,13 @@ import logging
 
 import pytest
 from moneyed import EUR
+from moneyed import Decimal
 from moneyed import Money
 
 from scaleos.events.tests import model_factories as event_factories
 from scaleos.hr.tests import model_factories as hr_factories
-from scaleos.payments.models import PaymentRequest
-from scaleos.payments.models import Price
 from scaleos.payments.tests import model_factories as payment_factories
-from scaleos.reservations import models as reservation_models
 from scaleos.reservations.tests import model_factories as reservation_factories
-from scaleos.shared.mixins import ITS_NOW
 from scaleos.users.tests import model_factories as user_factories
 
 logger = logging.getLogger(__name__)
@@ -19,46 +16,57 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.django_db
 def test_brunch_reservation_for_waerboom(faker):
-    logger.setLevel(logging.DEBUG)
     from scaleos.payments.tests.model_factories import AgePriceMatrixFactory
     from scaleos.payments.tests.model_factories import AgePriceMatrixItemFactory
     from scaleos.payments.tests.model_factories import PriceFactory
 
-    brunch_concept = event_factories.BrunchConceptFactory.create()
+    brunch_concept = event_factories.ConceptFactory.create()
     age_price_matrix = AgePriceMatrixFactory.create()
 
     the_baby_price = Money(0.0, EUR)
-    baby_price = PriceFactory.create(current_price=the_baby_price)
+
     baby_price_matrix_item = AgePriceMatrixItemFactory.create(
         till_age=4,
-        price_id=baby_price.pk,
         age_price_matrix_id=age_price_matrix.pk,
+    )
+    PriceFactory.create(
+        vat_included=the_baby_price,
+        unique_origin=baby_price_matrix_item,
     )
 
     the_children_price = Money(10, EUR)
-    children_price = PriceFactory.create(current_price=the_children_price)
+
     children_price_matrix_item = AgePriceMatrixItemFactory.create(
         from_age=5,
         till_age=12,
-        price_id=children_price.pk,
         age_price_matrix_id=age_price_matrix.pk,
+    )
+    PriceFactory.create(
+        vat_included=the_children_price,
+        unique_origin=children_price_matrix_item,
     )
 
     the_adolescent_price = Money(20, EUR)
-    adolescent_price = PriceFactory.create(current_price=the_adolescent_price)
+
     adolescent_price_matrix_item = AgePriceMatrixItemFactory.create(
         from_age=13,
         till_age=16,
-        price_id=adolescent_price.pk,
         age_price_matrix_id=age_price_matrix.pk,
+    )
+    PriceFactory.create(
+        vat_included=the_adolescent_price,
+        unique_origin=adolescent_price_matrix_item,
     )
 
     the_adult_price = Money(30, EUR)
-    adult_price = PriceFactory.create(current_price=the_adult_price)
+
     adult_price_matrix_item = AgePriceMatrixItemFactory.create(
         from_age=17,
-        price_id=adult_price.pk,
         age_price_matrix_id=age_price_matrix.pk,
+    )
+    PriceFactory.create(
+        vat_included=the_adult_price,
+        unique_origin=adult_price_matrix_item,
     )
 
     event_factories.ConceptPriceMatrixFactory.create(
@@ -79,7 +87,7 @@ def test_brunch_reservation_for_waerboom(faker):
     brunch_reservation.person_id = person.pk
     brunch_reservation.save()
 
-    assert Money(0, EUR) == brunch_reservation.total_price, (
+    assert Money(0, EUR) == brunch_reservation.get_total_price().vat_included, (
         "because we haven't any reservation lines yet"
     )
     assert brunch_event.current_price_matrix, (
@@ -90,46 +98,55 @@ def test_brunch_reservation_for_waerboom(faker):
     brunch_reservation.save()
 
     number_of_babies = 3
-    baby_reservation = reservation_factories.ReservationLineFactory.create(
+    baby_reservation_line = reservation_factories.ReservationLineFactory.create(
         reservation_id=brunch_reservation.pk,
         amount=number_of_babies,
         price_matrix_item_id=baby_price_matrix_item.pk,
     )
-    assert number_of_babies * the_baby_price == baby_reservation.total_price
+    assert (
+        number_of_babies * the_baby_price
+        == baby_reservation_line.total_price.vat_included
+    )
 
     number_of_children = 5
-    children_reservation = reservation_factories.ReservationLineFactory.create(
+    children_reservation_line = reservation_factories.ReservationLineFactory.create(
         reservation_id=brunch_reservation.pk,
         amount=number_of_children,
         price_matrix_item_id=children_price_matrix_item.pk,
     )
-    assert the_children_price * number_of_children == children_reservation.total_price
+    assert (
+        the_children_price * number_of_children
+        == children_reservation_line.total_price.vat_included
+    )
 
     number_of_adolescents = 2
-    adolescent_reservation = reservation_factories.ReservationLineFactory.create(
+    adolescent_reservation_line = reservation_factories.ReservationLineFactory.create(
         reservation_id=brunch_reservation.pk,
         amount=number_of_adolescents,
         price_matrix_item_id=adolescent_price_matrix_item.pk,
     )
     assert (
         number_of_adolescents * the_adolescent_price
-        == adolescent_reservation.total_price
+        == adolescent_reservation_line.total_price.vat_included
     )
 
     number_of_adults = 4
-    adults_reservation = reservation_factories.ReservationLineFactory.create(
+    adults_reservation_line = reservation_factories.ReservationLineFactory.create(
         reservation_id=brunch_reservation.pk,
         amount=number_of_adults,
         price_matrix_item_id=adult_price_matrix_item.pk,
     )
-    assert number_of_adults * the_adult_price == adults_reservation.total_price
+    assert (
+        number_of_adults * the_adult_price
+        == adults_reservation_line.total_price.vat_included
+    )
 
     assert (
-        baby_reservation.total_price
-        + children_reservation.total_price
-        + adolescent_reservation.total_price
-        + adults_reservation.total_price
-        == brunch_reservation.total_price
+        baby_reservation_line.total_price.vat_included
+        + children_reservation_line.total_price.vat_included
+        + adolescent_reservation_line.total_price.vat_included
+        + adults_reservation_line.total_price.vat_included
+        == brunch_reservation.get_total_price().vat_included
     )
 
 
@@ -187,7 +204,7 @@ def test_brunch_reservationline_for_waerboom_cannot_exceed_total_availble_places
     )
     assert max_spots == small_brunch.free_spots
     assert max_spots == reservation_line.maximum_amount, (
-        f"because we only have {brunch.free_spots} free spots in the event"
+        f"because we only have {small_brunch.free_spots} free spots in the event"
     )
 
     brunch_unlimited_seats = event_factories.BrunchEventFactory.create(
@@ -240,21 +257,27 @@ def test_reservation_is_not_human_verified(faker):
 
 
 @pytest.mark.django_db
-def test_reservation_finish(faker):
-    an_email = "my_reservation_finish@hotmail.com"
-    reservation = reservation_factories.ReservationFactory()
-    assert reservation.finish(request=None, confirmation_email_address=an_email)
-    assert not (
-        reservation.finish(request=None, confirmation_email_address=an_email)
-    ), "because it is already finished"
-
-
-@pytest.mark.django_db
 def test_reservation_requester_confirm(faker):
     reservation = reservation_factories.ReservationFactory()
     reservation.requester_confirm()
     assert reservation.requester_confirmed
     assert not reservation.requester_confirm(), "because it is already confirmed"
+
+
+@pytest.mark.django_db
+def test_reservation_without_user_cannot_be_confirmed(faker):
+    reservation = reservation_factories.ReservationFactory()
+    reservation.user = None
+    reservation.requester_confirm()
+    assert reservation.requester_confirmed is False
+
+
+@pytest.mark.django_db
+def test_reservation_that_is_already_confirmed_by_requester_cannot_be_confirmed(faker):
+    reservation = reservation_factories.ReservationFactory()
+    reservation.requester_confirm()
+    assert reservation.requester_confirmed is True
+    assert reservation.requester_confirm() is False
 
 
 @pytest.mark.django_db
@@ -266,51 +289,44 @@ def test_reservation_organization_confirm(faker):
 
 
 @pytest.mark.django_db
-def test_reservation_is_statusses(faker):
-    the_email = "my_email@hotmail.com"
-
-    user = user_factories.UserFactory(email=the_email)
-
-    reservation = reservation_factories.ReservationFactory(user=user)
-    assert reservation.verified_email_address is None
-
-    assert reservation.finished_on is None
-    assert reservation.status == reservation_models.Reservation.STATUS.IN_PROGRESS
-    reservation.finished_on = ITS_NOW
-    assert (
-        reservation.status
-        == reservation_models.Reservation.STATUS.TO_BE_CONFIRMED_BY_REQUESTER
+def test_reservation_that_is_already_confirmed_by_organization_cannot_be_confirmed(
+    faker,
+):
+    reservation = reservation_factories.ReservationFactory()
+    assert reservation.organization_confirm() is True
+    assert reservation.organization_confirmed is True
+    assert reservation.organization_confirm() is False, (
+        "because it is already confirmed"
     )
-    reservation.requester_confirmed_on = ITS_NOW
-    assert reservation.organization_confirmed_on is None
-    assert (
-        reservation.status
-        == reservation_models.Reservation.STATUS.TO_BE_CONFIRMED_BY_ORGANIZATION
-    )
+
+
+@pytest.mark.django_db
+def test_if_a_reservation_is_confirmed(faker):
+    reservation = reservation_factories.ReservationFactory()
+    assert reservation.organization_confirm() is True
+    assert reservation.requester_confirm() is True
+    assert reservation.is_confirmed is True
 
 
 @pytest.mark.django_db
 def test_reservation_payment_request(faker):
     hundred_euro = Money(100, EUR)
-    price = payment_factories.PriceFactory.create(
-        current_price=hundred_euro,
-        includes_vat=False,
-        vat_percentage=21,
-    )
-    assert Money(121.00, "EUR") == price.vat_included
 
     age_price_matrix = payment_factories.AgePriceMatrixFactory()
     age_price_matrix_item = payment_factories.AgePriceMatrixItemFactory(
         age_price_matrix_id=age_price_matrix.pk,
-        price_id=price.pk,
     )
-    brunch_concept = event_factories.BrunchConceptFactory()
+    payment_factories.PriceFactory.create(
+        vat_included=hundred_euro,
+        unique_origin=age_price_matrix_item,
+    )
+
+    brunch_concept = event_factories.ConceptFactory()
     event_factories.ConceptPriceMatrixFactory(
         price_matrix_id=age_price_matrix.pk,
         concept_id=brunch_concept.pk,
     )
     brunch_event = event_factories.BrunchEventFactory(concept_id=brunch_concept.pk)
-    assert brunch_event.current_price_matrix
 
     reservation = reservation_factories.EventReservationFactory(
         event_id=brunch_event.pk,
@@ -322,11 +338,11 @@ def test_reservation_payment_request(faker):
     )
     assert reservation.lines.count() == 1
 
-    assert reservation.total_price_vat_included.amount == 121
+    assert reservation.get_total_price()
+    assert reservation.get_total_price().vat_included
+    assert reservation.get_total_price().vat_included.amount == Decimal(100.00)
     reservation.organization_confirm()
     assert reservation.payment_request
-    assert reservation.payment_request.to_pay
-    assert reservation.payment_request.to_pay.vat_included.amount == 121
 
 
 @pytest.mark.django_db
@@ -337,23 +353,35 @@ def test_update_payment_request_updates_existing_payment_request_and_price(
     Test that if there's an existing payment_request, it will update it
     and the price.
     """
-    price = payment_factories.PriceFactory(
-        current_price=Money(50, EUR),
-        includes_vat=False,
+
+    payment_request = payment_factories.PaymentRequestFactory()
+    payment_factories.PriceFactory(
+        vat_included=Money(50, EUR),
+        unique_origin=payment_request,
     )
-    payment_request = payment_factories.PaymentRequestFactory(to_pay=price)
     reservation = reservation_factories.ReservationFactory(
         payment_request=payment_request,
     )
     reservation.update_payment_request()
+    assert payment_request.to_pay.vat_included == Money(50, EUR)
 
-    payment_request.refresh_from_db()
-    price.refresh_from_db()
+    age_price_matrix = payment_factories.AgePriceMatrixFactory()
+    age_price_matrix_item = payment_factories.AgePriceMatrixItemFactory(
+        age_price_matrix_id=age_price_matrix.pk,
+    )
+    hundred_euro = Money(100, EUR)
+    payment_factories.PriceFactory.create(
+        vat_included=hundred_euro,
+        unique_origin=age_price_matrix_item,
+    )
 
-    assert PaymentRequest.objects.count() == 1
-    assert payment_request.to_pay is not None
-    assert payment_request.to_pay.includes_vat is True
-    assert Price.objects.count() == 1
+    reservation_factories.ReservationLineFactory(
+        reservation=reservation,
+        amount=2,
+        price_matrix_item_id=age_price_matrix_item.pk,
+    )
+    reservation.update_payment_request()
+    assert payment_request.to_pay.vat_included == Money(200, EUR)
 
 
 @pytest.mark.django_db
@@ -362,16 +390,56 @@ def test_total_price_vat_included_no_price(faker):
     Test that total_price_vat_included returns None and logs a warning
     when there is no price.
     """
-    age_price_matrix_item = payment_factories.AgePriceMatrixItemFactory(
-        price=None,
-    )
+    age_price_matrix_item = payment_factories.AgePriceMatrixItemFactory()
     reservation_line = reservation_factories.ReservationLineFactory(
         amount=3,
         price_matrix_item=age_price_matrix_item,
     )
-    assert reservation_line.total_price_vat_included is None
+    assert reservation_line.total_price.vat_included == Money(0, EUR)
 
 
-# @pytest.mark.django_db
-# def test_event_can_have_other_pricematrix_than_concept(faker):
-#    assert False, "implement me"
+@pytest.mark.django_db
+def test_event_reservation_is_automatically_confired_by_organization_when_there_is_enough_free_space(  # noqa: E501
+    faker,
+):
+    event = event_factories.BrunchEventFactory.create(maximum_number_of_guests=10)
+    assert event.free_spots == 10
+    event_reservation = reservation_factories.EventReservationFactory(event_id=event.pk)
+    reservation_factories.ReservationLineFactory.create(
+        reservation_id=event_reservation.pk,
+        amount=1,
+    )
+    assert event.free_spots == 10
+    event_reservation.requester_confirm()
+    assert event_reservation.requester_confirmed
+    event_reservation.organization_confirm()
+    assert event_reservation.organization_confirmed
+    assert event.free_spots == 9
+
+
+@pytest.mark.django_db
+def test_event_can_have_a_waitlist(faker):
+    event_reservation_settings = reservation_factories.EventReservationSettingsFactory()
+    event = event_factories.BirthdayEventFactory(
+        reservation_settings_id=event_reservation_settings.pk,
+        maximum_number_of_guests=10,
+    )
+    event_reservation = reservation_factories.EventReservationFactory(event_id=event.pk)
+    reservation_factories.ReservationLineFactory(
+        reservation_id=event_reservation.pk,
+        amount=9,
+    )
+    event_reservation.organization_confirm()
+    event_reservation.requester_confirm()
+    assert event_reservation.on_waitinglist_since is None
+
+    event_reservation_big_group = reservation_factories.EventReservationFactory(
+        event_id=event.pk,
+    )
+    reservation_factories.ReservationLineFactory(
+        reservation_id=event_reservation_big_group.pk,
+        amount=30,
+    )
+    assert event_reservation_big_group.organization_auto_confirm() is False
+    assert event_reservation_big_group.on_waitinglist_since is not None
+    assert event_reservation_big_group.is_confirmed is False

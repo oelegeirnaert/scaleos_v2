@@ -1,5 +1,6 @@
 import logging
 
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.views.decorators.cache import cache_page
@@ -10,8 +11,22 @@ logger = logging.getLogger(__name__)
 
 
 @cache_page(60 * 15)
-def reservation(request, reservation_public_key):
+@login_required
+def reservation(request, reservation_public_key=None):
     context = {}
+    if reservation_public_key is None:
+        reservations = None
+        if request.user.is_staff:
+            reservations = reservation_models.Reservation.objects.all()
+        else:
+            reservations = reservation_models.Reservation.objects.filter(
+                user_id=request.user.pk,
+            )
+
+        context["details"] = reservations
+
+        return render(request, "detail_list.html", context)
+
     reservation = get_object_or_404(
         reservation_models.Reservation,
         public_key=reservation_public_key,

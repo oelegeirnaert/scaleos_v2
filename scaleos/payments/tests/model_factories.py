@@ -1,4 +1,6 @@
 from factory.django import DjangoModelFactory
+from moneyed import EUR
+from moneyed import Money
 
 from scaleos.payments import models as payment_models
 
@@ -19,6 +21,10 @@ class AgePriceMatrixFactory(DjangoModelFactory[payment_models.AgePriceMatrix]):
 
 
 class PriceFactory(DjangoModelFactory[payment_models.Price]):
+    vat_included = Money(121, EUR)
+    vat_excluded = Money(100, EUR)
+    vat = Money(121, EUR)
+
     class Meta:
         model = payment_models.Price
 
@@ -47,3 +53,70 @@ class PaymentFactory(
 ):
     class Meta:
         model = payment_models.Payment
+
+
+class EPCMoneyTransferPaymentFactory(
+    DjangoModelFactory[payment_models.EPCMoneyTransferPayment],
+):
+    class Meta:
+        model = payment_models.EPCMoneyTransferPayment
+
+
+class PriceMatrixItemFactory(
+    DjangoModelFactory[payment_models.PriceMatrixItem],
+):
+    class Meta:
+        model = payment_models.PriceMatrixItem
+
+
+class EventReservationPaymentConditionFactory(
+    DjangoModelFactory[payment_models.EventReservationPaymentCondition],
+):
+    class Meta:
+        model = payment_models.EventReservationPaymentCondition
+
+
+class EventReservationPaymentSettingsFactory(
+    DjangoModelFactory[payment_models.EventReservationPaymentSettings],
+):
+    class Meta:
+        model = payment_models.EventReservationPaymentSettings
+
+
+class PaymentSettingsFactory(DjangoModelFactory[payment_models.PaymentSettings]):
+    class Meta:
+        model = payment_models.PaymentSettings
+
+
+class PaymentMethodFactory(DjangoModelFactory[payment_models.PaymentMethod]):
+    class Meta:
+        model = payment_models.PaymentMethod
+
+
+class EPCMoneyTransferPaymentMethodFactory(
+    DjangoModelFactory[payment_models.EPCMoneyTransferPaymentMethod],
+):
+    class Meta:
+        model = payment_models.EPCMoneyTransferPaymentMethod
+
+
+class CashPaymentMethodFactory(DjangoModelFactory[payment_models.CashPaymentMethod]):
+    class Meta:
+        model = payment_models.CashPaymentMethod
+
+
+class VoucherPaymentMethodFactory(
+    DjangoModelFactory[payment_models.VoucherPaymentMethod],
+):
+    class Meta:
+        model = payment_models.VoucherPaymentMethod
+
+
+class PaymentProposalFactory(DjangoModelFactory[payment_models.PaymentProposal]):
+    class Meta:
+        model = payment_models.PaymentProposal
+
+
+class VATPriceLineFactory(DjangoModelFactory[payment_models.VATPriceLine]):
+    class Meta:
+        model = payment_models.VATPriceLine

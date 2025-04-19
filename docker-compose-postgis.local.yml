@@ -4,6 +4,7 @@ volumes:
   scaleos_local_redis_data: {}
   scaleos_local_postgis_data:
   scaleos_local_postgis_data_backups:
+  scaleos_local_ollama_data:
 
 services:
 

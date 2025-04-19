@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 import openpyxl
@@ -6,10 +7,10 @@ from celery import shared_task
 from django.core.exceptions import ValidationError
 from email_validator import EmailNotValidError
 from email_validator import validate_email
-from webpush import send_user_notification
 
 from scaleos.geography import models as geography_models
 from scaleos.hr import models as hr_models
+from scaleos.notifications import models as notification_models
 from scaleos.organizations import models as organization_models
 from scaleos.shared.functions import birthday_cleaning
 from scaleos.shared.functions import mobile_phone_number_cleaning
@@ -72,7 +73,7 @@ def read_sheet_and_validate_resengo_excel(excel_file_path):
     return sheet
 
 
-def import_resengo_row(row, organization_id=None, force_overwrite=None):
+def import_resengo_row(row, organization_id=None, force_overwrite=None):  # noqa: PLR0915
     name = row[0].value  # 'Oele',
     family_name = row[1].value  # 'Geirnaert',
     email_address = row[2].value  # 'oelegeirnaert@hotmail.com',
@@ -122,7 +123,7 @@ def import_resengo_row(row, organization_id=None, force_overwrite=None):
         # The exception message is human-readable explanation of why it's
         # not a valid (or deliverable) email address.
         logger.warning(e)
-        return ValidationError(e)
+        raise ValidationError(e) from e
 
     # Check if a user with that email already exists
 
@@ -130,9 +131,9 @@ def import_resengo_row(row, organization_id=None, force_overwrite=None):
         email=email_address,
     )
     if not user_created and not force_overwrite:
-        msg = "Email address '{email_address}' already exists in row: {row[0].row}"
+        msg = "Email address '%s' already exists in row: %s", email_address, row[0].row
         logger.warning(msg)
-        return ValidationError()
+        raise ValidationError(msg)
 
     # DATA CLEANING
     # Convert date to correct format if necessary
@@ -158,19 +159,24 @@ def import_resengo_row(row, organization_id=None, force_overwrite=None):
         logger.info("PersonAddress created")
 
     if person_address.address is None:
-        new_address = geography_models.Address.objects.create()
-        new_address.street = street_and_number
-        new_address.postal_code = postal_code
-        new_address.city = city
-        new_address.country = country
-        new_address.save()
-        person_address.address = new_address
-        person_address.save()
+        if street_and_number and postal_code and city and country:
+            new_address = geography_models.Address.objects.create()
+            new_address.street = street_and_number
+            new_address.postal_code = postal_code
+            new_address.city = city
+            new_address.country = country
+            new_address.save()
+            person_address.address = new_address
+            person_address.save()
+        else:
+            msg = "We cannot create an address because we do not have all the data"
+            logger.warning(msg)
+            raise ValidationError(msg)
 
     organization_customer, organization_customer_created = (
         organization_models.OrganizationCustomer.objects.get_or_create(
             organization_id=organization_id,
-            person_id=person.pk,
+            b2c_id=person.pk,
         )
     )
     if organization_customer_created:
@@ -206,40 +212,39 @@ def import_resengo_excel(
     row_count = sheet.max_row
     for idx, row in enumerate(sheet.iter_rows(min_row=2)):  # Skip the header row
         logger.info("importing row %s of %s", idx, row_count)
-        # Assuming your Excel has columns: name, email, date
 
         try:
             import_resengo_row(row, organization_id, force_overwrite)
         except ValidationError as e:
             errors.append(e)
 
-        if Path.exists(excel_file_path):
-            logger.info("Deleting excel file: %s", excel_file_path)
-            Path.unlink(excel_file_path)
+    logger.info("import ready...")
 
-        msg = ""
-        if not errors:
-            msg = "Excel file imported successfully!"
-            logger.info(msg)
-        else:
-            msg = "Excel import failed!"
-            logger.error(
-                "The excel file was not imported correctly \
-                      because of the following reasons: %s",
-                errors,
-            )
+    if os.path.exists(excel_file_path):  # noqa: PTH110
+        logger.info("Deleting excel file: %s", excel_file_path)
+        Path.unlink(excel_file_path)
 
-        if requested_by_user_id:
-            logger.info("inform %s", requested_by_user_id)
-            user = user_models.User.objects.get(pk=requested_by_user_id)
-            payload = {
-                "head": msg,
-                "body": "Hello World",
-                "icon": "https://i.imgur.com/dRDxiCQ.png",
-                "url": "https://www.example.com",
-            }
-            send_user_notification(user=user, payload=payload, ttl=10227000)
+    msg = ""
+    if not errors:
+        msg = "Excel file imported successfully!"
+        result = notification_models.Notification.NotificationResult.SUCCESS
+        logger.info(msg)
+    else:
+        msg = "Excel import failed!"
+        result = notification_models.Notification.NotificationResult.FAILED
+        logger.error(
+            "The excel file was not imported correctly \
+                    because of the following reasons: %s",
+            errors,
+        )
 
-        return msg
+    if requested_by_user_id:
+        logger.info("inform %s", requested_by_user_id)
+        notification_models.Notification.send(
+            notification_type=notification_models.Notification.NotificationType.RESENGO_IMPORT_READY,
+            notification_result=result,
+            message=str(errors),
+            user_id=requested_by_user_id,
+        )
 
     return True

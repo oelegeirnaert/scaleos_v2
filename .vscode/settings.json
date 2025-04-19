@@ -1,0 +1,9 @@
+{
+    "editor.codeActionsOnSave": {
+      "source.fixAll": true,
+      "source.fixAll.ruff": true
+    },
+    "python.formatting.provider": "ruff",
+    "ruff.lintOnSave": true,
+    "ruff.fixAll": true
+  }

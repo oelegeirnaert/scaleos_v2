@@ -24,3 +24,14 @@ def event(request, event_public_key):
         template_used,
         context,
     )
+
+
+def concept(request, concept_public_key):
+    context = {}
+    if concept_public_key:
+        concept = get_object_or_404(
+            event_models.Concept,
+            public_key=concept_public_key,
+        )
+        context["concept"] = concept
+    return render(request, concept.page_template, context)

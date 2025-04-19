@@ -27,14 +27,15 @@ class CardModel(models.Model):
 
     @cached_property
     def page_url(self):
-        try:
-            the_url = reverse(
-                f"{self.app_label}:{self.model_name}",
-                kwargs={f"{self.model_name}_slug": self.slug},
-            )
-            return f"href={the_url}"  # noqa: TRY300
-        except NoReverseMatch:
-            pass
+        if hasattr(self, "slug"):
+            try:
+                the_url = reverse(
+                    f"{self.app_label}:{self.model_name}",
+                    kwargs={f"{self.model_name}_slug": self.slug},
+                )
+                return f"href={the_url}"  # noqa: TRY300
+            except NoReverseMatch:
+                pass
 
         return ""
 

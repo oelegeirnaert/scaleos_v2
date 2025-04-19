@@ -4,8 +4,11 @@ from typing import ClassVar
 from django.contrib.auth.models import AbstractUser
 from django.db.models import CharField
 from django.db.models import EmailField
+from django.db.models import ImageField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from imagekit.models import ImageSpecField
+from imagekit.processors import ResizeToFill
 
 from scaleos.shared.mixins import AdminLinkMixin
 
@@ -26,6 +29,14 @@ class User(AbstractUser, AdminLinkMixin):
     email = EmailField(_("email address"), unique=True)
     username = None  # type: ignore[assignment]
 
+    avatar = ImageField(upload_to="avatars", null=True, blank=True)
+    avatar_thumbnail = ImageSpecField(
+        source="avatar",
+        processors=[ResizeToFill(50, 50)],
+        format="JPEG",
+        options={"quality": 60},
+    )
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
@@ -45,3 +56,9 @@ class User(AbstractUser, AdminLinkMixin):
         if not hasattr(self, "person"):
             return False
         return self.person.owning_organizations.count() > 0
+
+    @property
+    def primary_telephone_number(self):
+        if not hasattr(self, "person"):
+            return None
+        return self.person.primary_telephone_number

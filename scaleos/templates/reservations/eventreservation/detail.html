@@ -1,20 +1,22 @@
 {# generated via manage create_html_scripts #}
 {% load i18n %}
 
-<div id="{{ event_reservation.html_public_key }}">
-  <form hx-post="{% url 'reservations_htmx:event_reservation_total_price' event_reservation.public_key %}"
-        hx-target="#{{ event_reservation.html_id }}.total.price"
-        hx-trigger="load, change delay:500ms">
-    <ul style="text-align: left;">
-      {% for reservationline in event_reservation.lines.all %}
-        <li>{% include reservationline.detail_template %}</li>
-      {% endfor %}
-    </ul>
-  </form>
-  <div style="text-align: left;">
-    <div class="mt-5 font-bold">
-      <span id="{{ event_reservation.html_id }}" class="total price">Loading total price</span>
+{% if event_reservation %}
+  <div id="{{ event_reservation.html_public_key }}">
+    <form hx-post="{% url 'reservations_htmx:event_reservation_total_price' event_reservation.public_key %}"
+          hx-target="#{{ event_reservation.html_id }}.total.price"
+          hx-trigger="load, change delay:500ms">
+      <ul style="text-align: left;">
+        {% for reservationline in event_reservation.lines.all %}
+          <li>{% include reservationline.detail_template %}</li>
+        {% endfor %}
+      </ul>
+    </form>
+    <div style="text-align: left;">
+      <div class="mt-5 font-bold">
+        <span id="{{ event_reservation.html_id }}" class="total price">Loading total price</span>
+      </div>
     </div>
   </div>
-</div>
+{% endif %}
 {% include 'staff.html' with obj=event_reservation %}

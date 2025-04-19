@@ -15,6 +15,7 @@ Welcome to ScaleOS's documentation!
    production_stack
    usefull_links
    test_mail
+   ai_assistant
 
 
 

@@ -16,6 +16,30 @@
              placeholder="{{ request.user.email|default:'your-email@address.com' }}"
              class="mt-1 p-2 bg-neutral-50/50 w-full rounded-md border-gray-200 shadow-xs" />
     </div>
+    <div>
+      <label for="customer_telephone"
+             class="block text-xs font-medium text-gray-700">
+        {% trans 'please, provide your telephone number in case something went wrong'|capfirst %}.
+      </label>
+      <input type="tel"
+             id="customer_telephone"
+             name="customer_telephone"
+             value="{{ request.user.primary_telephone_number|default_if_none:'' }}"
+             placeholder="+32479121212"
+             class="mt-1 p-2 bg-neutral-50/50 w-full rounded-md border-gray-200 shadow-xs" />
+    </div>
+    <div>
+      <label for="customer_comment"
+             class="block text-xs font-medium text-gray-700">
+        {% trans 'do you have any additional comments'|capfirst %}?
+      </label>
+      <textarea name="customer_comment"
+                id="customer_comment"
+                class="mt-1 p-2 bg-neutral-50/50 w-full rounded-md border-gray-200 shadow-xs"
+                placeholder="{% trans 'put your message here'|capfirst %}..."
+                id=""
+                rows="4"></textarea>
+    </div>
     <button type="submit"
             class="mt-5 inline-flex w-full items-center gap-2 rounded-sm border border-gray-600 bg-gray-600 px-8 py-3 text-white hover:bg-transparent hover:text-{{ TAILWIND_THEME_COLORS.primary }} focus:ring-3 focus:outline-hidden">
       <svg xmlns="http://www.w3.org/2000/svg"

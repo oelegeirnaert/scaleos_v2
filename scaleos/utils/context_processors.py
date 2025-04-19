@@ -1,7 +1,15 @@
+import logging
+
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 def body_classes(request):
+    logger.debug("loading body_classes")
+    if request is None:
+        return {}
+
     return {
         "app_name": request.resolver_match.app_name,
         "view_name": request.resolver_match.url_name,
@@ -9,6 +17,10 @@ def body_classes(request):
 
 
 def hideable_page_parts(request):
+    logger.debug("loading hideable_page_parts")
+    if request is None:
+        return {}
+
     show_header = True
     try:
         request.GET["hide-header"]
@@ -30,6 +42,10 @@ def hideable_page_parts(request):
 
 
 def theme_colors(request):
+    logger.debug("loading theme_colors")
+    if request is None:
+        return {}
+
     """
     Adds Tailwind theme colors to the context.
     """

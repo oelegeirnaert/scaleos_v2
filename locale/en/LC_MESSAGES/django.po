@@ -1,0 +1,1624 @@
+# Translations for the ScaleOS project
+# Copyright (C) 2025 OeleGeirnaert
+# OeleGeirnaert <oelegeirnaert@scaleos.net>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-04-17 13:19+0000\n"
+"Language: en-US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: config/settings/base.py:36
+msgid "Nederlands"
+msgstr ""
+
+#: config/settings/base.py:37
+msgid "English"
+msgstr ""
+
+#: config/settings/base.py:38
+msgid "Français"
+msgstr ""
+
+#: config/settings/base.py:39
+msgid "Deutsch"
+msgstr ""
+
+#: htmlcov/z_5959481cfbb5d58f_base_html.html:187
+#: scaleos/templates/base.html:124
+msgid "our application is better with push messaging"
+msgstr ""
+
+#: htmlcov/z_8bdeee31e71373db_action_menu_html.html:102
+msgid "My Profile"
+msgstr ""
+
+#: htmlcov/z_8bdeee31e71373db_action_menu_html.html:108
+#: scaleos/templates/users/action_menu.html:35
+msgid "sign in"
+msgstr ""
+
+#: htmlcov/z_8bdeee31e71373db_action_menu_html.html:114
+#: scaleos/templates/account/signup.html:7
+#: scaleos/templates/account/signup.html:11
+#: scaleos/templates/users/action_menu.html:41
+msgid "register"
+msgstr ""
+
+#: htmlcov/z_8bdeee31e71373db_action_menu_html.html:131
+#: scaleos/templates/users/action_menu.html:63
+msgid "Logout"
+msgstr ""
+
+#: htmlcov/z_8c6cf5ed0037c66b_detail_html.html:91
+#: scaleos/reservations/models.py:109
+#: scaleos/templates/events/concept/detail.html:9
+msgid "reservation"
+msgstr ""
+
+#: htmlcov/z_8c6cf5ed0037c66b_detail_html.html:107
+#: htmlcov/z_b29fccf5b671cd34_page_html.html:94
+#: scaleos/templates/events/concept/detail.html:25
+#: scaleos/templates/events/event/page.html:12
+msgid "subscribe"
+msgstr ""
+
+#: htmlcov/z_8c6cf5ed0037c66b_detail_html.html:147
+#: scaleos/templates/events/concept/detail.html:67
+msgid "close pop-up"
+msgstr ""
+
+#: htmlcov/z_ff1615fb909058ab_detail_html.html:103
+#: scaleos/templates/reservations/eventreservation/confirmation.html:10
+msgid "please, provide your email address for your confirmation mail"
+msgstr ""
+
+#: htmlcov/z_ff1615fb909058ab_detail_html.html:122
+#: scaleos/templates/reservations/eventreservation/confirmation.html:53
+msgid "request reservation"
+msgstr ""
+
+#: scaleos/buildings/models.py:14 scaleos/geography/models.py:131
+#: scaleos/hardware/models.py:112 scaleos/organizations/models.py:42
+#: scaleos/organizations/models.py:286 scaleos/payments/models.py:487
+#: scaleos/reservations/models.py:66
+msgid "organization"
+msgstr ""
+
+#: scaleos/buildings/models.py:20 scaleos/geography/models.py:136
+#: scaleos/shared/fields.py:14 scaleos/templates/card.html:11
+msgid "name"
+msgstr ""
+
+#: scaleos/buildings/models.py:22
+msgid "level"
+msgstr ""
+
+#: scaleos/buildings/models.py:24
+msgid "square metres"
+msgstr ""
+
+#: scaleos/buildings/models.py:31 scaleos/events/models.py:907
+#: scaleos/geography/models.py:142
+msgid "floor"
+msgstr ""
+
+#: scaleos/buildings/models.py:32 scaleos/geography/models.py:143
+msgid "floors"
+msgstr ""
+
+#: scaleos/buildings/models.py:37 scaleos/geography/models.py:148
+msgid "building"
+msgstr ""
+
+#: scaleos/buildings/models.py:38 scaleos/geography/models.py:149
+msgid "buildings"
+msgstr ""
+
+#: scaleos/buildings/models.py:44 scaleos/geography/models.py:155
+msgid "in building"
+msgstr ""
+
+#: scaleos/buildings/models.py:51 scaleos/geography/models.py:162
+msgid "room"
+msgstr ""
+
+#: scaleos/buildings/models.py:52 scaleos/geography/models.py:163
+msgid "rooms"
+msgstr ""
+
+#: scaleos/buildings/models.py:57 scaleos/geography/models.py:168
+msgid "terrace"
+msgstr ""
+
+#: scaleos/buildings/models.py:58 scaleos/geography/models.py:169
+msgid "terraces"
+msgstr ""
+
+#: scaleos/events/admin.py:183
+msgid "applicable reservation settings"
+msgstr ""
+
+#: scaleos/events/models.py:29
+msgid "b2b"
+msgstr ""
+
+#: scaleos/events/models.py:30
+msgid "b2c"
+msgstr ""
+
+#: scaleos/events/models.py:31
+msgid "both"
+msgstr ""
+
+#: scaleos/events/models.py:36 scaleos/events/models.py:916
+msgid "organizer"
+msgstr ""
+
+#: scaleos/events/models.py:44
+msgid "segment"
+msgstr ""
+
+#: scaleos/events/models.py:55 scaleos/events/models.py:256
+#: scaleos/templates/events/brunchevent/detail.html:50
+msgid "reservation settings"
+msgstr ""
+
+#: scaleos/events/models.py:64 scaleos/events/models.py:265
+#: scaleos/payments/models.py:694 scaleos/payments/models.py:695
+#: scaleos/payments/models.py:800
+msgid "event reservation payment settings"
+msgstr ""
+
+#: scaleos/events/models.py:72 scaleos/events/models.py:189
+#: scaleos/events/models.py:225
+msgid "concept"
+msgstr ""
+
+#: scaleos/events/models.py:73
+#: scaleos/templates/organizations/enterprise/action_menu.html:11
+msgid "concepts"
+msgstr ""
+
+#: scaleos/events/models.py:131
+msgid "customer"
+msgstr ""
+
+#: scaleos/events/models.py:141
+msgid "based on concept"
+msgstr ""
+
+#: scaleos/events/models.py:151
+msgid "google fotos album"
+msgstr ""
+
+#: scaleos/events/models.py:158
+msgid "customer concept"
+msgstr ""
+
+#: scaleos/events/models.py:159
+msgid "customer concepts"
+msgstr ""
+
+#: scaleos/events/models.py:165
+msgid "This is not one of your customers"
+msgstr ""
+
+#: scaleos/events/models.py:199
+msgid "price matrix"
+msgstr ""
+
+#: scaleos/events/models.py:207
+msgid "valid from"
+msgstr ""
+
+#: scaleos/events/models.py:214
+msgid "valid till"
+msgstr ""
+
+#: scaleos/events/models.py:234
+msgid "expected number of guests"
+msgstr ""
+
+#: scaleos/events/models.py:241
+msgid "minimum number of guests"
+msgstr ""
+
+#: scaleos/events/models.py:248
+msgid "maximum number of guests"
+msgstr ""
+
+#: scaleos/events/models.py:274
+msgid "allow reservations"
+msgstr ""
+
+#: scaleos/events/models.py:280 scaleos/events/models.py:704
+#: scaleos/events/models.py:864 scaleos/events/models.py:899
+#: scaleos/reservations/models.py:427
+msgid "event"
+msgstr ""
+
+#: scaleos/events/models.py:281 scaleos/templates/events/concept/card.html:16
+#: scaleos/templates/organizations/enterprise/action_menu.html:15
+msgid "events"
+msgstr ""
+
+#: scaleos/events/models.py:290
+msgid "∞"
+msgstr ""
+
+#: scaleos/events/models.py:400
+msgid "yay, there are no warnings"
+msgstr ""
+
+#: scaleos/events/models.py:405
+msgid "upcoming"
+msgstr ""
+
+#: scaleos/events/models.py:406
+msgid "ongoing"
+msgstr ""
+
+#: scaleos/events/models.py:407 scaleos/reservations/models.py:60
+msgid "ended"
+msgstr ""
+
+#: scaleos/events/models.py:408 scaleos/notifications/models.py:41
+#: scaleos/notifications/models.py:56 scaleos/reservations/models.py:61
+#: scaleos/reservations/models.py:540 scaleos/reservations/models.py:601
+msgid "unknown"
+msgstr ""
+
+#: scaleos/events/models.py:412
+msgid "show in ongoing events"
+msgstr ""
+
+#: scaleos/events/models.py:418
+msgid "starting at"
+msgstr ""
+
+#: scaleos/events/models.py:424
+msgid "ending on"
+msgstr ""
+
+#: scaleos/events/models.py:431
+msgid "duplicator"
+msgstr ""
+
+#: scaleos/events/models.py:453
+msgid "single event"
+msgstr ""
+
+#: scaleos/events/models.py:454
+msgid "single events"
+msgstr ""
+
+#: scaleos/events/models.py:540
+msgid "dance event"
+msgstr ""
+
+#: scaleos/events/models.py:541
+msgid "dance events"
+msgstr ""
+
+#: scaleos/events/models.py:546
+msgid "stay over"
+msgstr ""
+
+#: scaleos/events/models.py:547
+msgid "stay overs"
+msgstr ""
+
+#: scaleos/events/models.py:554
+msgid "birthday"
+msgstr ""
+
+#: scaleos/events/models.py:555
+msgid "birthdays"
+msgstr ""
+
+#: scaleos/events/models.py:561
+msgid "please add at least the birthday person to your guests"
+msgstr ""
+
+#: scaleos/events/models.py:568
+msgid "please add the birthday person to your guests"
+msgstr ""
+
+#: scaleos/events/models.py:576
+msgid "wedding"
+msgstr ""
+
+#: scaleos/events/models.py:577
+msgid "weddings"
+msgstr ""
+
+#: scaleos/events/models.py:584
+msgid "please add at least the couple to your guests"
+msgstr ""
+
+#: scaleos/events/models.py:594
+msgid "please add the groom or bride to your guests"
+msgstr ""
+
+#: scaleos/events/models.py:602
+msgid "dinner"
+msgstr ""
+
+#: scaleos/events/models.py:603
+msgid "dinners"
+msgstr ""
+
+#: scaleos/events/models.py:610
+msgid "lunch"
+msgstr ""
+
+#: scaleos/events/models.py:611
+msgid "lunches"
+msgstr ""
+
+#: scaleos/events/models.py:618
+msgid "meeting"
+msgstr ""
+
+#: scaleos/events/models.py:619
+msgid "meetings"
+msgstr ""
+
+#: scaleos/events/models.py:626
+msgid "breakfast"
+msgstr ""
+
+#: scaleos/events/models.py:627
+msgid "breakfasts"
+msgstr ""
+
+#: scaleos/events/models.py:634
+msgid "live performance"
+msgstr ""
+
+#: scaleos/events/models.py:635
+msgid "live performances"
+msgstr ""
+
+#: scaleos/events/models.py:642
+msgid "presentation"
+msgstr ""
+
+#: scaleos/events/models.py:643
+msgid "presentations"
+msgstr ""
+
+#: scaleos/events/models.py:650
+msgid "brunch"
+msgstr ""
+
+#: scaleos/events/models.py:651
+msgid "brunches"
+msgstr ""
+
+#: scaleos/events/models.py:658
+msgid "team building"
+msgstr ""
+
+#: scaleos/events/models.py:659
+msgid "team buildings"
+msgstr ""
+
+#: scaleos/events/models.py:666
+msgid "ceremony event"
+msgstr ""
+
+#: scaleos/events/models.py:667
+msgid "ceremony events"
+msgstr ""
+
+#: scaleos/events/models.py:674
+msgid "reception"
+msgstr ""
+
+#: scaleos/events/models.py:675
+msgid "receptions"
+msgstr ""
+
+#: scaleos/events/models.py:682
+msgid "closing"
+msgstr ""
+
+#: scaleos/events/models.py:683
+msgid "closings"
+msgstr ""
+
+#: scaleos/events/models.py:690
+msgid "break"
+msgstr ""
+
+#: scaleos/events/models.py:691
+msgid "breaks"
+msgstr ""
+
+#: scaleos/events/models.py:696
+msgid "every AMOUNT day"
+msgstr ""
+
+#: scaleos/events/models.py:697
+msgid "every AMOUNT week"
+msgstr ""
+
+#: scaleos/events/models.py:698
+msgid "every AMOUNT month"
+msgstr ""
+
+#: scaleos/events/models.py:699
+msgid "every AMOUNT year"
+msgstr ""
+
+#: scaleos/events/models.py:711
+msgid "from date"
+msgstr ""
+
+#: scaleos/events/models.py:717
+msgid "to date"
+msgstr ""
+
+#: scaleos/events/models.py:723
+msgid "amount"
+msgstr ""
+
+#: scaleos/events/models.py:730
+msgid "every interval"
+msgstr ""
+
+#: scaleos/events/models.py:741
+msgid "we cannot duplicate an event if none is defined"
+msgstr ""
+
+#: scaleos/events/models.py:745
+msgid "we cannot duplicate an event without a to date"
+msgstr ""
+
+#: scaleos/events/models.py:752
+msgid "we cannot duplicate an event without a from date"
+msgstr ""
+
+#: scaleos/events/models.py:756
+msgid "the from date must be lower than the to date"
+msgstr ""
+
+#: scaleos/events/models.py:761
+msgid "we cannot duplicate an event witout starting date or time"
+msgstr ""
+
+#: scaleos/events/models.py:765
+msgid "we cannot duplicate an event witout ending date or time"
+msgstr ""
+
+#: scaleos/events/models.py:873
+msgid "person"
+msgstr ""
+
+#: scaleos/events/models.py:881
+msgid "checked in at"
+msgstr ""
+
+#: scaleos/events/models.py:888
+msgid "checked out at"
+msgstr ""
+
+#: scaleos/events/models.py:917
+msgid "staff"
+msgstr ""
+
+#: scaleos/events/models.py:918
+msgid "vip"
+msgstr ""
+
+#: scaleos/events/models.py:919
+msgid "bride"
+msgstr ""
+
+#: scaleos/events/models.py:920
+msgid "groom"
+msgstr ""
+
+#: scaleos/events/models.py:921
+msgid "birthday person"
+msgstr ""
+
+#: scaleos/events/models.py:922
+msgid "dj"
+msgstr ""
+
+#: scaleos/events/models.py:923
+msgid "artist"
+msgstr ""
+
+#: scaleos/events/models.py:924
+msgid "photographer"
+msgstr ""
+
+#: scaleos/events/models.py:925
+msgid "technician"
+msgstr ""
+
+#: scaleos/events/models.py:926
+msgid "cook"
+msgstr ""
+
+#: scaleos/events/models.py:927
+msgid "caterer"
+msgstr ""
+
+#: scaleos/events/models.py:928
+msgid "speaker"
+msgstr ""
+
+#: scaleos/events/models.py:929
+msgid "other"
+msgstr ""
+
+#: scaleos/events/models.py:933
+msgid "role"
+msgstr ""
+
+#: scaleos/events/models.py:942
+msgid "event attendee"
+msgstr ""
+
+#: scaleos/events/models.py:951
+msgid "from organization"
+msgstr ""
+
+#: scaleos/events/models.py:960
+msgid "comments"
+msgstr ""
+
+#: scaleos/events/models.py:967
+msgid "attendee role"
+msgstr ""
+
+#: scaleos/events/models.py:968
+msgid "attendee roles"
+msgstr ""
+
+#: scaleos/geography/models.py:73
+msgid "country"
+msgstr ""
+
+#: scaleos/hardware/models.py:30 scaleos/hardware/models.py:128
+#: scaleos/organizations/models.py:34
+msgid "network"
+msgstr ""
+
+#: scaleos/hardware/models.py:31
+msgid "networks"
+msgstr ""
+
+#: scaleos/hardware/models.py:120
+msgid "device"
+msgstr ""
+
+#: scaleos/hardware/models.py:121
+msgid "devices"
+msgstr ""
+
+#: scaleos/hardware/models.py:145 scaleos/software/models.py:28
+msgid "computer"
+msgstr ""
+
+#: scaleos/hardware/models.py:146
+msgid "computers"
+msgstr ""
+
+#: scaleos/hr/models.py:115
+msgid "Language"
+msgstr ""
+
+#: scaleos/hr/models.py:123
+msgid "Writing Score"
+msgstr ""
+
+#: scaleos/hr/models.py:128
+msgid "Reading Score"
+msgstr ""
+
+#: scaleos/hr/models.py:133
+msgid "Speaking Score"
+msgstr ""
+
+#: scaleos/hr/models.py:138
+msgid "understanding_score"
+msgstr ""
+
+#: scaleos/hr/models.py:146
+msgid "mobile"
+msgstr ""
+
+#: scaleos/hr/models.py:147
+msgid "home"
+msgstr ""
+
+#: scaleos/hr/models.py:148
+msgid "work"
+msgstr ""
+
+#: scaleos/hr/models.py:159
+msgid "Telephone Type"
+msgstr ""
+
+#: scaleos/notifications/models.py:35
+msgid "Resengo import ready"
+msgstr ""
+
+#: scaleos/notifications/models.py:38
+msgid "organization confirmed event reservation"
+msgstr ""
+
+#: scaleos/notifications/models.py:44
+msgid "created"
+msgstr ""
+
+#: scaleos/notifications/models.py:45
+msgid "sent"
+msgstr ""
+
+#: scaleos/notifications/models.py:46
+msgid "dismissed"
+msgstr ""
+
+#: scaleos/notifications/models.py:47
+msgid "modified"
+msgstr ""
+
+#: scaleos/notifications/models.py:48
+msgid "read"
+msgstr ""
+
+#: scaleos/notifications/models.py:49
+msgid "seen"
+msgstr ""
+
+#: scaleos/notifications/models.py:50 scaleos/reservations/models.py:382
+#: scaleos/reservations/models.py:401
+msgid "confirmed"
+msgstr ""
+
+#: scaleos/notifications/models.py:51 scaleos/reservations/models.py:386
+#: scaleos/reservations/models.py:403
+msgid "canceled"
+msgstr ""
+
+#: scaleos/notifications/models.py:52
+msgid "completed"
+msgstr ""
+
+#: scaleos/notifications/models.py:53
+msgid "error"
+msgstr ""
+
+#: scaleos/notifications/models.py:54
+msgid "success"
+msgstr ""
+
+#: scaleos/notifications/models.py:55
+msgid "failed"
+msgstr ""
+
+#: scaleos/notifications/models.py:59 scaleos/payments/models.py:789
+#: scaleos/reservations/models.py:624
+msgid "seconds"
+msgstr ""
+
+#: scaleos/notifications/models.py:60 scaleos/payments/models.py:790
+#: scaleos/reservations/models.py:625
+msgid "minutes"
+msgstr ""
+
+#: scaleos/notifications/models.py:61 scaleos/payments/models.py:791
+#: scaleos/reservations/models.py:626
+msgid "hour"
+msgstr ""
+
+#: scaleos/notifications/models.py:62 scaleos/payments/models.py:792
+#: scaleos/reservations/models.py:627
+msgid "days"
+msgstr ""
+
+#: scaleos/notifications/models.py:63 scaleos/payments/models.py:793
+#: scaleos/reservations/models.py:628
+msgid "weeks"
+msgstr ""
+
+#: scaleos/notifications/models.py:64 scaleos/payments/models.py:794
+#: scaleos/reservations/models.py:629
+msgid "months"
+msgstr ""
+
+#: scaleos/notifications/models.py:65 scaleos/payments/models.py:795
+#: scaleos/reservations/models.py:630
+msgid "years"
+msgstr ""
+
+#: scaleos/notifications/models.py:125
+msgid "notification"
+msgstr ""
+
+#: scaleos/notifications/models.py:126
+msgid "notifications"
+msgstr ""
+
+#: scaleos/notifications/models.py:210 scaleos/notifications/models.py:214
+msgid "please choose one of both options"
+msgstr ""
+
+#: scaleos/notifications/models.py:304
+msgid "click here"
+msgstr ""
+
+#: scaleos/notifications/models.py:371
+msgid "full organization"
+msgstr ""
+
+#: scaleos/notifications/models.py:372
+msgid "organization owners"
+msgstr ""
+
+#: scaleos/notifications/models.py:373
+msgid "organization employees"
+msgstr ""
+
+#: scaleos/notifications/models.py:374
+msgid "organization suppliers"
+msgstr ""
+
+#: scaleos/notifications/models.py:375 scaleos/organizations/models.py:209
+msgid "organization customers"
+msgstr ""
+
+#: scaleos/notifications/models.py:503 scaleos/notifications/models.py:504
+msgid "user notification settings"
+msgstr ""
+
+#: scaleos/organizations/models.py:43 scaleos/templates/base.html:76
+msgid "organizations"
+msgstr ""
+
+#: scaleos/organizations/models.py:208
+msgid "organization customer"
+msgstr ""
+
+#: scaleos/organizations/models.py:214
+msgid "B2C"
+msgstr ""
+
+#: scaleos/organizations/models.py:217
+msgid "B2B"
+msgstr ""
+
+#: scaleos/organizations/models.py:228
+msgid "your customer needs to be a person OR an organization, not both"
+msgstr ""
+
+#: scaleos/organizations/models.py:234
+msgid "your customer needs to be a person OR an organization"
+msgstr ""
+
+#: scaleos/organizations/models.py:239
+msgid "you cannot add yourself as a customer"
+msgstr ""
+
+#: scaleos/organizations/models.py:259
+msgid "enterprise"
+msgstr ""
+
+#: scaleos/organizations/models.py:260
+msgid "enterprises"
+msgstr ""
+
+#: scaleos/organizations/models.py:295 scaleos/payments/models.py:1031
+msgid "payment method"
+msgstr ""
+
+#: scaleos/organizations/models.py:303
+msgid "pay"
+msgstr ""
+
+#: scaleos/organizations/models.py:304
+msgid "with"
+msgstr ""
+
+#: scaleos/payments/admin.py:25
+msgid "add your price after saving..."
+msgstr ""
+
+#: scaleos/payments/admin.py:105 scaleos/payments/admin.py:280
+#: scaleos/shared/admin.py:87
+msgid "origin link"
+msgstr ""
+
+#: scaleos/payments/admin.py:189
+msgid "unique origin link"
+msgstr ""
+
+#: scaleos/payments/admin.py:291
+msgid "price link"
+msgstr ""
+
+#: scaleos/payments/models.py:87 scaleos/payments/models.py:626
+msgid "price"
+msgstr ""
+
+#: scaleos/payments/models.py:88
+msgid "prices"
+msgstr ""
+
+#: scaleos/payments/models.py:132
+msgid "vat included"
+msgstr ""
+
+#: scaleos/payments/models.py:148 scaleos/payments/models.py:437
+msgid "free"
+msgstr ""
+
+#: scaleos/payments/models.py:255
+msgid "VAT price line"
+msgstr ""
+
+#: scaleos/payments/models.py:256
+msgid "VAT price lines"
+msgstr ""
+
+#: scaleos/payments/models.py:267
+msgid "your input price may not be 0, otherwise it's free"
+msgstr ""
+
+#: scaleos/payments/models.py:272
+msgid "please set your vat percentage"
+msgstr ""
+
+#: scaleos/payments/models.py:275
+msgid "does your price include VAT"
+msgstr ""
+
+#: scaleos/payments/models.py:284
+msgid "we cannot set the vat without an input price"
+msgstr ""
+
+#: scaleos/payments/models.py:290
+msgid "we cannot set the vat without a vat percentage"
+msgstr ""
+
+#: scaleos/payments/models.py:295
+msgid "we need to know if the input price contains vat or not"
+msgstr ""
+
+#: scaleos/payments/models.py:423
+msgid "year"
+msgstr ""
+
+#: scaleos/payments/models.py:462
+msgid "from number of items"
+msgstr ""
+
+#: scaleos/payments/models.py:470
+msgid "to number of items"
+msgstr ""
+
+#: scaleos/payments/models.py:479
+msgid "bulk price matrix item"
+msgstr ""
+
+#: scaleos/payments/models.py:480
+msgid "bulk price matrix items"
+msgstr ""
+
+#: scaleos/payments/models.py:496 scaleos/payments/models.py:497
+#: scaleos/payments/models.py:523
+msgid "payment settings"
+msgstr ""
+
+#: scaleos/payments/models.py:508
+msgid "to person"
+msgstr ""
+
+#: scaleos/payments/models.py:515
+msgid "to organization"
+msgstr ""
+
+#: scaleos/payments/models.py:609
+#, python-format
+msgid "%s has no %s"
+msgstr ""
+
+#: scaleos/payments/models.py:617
+msgid "payment request"
+msgstr ""
+
+#: scaleos/payments/models.py:634
+msgid "due date & time"
+msgstr ""
+
+#: scaleos/payments/models.py:640
+msgid "payment proposal"
+msgstr ""
+
+#: scaleos/payments/models.py:641
+msgid "payment proposals"
+msgstr ""
+
+#: scaleos/payments/models.py:717
+msgid "no conditions defined"
+msgstr ""
+
+#: scaleos/payments/models.py:769
+msgid "full price"
+msgstr ""
+
+#: scaleos/payments/models.py:770
+msgid "fixed price"
+msgstr ""
+
+#: scaleos/payments/models.py:773
+msgid "percentage of total price"
+msgstr ""
+
+#: scaleos/payments/models.py:775
+msgid "remaining price"
+msgstr ""
+
+#: scaleos/payments/models.py:780
+msgid "before the start of the event"
+msgstr ""
+
+#: scaleos/payments/models.py:782
+msgid "after the start of the event"
+msgstr ""
+
+#: scaleos/payments/models.py:783
+msgid "before the event ends"
+msgstr ""
+
+#: scaleos/payments/models.py:784
+msgid "after the event ended"
+msgstr ""
+
+#: scaleos/payments/models.py:785
+msgid "at the start of the event"
+msgstr ""
+
+#: scaleos/payments/models.py:786
+msgid "at the end of the event"
+msgstr ""
+
+#: scaleos/payments/models.py:838
+msgid "number of persons"
+msgstr ""
+
+#: scaleos/payments/models.py:855
+msgid "event reservation payment condition"
+msgstr ""
+
+#: scaleos/payments/models.py:856
+msgid "event reservation payment conditions"
+msgstr ""
+
+#: scaleos/payments/models.py:868
+msgid ""
+"you need to set a percentage when the payment type is set to percentage of "
+"total price"
+msgstr ""
+
+#: scaleos/payments/models.py:877
+msgid "to be paid"
+msgstr ""
+
+#: scaleos/payments/models.py:892
+#, python-format
+msgid "% of total price"
+msgstr ""
+
+#: scaleos/payments/models.py:911
+msgid ""
+"We do not have any event reservation, so we are not able to calculate the "
+"price"
+msgstr ""
+
+#: scaleos/payments/models.py:1032
+msgid "payment methods"
+msgstr ""
+
+#: scaleos/payments/models.py:1039
+msgid "voucher"
+msgstr ""
+
+#: scaleos/payments/models.py:1040
+msgid "vouchers"
+msgstr ""
+
+#: scaleos/payments/models.py:1047 scaleos/payments/models.py:1048
+msgid "EPC money transfer"
+msgstr ""
+
+#: scaleos/payments/models.py:1053 scaleos/payments/models.py:1054
+msgid "cash"
+msgstr ""
+
+#: scaleos/reservations/admin.py:106
+msgid "applicable payment settings link"
+msgstr ""
+
+#: scaleos/reservations/models.py:41
+msgid "in progress"
+msgstr ""
+
+#: scaleos/reservations/models.py:45
+msgid "to be confirmed by requester"
+msgstr ""
+
+#: scaleos/reservations/models.py:51
+msgid "to be confirmed by organization"
+msgstr ""
+
+#: scaleos/reservations/models.py:54
+msgid "on waitinglist"
+msgstr ""
+
+#: scaleos/reservations/models.py:55
+msgid "waiting for payment"
+msgstr ""
+
+#: scaleos/reservations/models.py:56
+msgid "partially paid"
+msgstr ""
+
+#: scaleos/reservations/models.py:57
+msgid "partially used"
+msgstr ""
+
+#: scaleos/reservations/models.py:58
+msgid "used"
+msgstr ""
+
+#: scaleos/reservations/models.py:59
+msgid "event is over"
+msgstr ""
+
+#: scaleos/reservations/models.py:83
+msgid "the moment the reservation has been made"
+msgstr ""
+
+#: scaleos/reservations/models.py:87
+msgid "on waitinglist since"
+msgstr ""
+
+#: scaleos/reservations/models.py:91
+msgid "the moment the reservation has been added to the waitinglist"
+msgstr ""
+
+#: scaleos/reservations/models.py:110
+#: scaleos/templates/events/brunchevent/detail.html:57
+msgid "reservations"
+msgstr ""
+
+#: scaleos/reservations/models.py:232
+msgid "for an event reservation, you need at least one person"
+msgstr ""
+
+#: scaleos/reservations/models.py:242
+msgid "we need an event for an event reservation"
+msgstr ""
+
+#: scaleos/reservations/models.py:384
+msgid "refused"
+msgstr ""
+
+#: scaleos/reservations/models.py:387 scaleos/reservations/models.py:404
+msgid "pending"
+msgstr ""
+
+#: scaleos/reservations/models.py:428
+msgid "for"
+msgstr ""
+
+#: scaleos/reservations/models.py:445 scaleos/reservations/models.py:514
+msgid "open reservation"
+msgstr ""
+
+#: scaleos/reservations/models.py:455
+msgid "send notification"
+msgstr ""
+
+#: scaleos/reservations/models.py:466
+msgid "reservation update"
+msgstr ""
+
+#: scaleos/reservations/models.py:467
+msgid "reservation updates"
+msgstr ""
+
+#: scaleos/reservations/models.py:470
+msgid "updated"
+msgstr ""
+
+#: scaleos/reservations/models.py:473
+msgid "on"
+msgstr ""
+
+#: scaleos/reservations/models.py:510
+msgid "organization confirmed"
+msgstr ""
+
+#: scaleos/reservations/models.py:512
+msgid "your reservation has been confirmed"
+msgstr "jouw reservatie werd bevestigd"
+
+#: scaleos/reservations/models.py:521
+msgid "organization canceled"
+msgstr ""
+
+#: scaleos/reservations/models.py:523
+msgid "your reservation has been canceled"
+msgstr ""
+
+#: scaleos/reservations/models.py:531
+msgid "organization refused"
+msgstr ""
+
+#: scaleos/reservations/models.py:533
+msgid "a reservation has been refused"
+msgstr ""
+
+#: scaleos/reservations/models.py:537
+msgid "event full"
+msgstr ""
+
+#: scaleos/reservations/models.py:538
+msgid "person blocked"
+msgstr ""
+
+#: scaleos/reservations/models.py:539 scaleos/reservations/models.py:553
+msgid "custom reason"
+msgstr ""
+
+#: scaleos/reservations/models.py:544 scaleos/reservations/models.py:605
+msgid "reason"
+msgstr ""
+
+#: scaleos/reservations/models.py:563
+msgid "requester confirmed"
+msgstr ""
+
+#: scaleos/reservations/models.py:565
+msgid "the requester has confirmed his reservation"
+msgstr ""
+
+#: scaleos/reservations/models.py:573
+msgid "requester canceled"
+msgstr ""
+
+#: scaleos/reservations/models.py:575
+msgid "the requester has canceled his reservation"
+msgstr ""
+
+#: scaleos/reservations/models.py:583
+msgid "waiting user email confirmation"
+msgstr ""
+
+#: scaleos/reservations/models.py:584
+msgid "please confirm your email address"
+msgstr ""
+
+#: scaleos/reservations/models.py:586
+msgid "confirm now"
+msgstr ""
+
+#: scaleos/reservations/models.py:594
+msgid "invalid reservation"
+msgstr ""
+
+#: scaleos/reservations/models.py:595
+msgid "an invalid reservation has been made"
+msgstr ""
+
+#: scaleos/reservations/models.py:599
+msgid "invalid email"
+msgstr ""
+
+#: scaleos/reservations/models.py:600
+msgid "no active organization"
+msgstr ""
+
+#: scaleos/reservations/models.py:614
+msgid "additional info"
+msgstr ""
+
+#: scaleos/reservations/models.py:631
+msgid "at start"
+msgstr ""
+
+#: scaleos/reservations/models.py:632
+msgid "when ended"
+msgstr ""
+
+#: scaleos/reservations/models.py:701 scaleos/reservations/models.py:702
+msgid "event reservation settings"
+msgstr ""
+
+#: scaleos/reservations/tests/test_views_htmx.py:307
+#: scaleos/reservations/views_htmx.py:294
+#: scaleos/reservations/views_htmx.py:308
+msgid "we cannot confirm this reservation"
+msgstr ""
+
+#: scaleos/reservations/views_htmx.py:49
+msgid "you already made a reservation for this event"
+msgstr ""
+
+#: scaleos/reservations/views_htmx.py:54
+msgid "sorry, the reservations for this event are already closed"
+msgstr ""
+
+#: scaleos/reservations/views_htmx.py:203
+msgid "this event reservation has no event assigned"
+msgstr ""
+
+#: scaleos/reservations/views_htmx.py:214
+#, python-brace-format
+msgid "you need at least {mimimum_people} persons to make this reservation"
+msgstr ""
+
+#: scaleos/reservations/views_htmx.py:222
+#, python-brace-format
+msgid "you need at most {maximum_people} persons to make this reservation"
+msgstr ""
+
+#: scaleos/reservations/views_htmx.py:227
+#, python-format
+msgid "total price for %(amount)s persons: %(price)s"
+msgstr ""
+
+#: scaleos/reservations/views_htmx.py:246
+msgid "we don't know to which organization this reservation belongs"
+msgstr ""
+
+#: scaleos/reservations/views_htmx.py:283
+msgid "reservation requested, but your are on our waiting list"
+msgstr ""
+
+#: scaleos/reservations/views_htmx.py:286
+msgid "reservation requested"
+msgstr ""
+
+#: scaleos/reservations/views_htmx.py:300
+#: scaleos/reservations/views_htmx.py:314
+msgid "reservation confirmed"
+msgstr ""
+
+#: scaleos/shared/admin.py:50
+#, python-brace-format
+msgid "{obj} has no {on_attr}"
+msgstr ""
+
+#: scaleos/shared/admin.py:95 scaleos/shared/admin.py:103
+msgid "origin"
+msgstr ""
+
+#: scaleos/shared/functions.py:127
+msgid "email address must be a string"
+msgstr ""
+
+#: scaleos/shared/functions.py:131
+msgid "email address is required"
+msgstr ""
+
+#: scaleos/shared/functions.py:137
+#, python-format
+msgid "email address %s must be at least %s characters long"
+msgstr ""
+
+#: scaleos/shared/functions.py:166
+msgid "is blacklisted"
+msgstr ""
+
+#: scaleos/shared/models.py:14
+msgid "card image"
+msgstr ""
+
+#: scaleos/shared/models.py:19
+msgid "card description"
+msgstr ""
+
+#: scaleos/shared/validators.py:7
+msgid "percentage value must be between 0 and 100"
+msgstr ""
+
+#: scaleos/shared/views_htmx.py:12 scaleos/shared/views_htmx.py:19
+msgid "this is not a HTMX request"
+msgstr ""
+
+#: scaleos/shared/views_htmx.py:24
+msgid "this is not a POST request"
+msgstr ""
+
+#: scaleos/software/models.py:36
+msgid "service"
+msgstr ""
+
+#: scaleos/software/models.py:37
+msgid "services"
+msgstr ""
+
+#: scaleos/software/models.py:45
+msgid "ollama service"
+msgstr ""
+
+#: scaleos/software/models.py:46
+msgid "ollama services"
+msgstr ""
+
+#: scaleos/templates/account/login.html:7
+#: scaleos/templates/account/login.html:11
+#: scaleos/templates/account/login.html:112
+#: scaleos/templates/allauth/layouts/entrance.html:7
+msgid "Sign In"
+msgstr ""
+
+#: scaleos/templates/account/login.html:16
+msgid ""
+"Please sign in with one of your existing third-party accounts or create a "
+"new account."
+msgstr ""
+
+#: scaleos/templates/account/login.html:25
+#: scaleos/templates/account/signup.html:25
+msgid "or"
+msgstr ""
+
+#: scaleos/templates/account/login.html:34
+#, python-format
+msgid ""
+"If you have not created an account yet, then please <a "
+"href=\"%(signup_url)s\" class=\"text-indigo-600 hover:text-indigo-800\">sign "
+"up</a> first."
+msgstr ""
+
+#: scaleos/templates/account/login.html:59
+#: scaleos/templates/account/password_reset.html:56
+#: scaleos/templates/account/signup.html:56
+msgid "Email Address"
+msgstr ""
+
+#: scaleos/templates/account/login.html:76
+#: scaleos/templates/account/signup.html:87
+msgid "Password"
+msgstr ""
+
+#: scaleos/templates/account/login.html:97
+msgid "Remember Me"
+msgstr ""
+
+#: scaleos/templates/account/login.html:101
+msgid "Forgot Password?"
+msgstr ""
+
+#: scaleos/templates/account/login.html:118
+msgid "Don't have an account?"
+msgstr ""
+
+#: scaleos/templates/account/login.html:120
+msgid "Sign up"
+msgstr ""
+
+#: scaleos/templates/account/password_reset.html:7
+#: scaleos/templates/account/password_reset.html:11
+msgid "Password Reset"
+msgstr ""
+
+#: scaleos/templates/account/password_reset.html:23
+msgid "Note"
+msgstr ""
+
+#: scaleos/templates/account/password_reset.html:32
+msgid ""
+"Forgotten your password? Enter your email address below, and we'll send you "
+"an email allowing you to reset it."
+msgstr ""
+
+#: scaleos/templates/account/password_reset.html:74
+msgid "Reset My Password"
+msgstr ""
+
+#: scaleos/templates/account/password_reset.html:81
+msgid "Back to login"
+msgstr ""
+
+#: scaleos/templates/account/signup.html:16
+msgid ""
+"You can register yourself with one of your existing third-party accounts or "
+"create a new account."
+msgstr ""
+
+#: scaleos/templates/account/signup.html:73
+msgid "Username"
+msgstr ""
+
+#: scaleos/templates/account/signup.html:105
+msgid "Confirm Password"
+msgstr ""
+
+#: scaleos/templates/account/signup.html:128
+msgid "Sign Up"
+msgstr ""
+
+#: scaleos/templates/account/signup.html:134
+msgid "Already have an account?"
+msgstr ""
+
+#: scaleos/templates/account/signup.html:136
+msgid "Sign in"
+msgstr ""
+
+#: scaleos/templates/account/verification_sent.html:7
+msgid "confirm your email"
+msgstr ""
+
+#: scaleos/templates/card.html:19
+msgid "description"
+msgstr ""
+
+#: scaleos/templates/events/brunchevent/detail.html:7
+msgid "what"
+msgstr ""
+
+#: scaleos/templates/events/brunchevent/detail.html:13
+msgid "when"
+msgstr ""
+
+#: scaleos/templates/events/brunchevent/detail.html:19
+msgid "spots"
+msgstr ""
+
+#: scaleos/templates/events/brunchevent/detail.html:25
+msgid "pricing"
+msgstr ""
+
+#: scaleos/templates/events/brunchevent/detail.html:31
+msgid "no pricing set"
+msgstr ""
+
+#: scaleos/templates/events/brunchevent/detail.html:38
+msgid "reservations are closed"
+msgstr ""
+
+#: scaleos/templates/events/brunchevent/detail.html:44
+msgid "reservations closed on"
+msgstr ""
+
+#: scaleos/templates/events/concept/card.html:17
+msgid "planned"
+msgstr ""
+
+#: scaleos/templates/events/concept/card.html:31
+msgid "join"
+msgstr ""
+
+#: scaleos/templates/events/concept/card.html:46
+msgid "manage"
+msgstr ""
+
+#: scaleos/templates/events/concept/detail.html:68
+msgid "all prices includes VAT"
+msgstr ""
+
+#: scaleos/templates/notifications/notification/detail.html:7
+msgid "title"
+msgstr ""
+
+#: scaleos/templates/notifications/notification/detail.html:13
+msgid "message"
+msgstr ""
+
+#: scaleos/templates/notifications/notification/detail.html:19
+msgid "created on"
+msgstr ""
+
+#: scaleos/templates/notifications/notification/detail.html:25
+msgid "actions"
+msgstr ""
+
+#: scaleos/templates/reservations/eventreservation/confirmation.html:22
+msgid "please, provide your telephone number in case something went wrong"
+msgstr ""
+
+#: scaleos/templates/reservations/eventreservation/confirmation.html:34
+msgid "do you have any additional comments"
+msgstr ""
+
+#: scaleos/templates/reservations/eventreservation/confirmation.html:39
+msgid "put your message here"
+msgstr ""
+
+#: scaleos/templates/reservations/reservation/card.html:17
+msgid "persons"
+msgstr ""
+
+#: scaleos/templates/reservations/reservation/card.html:18
+msgid "status"
+msgstr ""
+
+#: scaleos/templates/reservations/reservation/card.html:23
+msgid "requester confirmed on"
+msgstr ""
+
+#: scaleos/templates/reservations/reservation/card.html:31
+msgid "organization confirmed on"
+msgstr ""
+
+#: scaleos/templates/users/action_menu.html:26
+msgid "my profile"
+msgstr ""
+
+#: scaleos/templates/users/action_menu.html:29
+msgid "my notifications"
+msgstr ""
+
+#: scaleos/templates/users/action_menu.html:47
+msgid "deactivate organization"
+msgstr ""
+
+#: scaleos/templates/users/action_menu.html:81
+msgid "admin"
+msgstr ""
+
+#: scaleos/templates/users/user_detail.html:28
+msgid "my info"
+msgstr ""
+
+#: scaleos/templates/users/user_detail.html:39
+msgid "my reservations"
+msgstr ""
+
+#: scaleos/templates/users/user_detail.html:50
+msgid "my organizations"
+msgstr ""
+
+#: scaleos/templates/users/user_detail.html:61
+msgid "personal information"
+msgstr ""
+
+#: scaleos/users/admin.py:25
+msgid "Personal info"
+msgstr ""
+
+#: scaleos/users/admin.py:27
+msgid "Permissions"
+msgstr ""
+
+#: scaleos/users/admin.py:38
+msgid "Important dates"
+msgstr ""
+
+#: scaleos/users/apps.py:9
+msgid "Users"
+msgstr ""
+
+#: scaleos/users/forms.py:27 scaleos/users/tests/test_forms.py:35
+msgid "This email has already been taken."
+msgstr ""
+
+#: scaleos/users/models.py:26
+msgid "Name of User"
+msgstr ""
+
+#: scaleos/users/models.py:29
+msgid "email address"
+msgstr ""
+
+#: scaleos/users/tests/test_views.py:75 scaleos/users/views.py:35
+msgid "Information successfully updated"
+msgstr ""

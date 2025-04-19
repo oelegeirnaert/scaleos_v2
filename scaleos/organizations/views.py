@@ -6,10 +6,13 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 
+from scaleos.events.models import CustomerConcept
 from scaleos.organizations import models as organization_models
 from scaleos.organizations import tasks as organization_tasks
 from scaleos.organizations.forms import ResengoExcelUploadForm
@@ -25,7 +28,7 @@ def concepts(request, organization_slug):
         slug=organization_slug,
     )
     context["organization"] = organization
-    context["concepts"] = organization.concepts.all()
+    context["concepts"] = organization.concepts.exclude(Q(instance_of=CustomerConcept))
     return render(
         request,
         organization.page_template,
@@ -34,12 +37,23 @@ def concepts(request, organization_slug):
 
 
 def enterprise(request, enterprise_slug=None):
+    return redirect(
+        "organizations:activate_organization",
+        organization_slug=enterprise_slug,
+    )
+
+
+def events(request, organization_slug):
     context = {}
-    enterprise = get_object_or_404(organization_models.Enterprise, slug=enterprise_slug)
-    context["enterprise"] = enterprise
+    organization = get_object_or_404(
+        organization_models.Organization,
+        slug=organization_slug,
+    )
+    context["organization"] = organization
+    context["events"] = organization.events_open_for_reservation
     return render(
         request,
-        enterprise.page_template,
+        organization.page_template,
         context,
     )
 
@@ -68,6 +82,25 @@ def organization(request, organization_slug=None):
         organization.page_template,
         context,
     )
+
+
+def activate_organization(request, organization_slug):
+    organization = get_object_or_404(
+        organization_models.Organization,
+        slug=organization_slug,
+    )
+    if organization.internal_url is None:
+        organization.internal_url = request.build_absolute_uri()
+        organization.save(update_fields=["internal_url"])
+
+    request.session["active_organization_id"] = organization.id
+    return redirect("organizations:organization", organization_slug=organization_slug)
+
+
+def deactivate_organization(request):
+    if "active_organization_id" in request.session:
+        del request.session["active_organization_id"]
+    return redirect("home")
 
 
 @login_required
@@ -104,14 +137,14 @@ def import_resengo_excel(request, organization_slug):
             # Save the file temporarily
             with transaction.atomic():
                 file_name = excel_file.name
-                file_path = Path(settings.MEDIA_ROOT / file_name)
+                file_path = Path(settings.MEDIA_ROOT, file_name)
                 with Path.open(file_path, "wb+") as destination:
                     for chunk in excel_file.chunks():
                         destination.write(chunk)
 
             # Launch the Celery task
             organization_tasks.import_resengo_excel.delay(
-                file_path,
+                str(file_path),
                 organization.id,
                 request.user.id,
                 overwrite_existing_data,

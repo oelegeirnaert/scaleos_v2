@@ -5,9 +5,15 @@
           type="button"
           class="overflow-hidden rounded-full border border-gray-300 shadow-inner">
     <span class="sr-only">Toggle dashboard menu</span>
-    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-         alt=""
-         class="size-10 object-cover" />
+    {% if request.user.avatar_thumbnail %}
+      <img src="{{ request.user.avatar_thumbnail.url }}"
+           alt=""
+           class="size-10 object-cover" />
+    {% else %}
+      <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+           alt=""
+           class="size-10 object-cover" />
+    {% endif %}
   </button>
   <div x-cloak
        x-show="showDropdown"
@@ -17,7 +23,10 @@
       {% if request.user.is_authenticated %}
         <a class="block rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700"
            role="menuitem"
-           href="{% url 'users:detail' request.user.pk %}">{% translate "My Profile" %}</a>
+           href="{% url 'users:detail' request.user.pk %}">{% translate "my profile"|title %}</a>
+        <a class="block rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+           role="menuitem"
+           href="{% url 'notifications:notification' %}">{% translate "my notifications"|title %}</a>
       {% else %}
         {# URL provided by django-allauth/account/urls.py #}
         <a id="log-in-link"
@@ -31,6 +40,11 @@
              role="menuitem"
              href="{% url 'account_signup' %}">{% translate "register"|capfirst %}</a>
         {% endif %}
+      {% endif %}
+      {% if active_organization %}
+        <a class="block rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+           role="menuitem"
+           href="{% url 'organizations:deactivate_organization' %}">{% translate "deactivate organization"|title %}</a>
       {% endif %}
     </div>
     {% if request.user.is_authenticated %}
@@ -51,16 +65,6 @@
       </div>
     {% endif %}
     {% if request.user.is_staff %}
-      <div class="p-2">
-        <form class="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-              action="{% url 'hijack:acquire' %}"
-              method="post">
-          {% csrf_token %}
-          <input type="hidden" name="user_pk" value="124" />
-          <button type="submit">Login as Tamara</button>
-          <input type="hidden" name="next" value="{{ request.path }}" />
-        </form>
-      </div>
       <div class="p-2">
         <a id="sign-up-link"
            class="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-sm text-red-700 hover:bg-red-50"

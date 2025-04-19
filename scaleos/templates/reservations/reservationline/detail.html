@@ -15,6 +15,8 @@
          {% if reservationline.maximum_amount %}max="{{ reservationline.maximum_amount }}"{% endif %} />
   <span class="font-bold">x</span>
   {{ reservationline.price_matrix_item }}
-  <span class="font-bold">=</span>
-  {{ reservationline.total_price }}
+  {% if reservationline.total_price %}
+    <span class="font-bold">=</span>
+    {{ reservationline.total_price }}
+  {% endif %}
 </div>

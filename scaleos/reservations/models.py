@@ -2,20 +2,21 @@ import logging
 
 from allauth.account.models import EmailAddress
 from allauth.account.models import EmailConfirmation
-from disposable_email_domains import blocklist
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models import Sum
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from email_validator import EmailNotValidError
-from email_validator import validate_email
 from moneyed import EUR
 from moneyed import Money
 from polymorphic.models import PolymorphicModel
 
-from scaleos.core.tasks import send_custom_templated_email
-from scaleos.reservations.tasks import send_reservation_confirmation
+from scaleos.notifications import models as notification_models
+from scaleos.organizations.models import Organization
+from scaleos.payments.models import Price
+from scaleos.reservations.tasks import send_reservation_update_notification
 from scaleos.shared.fields import LogInfoFields
 from scaleos.shared.fields import PublicKeyField
 from scaleos.shared.mixins import ITS_NOW
@@ -48,6 +49,7 @@ class Reservation(
                 "to be confirmed by organization",
             ),
         )
+        ON_WAITINGLIST = "ON_WAITINGLIST", _("on waitinglist")
         WAITING_FOR_PAYMENT = "WAITING_FOR_PAYMENT", _("waiting for payment")
         PARTIALLY_PAID = "PARTIALLY_PAID", _("partially paid")
         PARTIALLY_USED = "PARTIALLY_USED", _("partially used")
@@ -56,6 +58,16 @@ class Reservation(
         ENDED = "ENDED", _("ended")
         UNKNOWN = "UNKNOWN", _("unknown")
 
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        verbose_name=_(
+            "organization",
+        ),
+        related_name="reservations",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+    )
     user = models.ForeignKey(
         get_user_model(),
         related_name="reservations",
@@ -68,51 +80,54 @@ class Reservation(
         blank=True,
         help_text=_("the moment the reservation has been made"),
     )
-    requester_confirmed_on = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text=_(
-            """the moment the reservation is verified
-            by the user who made the reservation""",
+    on_waitinglist_since = models.DateTimeField(
+        verbose_name=_(
+            "on waitinglist since",
         ),
-    )
-    organization_confirmed_on = models.DateTimeField(
         null=True,
         blank=True,
-        help_text=_("the moment the employee has confirmed the reservation"),
+        help_text=_("the moment the reservation has been added to the waitinglist"),
     )
-    confirmation_mail_sent_on = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text=_(
-            "the moment the confirmation email of the reservation has been sent",
-        ),
-    )
+
     payment_request = models.OneToOneField(
         "payments.PaymentRequest",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
+    customer_comment = models.TextField(default="", blank=True)
+    customer_telephone = models.CharField(max_length=20, default="", blank=True)
+    price = GenericRelation(
+        Price,
+        content_type_field="unique_origin_content_type",
+        object_id_field="unique_origin_object_id",
+    )
 
     class Meta:
         verbose_name = _("reservation")
         verbose_name_plural = _("reservations")
 
-    @property
-    def total_price(self):
-        total_price = Money(0, EUR)
-        for line in self.lines.all():
-            total_price += line.total_price
+    def get_total_price(self) -> Price:
+        """return the total price VAT included
+        A reservation line can have another VAT percentage
+        """
+        logger.debug("Getting the total price for the reservation %s", self.pk)
+        total_price = Price(
+            vat_included=Money(0, EUR),
+        )
+        for idx, line in enumerate(self.lines.all()):
+            logger.info("Current reservation line %s", idx)
+            if line.total_price:
+                total_price.plus(line.total_price)
+                logger.info(
+                    "The total price is now %s",
+                    total_price.vat_included,
+                )
+        logger.debug("Total price is calculated.")
 
-        return total_price
+        # We dont want to set the VAT stuff, because we are talking about different prices with different VATs  # noqa: E501
 
-    @property
-    def total_price_vat_included(self):
-        total_price = Money(0, EUR)
-        for line in self.lines.all():
-            total_price += line.total_price_vat_included
-
+        logger.info("The total price is: %s", str(total_price))
         return total_price
 
     @property
@@ -137,13 +152,17 @@ class Reservation(
         return None  # pragma: no cover
 
     @property
+    def is_in_waiting_list(self):
+        return self.on_waitinglist_since is not None
+
+    @property
     def status(self):
+        if self.on_waitinglist_since:
+            return self.STATUS.ON_WAITINGLIST
+
         if self.finished_on is None:
             return self.STATUS.IN_PROGRESS
-        if self.requester_confirmed_on is None:
-            return self.STATUS.TO_BE_CONFIRMED_BY_REQUESTER
-        if self.organization_confirmed_on is None:
-            return self.STATUS.TO_BE_CONFIRMED_BY_ORGANIZATION
+
         if self.payment_request:
             if self.payment_request.payments.count() == 0:
                 return self.STATUS.WAITING_FOR_PAYMENT
@@ -152,42 +171,7 @@ class Reservation(
 
         return self.STATUS.UNKNOWN  # pragma: no cover
 
-    def finish(self, request, confirmation_email_address):
-        if self.finished_on:
-            logger.warning("The reservation %s is already finished", self.pk)
-            return False
-
-        if isinstance(self, EventReservation):
-            if self.total_amount == 0:
-                msg = _("for an event reservation, you need at least one person")
-                logger.warning(msg)
-                raise ValidationError(msg)
-
-        logger.info("checking email address: %s", confirmation_email_address)
-        try:
-            # Check that the email address is valid. Turn on check_deliverability
-            # for first-time validations like on account creation pages (but not
-            # login pages).
-            confirmation_email_address = validate_email(
-                confirmation_email_address,
-                check_deliverability=True,
-            )
-
-            # After this point, use only the normalized form of the email address,
-            # especially before going to a database query.
-            confirmation_email_address = confirmation_email_address.normalized
-
-        except EmailNotValidError as e:
-            # The exception message is human-readable explanation of why it's
-            # not a valid (or deliverable) email address.
-            raise ValidationError(e) from EmailNotValidError
-
-        email_domain = confirmation_email_address.split("@")[1]
-        logger.debug("checking if email domain is blacklisted")
-        if email_domain in blocklist:
-            logger.warning("The email domain is blacklisted: %s", email_domain)
-            raise ValidationError(_("this email address is blacklisted"))
-
+    def add_user(self, request, confirmation_email_address):
         user, user_created = User.objects.get_or_create(
             email=confirmation_email_address,
         )
@@ -201,91 +185,265 @@ class Reservation(
             )
             if email_created:
                 email_confirmation = EmailConfirmation.create(email_address)
-                logger.info("new user created for a reservation")
-                send_custom_templated_email(
-                    request,
-                    email_confirmation,
-                    reservation=self,
+                email_confirmation_link = ""
+                if request:
+                    email_confirmation_link = request.build_absolute_uri(
+                        reverse("account_confirm_email", args=[email_confirmation.key]),
+                    )
+
+                WaitingUserEmailConfirmation.objects.create(
+                    reservation_id=self.pk,
+                    send_notification=True,
+                    email_confirmation_link=email_confirmation_link,
                 )
+                logger.info("New user created via a reservation.")
+
+        if self.organization:
+            customer = self.organization.add_b2c(user)
+            logger.debug("We have customer %s", customer.pk)
 
         self.user_id = user.pk
-        self.finished_on = ITS_NOW
+        self.save(update_fields=["user_id"])
 
-        if request and request.user.is_authenticated:
-            self.created_by_id = request.user.pk
+    def organization_auto_confirm(self):
+        logger.debug("Trying to auto confirm the reserveration for the organization")
+        if isinstance(self, EventReservation):
+            logger.debug("This is an event reservation")
+            if not hasattr(self, "event") or self.event is None:
+                msg = _("we need an event for an event reservation")
+                raise ValueError(msg)
 
-            if user.pk == request.user.pk:
-                logger.info(
-                    "The requester for the event is the same as the loggedin user",
-                )
-                self.requester_confirm()
+            unlimited_spots = self.event.has_unlimited_spots
+            logger.debug("Event has unlimited spots? %s", unlimited_spots)
 
-        self.save()
-        return True
+            free_spots = self.event.free_spots
+            logger.debug("Free spots: %s", free_spots)
+
+            logger.debug("Total to reserve: %s", self.total_amount)
+
+            event = self.event
+            if event.has_capacity_for(self):
+                self.organization_confirm()
+                return True
+            logger.warning("The event is full, so if cannot be confirmed automatically")
+            self.on_waitinglist_since = ITS_NOW
+            self.save(update_fields=["on_waitinglist_since"])
+            logger.debug("Create an update")
+            OrganizationTemporarilyRejected.objects.create(
+                reservation_id=self.pk,
+                send_notification=True,
+                reason=OrganizationTemporarilyRejected.RejectReason.EVENT_FULL,
+            )
+            return False
+
+        logger.info("The reservation cannot be auto confirmed")
+        return False
 
     @property
     def organization_confirmed(self):
-        return self.organization_confirmed_on is not None
+        the_update = self.latest_organization_update
+        if the_update:
+            return the_update.is_confirmed
+        return False
 
-    def organization_confirm(self):
-        if self.organization_confirmed_on:
+    def organization_confirm(self, *, send_notification=True):
+        if self.organization is None:
+            logger.warning(
+                "This reservation has no organization, so we cannot confirm it",
+            )
+            return False
+
+        logger.info("organization is confirming the reservation with id: %s", self.pk)
+        if self.organization_confirmed:
             logger.info(
                 "The reservation %s is already confirmed by the organization",
                 self.pk,
             )
             return False
 
-        the_now = ITS_NOW
-        logger.info("Organization confirmed on: %s", the_now)
-        self.organization_confirmed_on = the_now
-        self.save()
+        OrganizationConfirm.objects.create(
+            reservation_id=self.pk,
+            send_notification=send_notification,
+        )
+
+        logger.info(
+            "The reservation %s has now been confirmed by the requester",
+            self.pk,
+        )
         self.update_payment_request()
-        send_reservation_confirmation.delay(self.id)
+
         return True
 
     @property
     def requester_confirmed(self):
-        return self.requester_confirmed_on is not None
+        logger.debug("Checking if the requester confirmed the reservation")
+        the_update = self.latest_requester_update
+        if the_update:
+            return the_update.is_confirmed
+        logger.debug("The reservation is not yet confirmed")
+        return False
 
-    def requester_confirm(self):
-        if self.requester_confirmed_on:
+    def requester_auto_confirm(self, request=None):
+        if self.created_by is None:
+            logger.debug("We do not know yet who created the reservation")
+            if request:
+                logger.debug("We have a request, so maybe we can get the user")
+                if request.user.is_authenticated:
+                    logger.debug("Yes it is an authenticated user")
+                    self.created_by_id = request.user.pk
+                    self.save(update_fields=["created_by_id"])
+                    logger.debug("saved the user id in created_by")
+                else:
+                    logger.info(
+                        "We do not know who created the reservation, \
+                            so we cannot auto confirm it for the requester",
+                    )
+                    return False
+
+        if self.user.pk == self.created_by_id:
+            logger.debug(
+                "The requester for the event is the same as creating user, \
+                    so auto confirm",
+            )
+            self.requester_confirm(send_notification=False)
+            return True
+
+        return False
+
+    def requester_confirm(self, *, send_notification=True):
+        logger.debug("requester is confirming the reservation with id: %s", self.pk)
+
+        if self.requester_confirmed:
             logger.info(
                 "The reseravtion %s is already confirmed by the requester",
                 self.pk,
             )
             return False
 
-        the_now = ITS_NOW
-        logger.info("Requester confirmed on: %s", the_now)
-        self.requester_confirmed_on = the_now
-        self.save()
+        if self.user is None:
+            logger.warning("This reservation has no user, so we cannot confirm it")
+            return False
+
+        logger.debug("Creating the requester confirm object")
+        RequesterConfirm.objects.create(
+            reservation_id=self.pk,
+            send_notification=send_notification,
+        )
+
+        logger.info(
+            "The reservation %s has now been confirmed by the requester",
+            self.pk,
+        )
         return True
+
+    @property
+    def total_payment_requests(self):
+        from scaleos.payments.models import PaymentRequest
+
+        return PaymentRequest.objects.filter(
+            origin_object_id=self.pk,
+            origin_content_type__model="reservation",
+        ).count()
+
+    @property
+    def applicable_payment_settings(self):
+        if isinstance(self, EventReservation):
+            if self.event.event_reservation_payment_settings:
+                return self.event.event_reservation_payment_settings
+            if self.event.concept.event_reservation_payment_settings:
+                return self.event.concept.event_reservation_payment_settings
+        return None
 
     def update_payment_request(self):
         from scaleos.payments.models import PaymentRequest
-        from scaleos.payments.models import Price
 
-        if self.payment_request is None:
-            payment_request = PaymentRequest.objects.create()
-            self.payment_request_id = payment_request.pk
-            self.save()
-        else:
-            payment_request = PaymentRequest.objects.get(id=self.payment_request_id)
+        logger.info("Updating payment request for the reservation with id: %s", self.pk)
 
-        if payment_request.to_pay is None:
-            price = Price.objects.create(
-                current_price=self.total_price_vat_included,
-                includes_vat=True,
+        the_total_price = self.get_total_price()
+        logger.debug("Total price: %s", the_total_price)
+        if (
+            the_total_price is None
+            or the_total_price.vat_included is None
+            or the_total_price.vat_included.amount == 0
+        ):
+            logger.info("No total price with VAT included for the reservation")
+            return
+
+        payment_request, created = PaymentRequest.objects.get_or_create(
+            id=self.payment_request_id,
+        )
+        if created:
+            logger.info("New payment request created")
+
+        if self.organization:
+            payment_request.to_organization_id = self.organization.pk
+            the_total_price.organization_id = self.organization.pk
+
+        payment_request.origin = self
+
+        if self.applicable_payment_settings:
+            payment_request.payment_settings_id = self.applicable_payment_settings.pk
+        payment_request.save()
+        self.payment_request_id = payment_request.pk
+        self.save()
+        payment_request.set_price_to_pay(the_total_price)
+        payment_request.apply_payment_settings()  # needs to be the last line, otherwise the payment conditions are not created  # noqa: E501
+
+    @property
+    def latest_organization_update(self):
+        logger.debug("Getting the latest organization update")
+        latest_status = (
+            self.updates.instance_of(
+                OrganizationConfirm,
+                OrganizationRefuse,
+                OrganizationCancel,
             )
-            payment_request.to_pay_id = price.pk
-            payment_request.save()
-        else:
-            price = Price.objects.get(id=payment_request.to_pay.pk)
-            price.current_price = self.total_price_vat_included
-            price.includes_vat = True
-            price.save()
-            payment_request.to_pay_id = price.pk
-            payment_request.save()
+            .order_by("-created_on")
+            .first()
+        )
+        logger.debug("Latest organization update: %s", latest_status)
+        return latest_status
+
+    @property
+    def organization_status(self):
+        the_update = self.latest_organization_update
+        if isinstance(the_update, OrganizationConfirm):
+            return _("confirmed")
+        if isinstance(the_update, OrganizationRefuse):
+            return _("refused")
+        if isinstance(the_update, OrganizationCancel):
+            return _("canceled")
+        return _("pending")
+
+    @property
+    def latest_requester_update(self):
+        logger.debug("Getting the latest requester update")
+        latest_upate = (
+            self.updates.instance_of(RequesterConfirm, RequesterCancel)
+            .order_by("-created_on")
+            .first()
+        )
+        logger.debug("Latest requester update: %s", latest_upate)
+        return latest_upate
+
+    @property
+    def requester_status(self):
+        the_update = self.latest_requester_update
+        if isinstance(the_update, RequesterConfirm):
+            return _("confirmed")
+        if isinstance(the_update, RequesterCancel):
+            return _("canceled")
+        return _("pending")
+
+    @property
+    def is_confirmed(self):
+        org_status = self.latest_organization_update
+        req_status = self.latest_requester_update
+
+        if org_status and req_status:
+            if org_status.is_confirmed and req_status.is_confirmed:
+                return True
+        return False
 
 
 class EventReservation(Reservation):
@@ -296,6 +454,267 @@ class EventReservation(Reservation):
         null=True,
         blank=False,
     )
+
+    def __str__(self):
+        str_event = _("event")
+        str_for = _("for")
+        event_name = None
+        person_name = None
+        if hasattr(self, "event") and hasattr(self.event, "name"):
+            event_name = self.event.name
+
+        if self.user and hasattr(self.user, "person"):
+            person_name = self.user.person
+
+        if event_name and person_name:
+            return f"{event_name} {str_for} {person_name}"
+
+        return f"{str_event} {str_for} {self.user}"
+
+
+class ReservationUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
+    is_confirmed = False
+    notification_button_text_translation = _("open reservation")
+    notification_button_text = notification_button_text_translation.upper()
+    reservation = models.ForeignKey(
+        Reservation,
+        related_name="updates",
+        on_delete=models.CASCADE,
+        null=True,
+    )
+
+    send_notification = models.BooleanField(
+        verbose_name=_("send notification"),
+        null=True,
+    )
+    """ notification = models.ForeignKey(
+        "notifications.Notification",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    ) """
+
+    class Meta:
+        verbose_name = _("reservation update")
+        verbose_name_plural = _("reservation updates")
+        ordering = ["-created_on"]
+
+    passed_action = _("updated")
+
+    def __str__(self):
+        str_on = _("on")
+        return f"{self.passed_action} {self.reservation} {str_on}: {self.created_on}"
+
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding  # True if this is a new object
+        super().save(*args, **kwargs)
+
+        if is_new and self.send_notification:
+            send_reservation_update_notification.apply_async((self.id,), countdown=5)
+
+    def send_notification_logic(self, klass=None):
+        logger.info(
+            "[NOTIFY] %s notification created with id #%s",
+            self.model_name,
+            self.id,
+        )
+
+        if klass is None:
+            logger.warning("We do not know to whom to send the notification")
+            return False
+
+        if self.reservation is None:
+            logger.warning(
+                "we are requested to send a reservation update, \
+                    but the reservation is none",
+            )
+            return False
+
+        if self.reservation.organization is None:
+            logger.warning(
+                "we can only send notifications if \
+                    we know which organization it is sending",
+            )
+            return False
+
+        if klass == User:
+            logger.debug("Creating the user notification object")
+            notification_models.UserNotification.objects.create(
+                sending_organization=self.reservation.organization,
+                to_user=self.reservation.user,
+                about_content_object=self,
+            )
+            return True
+
+        if klass == Organization:
+            logger.debug("Creating the organization notification object")
+            notification_models.OrganizationNotification.objects.create(
+                sending_organization=self.reservation.organization,
+                to=notification_models.OrganizationNotification.NotificationTo.ORGANIZATION_EMPLOYEES,
+                about_content_object=self,
+            )
+            return True
+        return False
+
+
+class OrganizationConfirm(ReservationUpdate):
+    passed_action = _("organization confirmed")
+    is_confirmed = True
+    notification_title_translation = _("your reservation has been confirmed")
+    notification_title = f"{notification_title_translation}. ✅".capitalize()
+    notification_button_text_translation = _("open reservation")
+    notification_button_text = notification_button_text_translation.upper()
+
+    def send_notification_logic(self):
+        return super().send_notification_logic(User)
+
+
+class OrganizationCancel(ReservationUpdate):
+    passed_action = _("organization canceled")
+    is_confirmed = False
+    notification_title_translation = _("your reservation has been canceled")
+    notification_title = f"{notification_title_translation}. ✘".capitalize()
+
+    def send_notification_logic(self):
+        return super().send_notification_logic(User)
+
+
+class OrganizationTemporarilyRejected(ReservationUpdate):
+    passed_action = _("organization temporarily rejected")
+    is_confirmed = False
+    notification_title_translation = _("your reservation has been temporarily rejected")
+    notification_title = f"{notification_title_translation}. ⏳".capitalize()
+
+    class RejectReason(models.TextChoices):
+        EVENT_FULL = "EVENT_FULL", _("event full")
+        EVENT_FULL_BUT_ON_WAITINGLIST = (
+            "EVENT_FULL_BUT_ON_WAITINGLIST",
+            _("event full but on waitinglist"),
+        )
+        UNKNOWN = "UNKNOWN", _("unknown")
+
+    reason = models.CharField(
+        verbose_name=_(
+            "reason",
+        ),
+        max_length=50,
+        choices=RejectReason.choices,
+        default=RejectReason.UNKNOWN,
+    )
+
+    def send_notification_logic(self):
+        return super().send_notification_logic(User)
+
+
+class OrganizationRefuse(ReservationUpdate):
+    passed_action = _("organization refused")
+    is_confirmed = False
+    notification_title_translation = _("a reservation has been refused")
+    notification_title = f"{notification_title_translation}. ✘".capitalize()
+
+    class RefuseReason(models.TextChoices):
+        EVENT_FULL = "EVENT_FULL", _("event full")
+        PERSON_BLOCKED = "PERSON_BLOCKED", _("person blocked")
+        CUSTOM_REASON = "CUSTOM_REASON", _("custom reason")
+        UNKNOWN = "UNKNOWN", _("unknown")
+
+    reason = models.CharField(
+        verbose_name=_(
+            "reason",
+        ),
+        max_length=50,
+        choices=RefuseReason.choices,
+        default=RefuseReason.UNKNOWN,
+    )
+
+    custom_reason = models.TextField(
+        verbose_name=_("custom reason"),
+        default="",
+        blank=True,
+    )
+
+    def send_notification_logic(self):
+        return super().send_notification_logic(User)
+
+
+class RequesterConfirm(ReservationUpdate):
+    passed_action = _("requester confirmed")
+    is_confirmed = True
+    notification_title_translation = _("the requester has confirmed his reservation")
+    notification_title = f"{notification_title_translation}. ✅".capitalize()
+
+    def send_notification_logic(self):
+        logger.debug(
+            "executing the logic of the requester confirmation notification logic",
+        )
+        return super().send_notification_logic(Organization)
+
+
+class RequesterCancel(ReservationUpdate):
+    passed_action = _("requester canceled")
+    is_confirmed = False
+    notification_title_translation = _("the requester has canceled his reservation")
+    notification_title = f"{notification_title_translation}. ✘".capitalize()
+
+    def send_notification_logic(self):
+        return super().send_notification_logic(Organization)
+
+
+class WaitingUserEmailConfirmation(ReservationUpdate):
+    passed_action = _("waiting user email confirmation")
+    notification_title_translation = _("please confirm your email address")
+    notification_title = f"{notification_title_translation}. 🔔".capitalize()
+    notification_button_text_translation = _("confirm now")
+    notification_button_text = notification_button_text_translation.upper()
+    email_confirmation_link = models.URLField(default="", blank=True)
+
+    def send_notification_logic(self):
+        if (
+            self.reservation
+            and hasattr(self.reservation, "user")
+            and self.reservation.user is None
+        ):
+            logger.warning(
+                "Reservation has no user, so we cannot send the notification \
+                      that we are waiting for email confirmation",
+            )
+            return
+
+        notification_models.UserNotification.objects.create(
+            sending_organization=self.reservation.organization,
+            to_user=self.reservation.user,
+            about_content_object=self,
+            button_link=self.email_confirmation_link,
+        )
+
+
+class InvalidReservation(ReservationUpdate):
+    passed_action = _("invalid reservation")
+    notification_title_translation = _("an invalid reservation has been made")
+    notification_title = f"{notification_title_translation}. ❗".capitalize()
+
+    class InvalidReason(models.TextChoices):
+        INVALID_EMAIL = "INVALID_EMAIL", _("invalid email")
+        NO_ACTIVE_ORGANIZATION = "NO_ACTIVE_ORGANIZATION", _("no active organization")
+        UNKNOWN = "UNKNOWN", _("unknown")
+
+    reason = models.CharField(
+        verbose_name=_(
+            "reason",
+        ),
+        max_length=50,
+        choices=InvalidReason.choices,
+        default=InvalidReason.UNKNOWN,
+    )
+
+    additional_info = models.TextField(
+        verbose_name=_("additional info"),
+        default="",
+        blank=True,
+    )
+
+    def send_notification_logic(self):
+        return super().send_notification_logic(Organization)
 
 
 class EventReservationSettings(AdminLinkMixin):
@@ -310,29 +729,86 @@ class EventReservationSettings(AdminLinkMixin):
         AT_START = "at_start", _("at start")
         WHEN_ENDED = "on_end", _("when ended")
 
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+    )
+    telephone_number_required = models.BooleanField(
+        verbose_name=_("telephone number required"),
+        default=True,
+    )
     minimum_persons_per_reservation = models.IntegerField(
+        verbose_name=_("minimum persons per reservation"),
         null=True,
         blank=False,
         default=1,
     )
     maximum_persons_per_reservation = models.IntegerField(
+        verbose_name=_("maximum persons per reservation"),
         null=True,
         blank=False,
         default=30,
     )
     maximum_reservations_in_waitlist = models.IntegerField(
+        verbose_name=_("maximum reservations in waitlist"),
         null=True,
         blank=False,
         default=60,
     )
 
-    close_reservation = models.IntegerField(null=True, blank=False, default=2)
+    close_reservation_time_amount = models.IntegerField(
+        verbose_name=_("close reservation time amount"),
+        null=True,
+        blank=True,
+        default=2,
+    )
     close_reservation_interval = models.CharField(
+        verbose_name=_("close reservation interval"),
         max_length=50,
         choices=CloseReservationInterval.choices,
         default=CloseReservationInterval.DAYS,
         blank=True,
     )
+    always_show_progress_bar = models.BooleanField(
+        verbose_name=_("always show progress bar"),
+        default=False,
+    )
+    show_progress_bar_when_x_percentage_reached = models.IntegerField(
+        verbose_name=_("show progress bar when x percentage reached"),
+        null=True,
+        blank=True,
+        default=65,
+    )
+
+    def __str__(self):
+        """
+        Display all properties of the model as key-value pairs.
+        """
+        properties = {}
+        for name in dir(self.__class__):
+            if not name.startswith("_"):
+                obj = getattr(self.__class__, name)
+
+                if isinstance(obj, property):
+                    try:
+                        value = getattr(self, name)
+                        properties[name] = value
+                    except Exception as e:  # noqa: BLE001
+                        properties[name] = f"Error getting value: {e}"
+
+        fields = {}
+        for field in self._meta.fields:
+            fields[field.name] = getattr(self, field.name)
+
+        return mark_safe(  # noqa: S308
+            f"{', '.join(f'{k}: {v!r}' for k, v in {**properties, **fields}.items())}",
+        )
+
+    class Meta:
+        verbose_name = _("event reservation settings")
+        verbose_name_plural = _("event reservation settings")
 
 
 class ReservationLine(AdminLinkMixin, PublicKeyField):
@@ -355,29 +831,62 @@ class ReservationLine(AdminLinkMixin, PublicKeyField):
         ordering = ["pk"]
 
     @property
-    def total_price(self):
-        try:
-            return self.amount * self.price_matrix_item.price.current_price
-        except AttributeError as e:
-            logger.warning(e)
-        return None
+    def total_price(self) -> Price:  # noqa: PLR0911
+        if self.amount == 0:
+            logger.info("The amount of persons is 0, thus returning an empty price")
+            return Price(vat_included=Money(0, EUR))
 
-    @property
-    def total_price_vat_included(self):
+        if self.price_matrix_item is None:
+            return Price(vat_included=Money(0, EUR))
+
+        a_price = self.price_matrix_item.current_price
+        if a_price is None:
+            return Price(vat_included=Money(0, EUR))
+
+        if a_price.vat_included.amount == 0:
+            logger.info("The price is 0, thus returning an empty price")
+            return Price(vat_included=Money(0, EUR))
+
+        if self.amount == 1:
+            return a_price
+
         try:
-            return self.amount * self.price_matrix_item.price.vat_included
+            result = a_price.multiply(self.amount)
+            logger.info("The multiplied price is %s", result)
+
         except AttributeError as e:
             logger.warning(e)
-        return None
+        else:
+            return result
+
+        return Price(input_price=Money(0, EUR))
 
     @property
     def minimum_amount(self):
-        if self.price_matrix_item and self.price_matrix_item.minimum_persons:
+        if self.price_matrix_item is None:
+            return 0
+
+        if not hasattr(self.price_matrix_item, "minimum_persons"):
+            return 0
+
+        if self.price_matrix_item.minimum_persons:
             return self.price_matrix_item.minimum_persons
+
         return 0
 
     @property
     def maximum_amount(self):
+        if hasattr(self.reservation, "event") and hasattr(
+            self.reservation.event,
+            "free_spots",
+        ):
+            free_spots = self.reservation.event.free_spots
+            if free_spots == "∞":
+                return None
+            if self.price_matrix_item and self.price_matrix_item.maximum_persons:
+                if self.price_matrix_item.maximum_persons > free_spots:
+                    return free_spots
+
         if self.price_matrix_item and self.price_matrix_item.maximum_persons:
             return self.price_matrix_item.maximum_persons
         return 10

@@ -52,3 +52,13 @@ disposable-email-domains==0.0.118  # https://pypi.org/project/disposable-email-d
 django-qr-code==4.1.0  # https://pypi.org/project/django-qr-code/
 django-localflavor==4.0  # https://django-localflavor.readthedocs.io/en/latest/
 django-hijack==3.7.1  # https://pypi.org/project/django-hijack/
+django-imagekit==5.0.0  # https://pypi.org/project/django-imagekit/
+django-modeltranslation==0.19.12  # https://pypi.org/project/django-modeltranslation/
+django-axes==7.0.2  # https://pypi.org/project/django-axes/
+# https://github.com/django-tenants/django-tenants?tab=readme-ov-file#readme for DEMO env?
+# https://pypi.org/project/django-guid/
+# django-ai-assistant==0.1.1  # https://pypi.org/project/django-ai-assistant/
+ollama==0.4.7 # https://pypi.org/project/ollama/
+django-dbbackup==4.2.1  # https://pypi.org/project/django-dbbackup/
+django-import-export==4.3.7  # https://pypi.org/project/django-import-export/
+django-celery-results==2.6.0  # https://pypi.org/project/django-celery-results/

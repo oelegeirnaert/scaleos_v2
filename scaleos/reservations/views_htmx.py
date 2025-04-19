@@ -8,8 +8,11 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 
 from scaleos.events import models as event_models
+from scaleos.organizations.context_processors import organization_context
 from scaleos.reservations import models as reservation_models
 from scaleos.shared import views_htmx as shared_htmx
+from scaleos.shared.functions import valid_email_address
+from scaleos.shared.mixins import ITS_NOW
 from scaleos.shared.views_htmx import htmx_response
 
 logger = logging.getLogger("scaleos")
@@ -19,34 +22,55 @@ EVENT_RESERVATION_ID_KEY = "event_reservation_id"
 
 @never_cache
 def event_reservation(request, event_public_key):
-    logger.setLevel(logging.DEBUG)
     shared_htmx.do_htmx_get_checks(request)
     event = get_object_or_404(event_models.Event, public_key=event_public_key)
+    the_context = organization_context(request)
 
-    if reservation_models.EventReservation.objects.filter(
-        event_id=event.pk,
-        user_id=request.user.pk,
-    ).exists():
-        return HttpResponse(
-            _("you already made a reservation for this event").capitalize(),
+    logged_in_user = request.user.is_authenticated
+    logger.debug("Is the user logged in? %s", logged_in_user)
+
+    is_organization_employee = the_context.get("is_organization_employee", False)
+    logger.debug("Is it an organization employee? %s", is_organization_employee)
+
+    if not is_organization_employee:
+        logger.debug("It is not an employee, so do additional checks")
+        user_aleady_made_a_reservation = (
+            reservation_models.EventReservation.objects.filter(
+                event_id=event.pk,
+                user_id=request.user.pk,
+            ).exists()
+        )
+        logger.debug(
+            "Does the user already made a reservation? %s",
+            user_aleady_made_a_reservation,
         )
 
-    if event.reservations_are_closed:
-        return HttpResponse(
-            _(
-                "sorry, the resservations for this event are already closed",
-            ).capitalize(),
-        )
+        if logged_in_user and user_aleady_made_a_reservation:
+            msg = _("you already made a reservation for this event")
+            logger.debug(msg)
+            return HttpResponse(msg.capitalize())
 
+        if hasattr(event, "reservations_are_closed") and event.reservations_are_closed:
+            msg = _("sorry, the reservations for this event are already closed")
+            logger.debug(msg)
+            return HttpResponse(msg.capitalize())
+
+    logger.debug("Getting event reservation from the session...")
     event_reservation_id = request.session.get(EVENT_RESERVATION_ID_KEY, None)
-    logger.debug("creating a new reservation for this session")
+    logger.debug("Getting event reservation from session: %s", event_reservation_id)
     event_reservation, created = (
         reservation_models.EventReservation.objects.get_or_create(
             id=event_reservation_id,
         )
     )
     if created:
+        logger.debug("creating a new reservation for this session")
+        if logged_in_user:
+            event_reservation.user_id = request.user.pk
         request.session[EVENT_RESERVATION_ID_KEY] = event_reservation.pk
+
+    if logged_in_user:
+        event_reservation.modified_by_id = request.user.pk
 
     event_reservation.event_id = event.pk
     event_reservation.save()
@@ -94,9 +118,11 @@ def event_reservation(request, event_public_key):
 
 
 def update_reservation_line(request, reservationline_public_key):
-    logger.setLevel(logging.DEBUG)
+    logger.debug(list(request.POST.items()))
     shared_htmx.do_htmx_post_checks(request)
+    logger.debug("ready with htmx checks")
 
+    logger.debug("Getting event reservation from the session...")
     event_reservation_id = request.session.get(EVENT_RESERVATION_ID_KEY, None)
     logger.debug("Searching for event reservation: %s", event_reservation_id)
     get_object_or_404(
@@ -134,6 +160,9 @@ def update_reservation_line(request, reservationline_public_key):
 
     template_used = reservationline.detail_template
     logger.debug("Template used: %s", template_used)
+    logger.debug("The request is %s", request)
+    logger.debug("The reservationline is %s", reservationline)
+
     html_fragment = get_template(template_used).render(
         context={
             "reservationline": reservationline,
@@ -146,6 +175,7 @@ def update_reservation_line(request, reservationline_public_key):
 
 def event_reservation_total_price(request, eventreservation_public_key):
     form_state = "disabled style=opacity:0.5;"
+    total_people_for_reservation = 0
 
     def return_it(msg):
         html_fragment = get_template(
@@ -155,7 +185,7 @@ def event_reservation_total_price(request, eventreservation_public_key):
                 "event_reservation": event_reservation,
                 "message": msg,
                 "amount": total_people_for_reservation,
-                "price": event_reservation.total_price,
+                "price": event_reservation.get_total_price(),
                 "form_state": form_state,
             },
             request=request,
@@ -167,6 +197,10 @@ def event_reservation_total_price(request, eventreservation_public_key):
         reservation_models.EventReservation,
         public_key=eventreservation_public_key,
     )
+
+    if event_reservation.event is None:
+        msg = _("this event reservation has no event assigned")
+        return return_it(msg)
 
     reservation_settings = event_reservation.event.applicable_reservation_settings
     logger.debug(reservation_settings)
@@ -191,35 +225,78 @@ def event_reservation_total_price(request, eventreservation_public_key):
     form_state = ""
     msg = _("total price for %(amount)s persons: %(price)s".capitalize()) % {
         "amount": total_people_for_reservation,
-        "price": event_reservation.total_price,
+        "price": event_reservation.get_total_price(),
     }
     return return_it(msg)
 
 
 def finish_reservation(request, reservation_public_key):
-    min_email_length = 5
-    logger.setLevel(logging.DEBUG)
     shared_htmx.do_htmx_post_checks(request)
-    confirmation_email_address = request.POST.get("confirmation_email_address", "")
-    if len(confirmation_email_address) < min_email_length:
-        return HttpResponse(_("this is not a valid email address"))
 
     reservation = get_object_or_404(
         reservation_models.Reservation,
         public_key=reservation_public_key,
     )
 
-    try:
-        reservation.finish(
-            request=request,
-            confirmation_email_address=confirmation_email_address,
+    if reservation.finished_on:
+        msg = _("this reservation has already been finished")
+        request.session[EVENT_RESERVATION_ID_KEY] = None
+        logger.warning(msg)
+        return HttpResponse(msg)
+
+    active_organization_id = request.session.get("active_organization_id", None)
+    if active_organization_id is None:
+        msg = _("we don't know to which organization this reservation belongs")
+        reservation_models.InvalidReservation.objects.create(
+            reservation_id=reservation.pk,
+            reason=reservation_models.InvalidReservation.InvalidReason.NO_ACTIVE_ORGANIZATION,
+            additional_info=msg,
         )
+        logger.error(msg)
+        return HttpResponse(msg)
+
+    confirmation_email_address = request.POST.get("confirmation_email_address", "")
+    valid_email, invalid_reason = valid_email_address(confirmation_email_address)
+    if not valid_email:
+        reservation_models.InvalidReservation.objects.create(
+            reservation_id=reservation.pk,
+            reason=reservation_models.InvalidReservation.InvalidReason.INVALID_EMAIL,
+            additional_info=invalid_reason,
+        )
+        logger.error(invalid_reason)
+        logger.debug("returning invalid reason")
+        return HttpResponse(invalid_reason)
+
+    if isinstance(reservation, reservation_models.EventReservation):
+        if reservation.total_amount == 0:
+            msg = _("for an event reservation, you need at least one person")
+            logger.warning(msg)
+            raise ValidationError(msg)
+
+    reservation.customer_comment = request.POST.get("customer_comment", "")
+    reservation.customer_telephone = request.POST.get("customer_telephone", "")
+    reservation.organization_id = active_organization_id
+
+    try:
+        reservation.add_user(request, confirmation_email_address)
+        reservation.requester_auto_confirm(request)
+        reservation.organization_auto_confirm()
+
+        reservation.finished_on = ITS_NOW
+        reservation.save()
+
     except ValidationError as e:
         return HttpResponse(str(e).capitalize())
 
     if isinstance(reservation, reservation_models.Reservation):
         request.session[EVENT_RESERVATION_ID_KEY] = None
-    return HttpResponse(_("reservation requested"))
+
+    if reservation.is_in_waiting_list:
+        return HttpResponse(
+            _("reservation requested, but your are on our waiting list").capitalize(),
+        )
+
+    return HttpResponse(_("reservation requested").capitalize())
 
 
 def organization_confirm_reservation(request):

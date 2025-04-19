@@ -1,0 +1,14 @@
+{# generated via manage create_html_scripts #}
+{% extends 'page.html' %}
+
+{% load i18n %}
+
+{% block main %}
+  {% if user.is_staff %}
+    <div style="text-align: center; margin-bottom: 20px;">
+      <span style="font-weight: bold;">Mail subject:</span> {{ email_subject }}
+    </div>
+  {% endif %}
+  <div>{{ html_body }}</div>
+  {% if user.is_staff %}<div>{{ plain_body|linebreaksbr|safe }}</div>{% endif %}
+{% endblock main %}

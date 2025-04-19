@@ -26,6 +26,10 @@ class AdminLinkMixin(models.Model):
         return self._meta.verbose_name
 
     @cached_property
+    def verbose_name_plural(self):
+        return self._meta.verbose_name_plural
+
+    @cached_property
     def app_label(self):
         return self._meta.app_label
 

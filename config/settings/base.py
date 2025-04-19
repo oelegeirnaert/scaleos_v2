@@ -33,10 +33,12 @@ LANGUAGE_CODE = "en-us"
 # from django.utils.translation import gettext_lazy as _
 
 LANGUAGES = [
+    ("nl", _("Nederlands")),
     ("en", _("English")),
-    ("fr-fr", _("French")),
-    ("nl", _("Dutch")),
+    ("fr", _("Français")),
+    ("de", _("Deutsch")),
 ]
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = 1
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-i18n
@@ -77,6 +79,7 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",  # Handy template tags
+    "modeltranslation",  #  If you want to use the admin integration, modeltranslation must be put before django.contrib.admin
     "django.contrib.admin",
     "django.contrib.gis",  # Oele
     "django.forms",
@@ -110,6 +113,11 @@ THIRD_PARTY_APPS = [
     "localflavor",
     "hijack",
     "hijack.contrib.admin",
+    "imagekit",
+    "import_export",
+    "dbbackup",
+    "colorfield",
+    "django_celery_results",
     # "templated_email",
 ]
 
@@ -123,6 +131,10 @@ LOCAL_APPS = [
     "scaleos.reservations",
     "scaleos.payments",
     "scaleos.geography",
+    "scaleos.notifications",
+    "scaleos.buildings",
+    "scaleos.hardware",
+    "scaleos.software",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -234,6 +246,7 @@ TEMPLATES = [
                 "scaleos.utils.context_processors.body_classes",
                 "scaleos.utils.context_processors.hideable_page_parts",
                 "scaleos.utils.context_processors.theme_colors",
+                "scaleos.organizations.context_processors.organization_context",
             ],
         },
     },

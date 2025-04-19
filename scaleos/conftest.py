@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from scaleos.users.models import User
@@ -12,3 +14,15 @@ def _media_storage(settings, tmpdir) -> None:
 @pytest.fixture
 def user(db) -> User:
     return UserFactory()
+
+
+@pytest.fixture(autouse=True)
+def celery_eager(settings):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+
+@pytest.fixture(autouse=True)
+def patch_webpush_context():
+    with patch("webpush.utils.get_templatetag_context", return_value={}):
+        yield

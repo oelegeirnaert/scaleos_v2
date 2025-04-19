@@ -1,5 +1,6 @@
 from scaleos.shared.functions import birthday_cleaning
 from scaleos.shared.functions import mobile_phone_number_cleaning
+from scaleos.shared.functions import valid_email_address
 
 
 class TestMobilePhoneNumberCleaning:
@@ -46,3 +47,31 @@ class TestBirthdayCleaning:
         assert birthday_cleaning(12345) is None
         assert birthday_cleaning(None) is None
         assert birthday_cleaning({}) is None
+
+
+class TestValidEmailAddress:
+    def test_valid_email_addresses(self):
+        is_valid, msg = valid_email_address(None)
+        assert is_valid is False
+        assert msg == "email address must be a string"
+        is_valid, msg = valid_email_address("")
+        assert is_valid is False
+        assert msg == "email address is required"
+        is_valid, msg = valid_email_address(" ")
+        assert is_valid is False
+        assert msg == "email address is required"
+        is_valid, msg = valid_email_address("a")
+        assert is_valid is False
+        assert msg == "email address 'a' must be at least 5 characters long"
+        is_valid, msg = valid_email_address("a@b.c")
+        assert is_valid is False
+        assert msg == "The domain name b.c does not exist."
+        is_valid, msg = valid_email_address("a@b.c.")
+        assert is_valid is False
+        assert msg == "An email address cannot end with a period."
+        is_valid, msg = valid_email_address("oelegeirnaert@yopmail.com")
+        assert is_valid is False
+        assert msg == "oelegeirnaert@yopmail.com is blacklisted"
+        is_valid, msg = valid_email_address("oelegeirnaert@hotmail.com")
+        assert is_valid is True
+        assert msg == ""

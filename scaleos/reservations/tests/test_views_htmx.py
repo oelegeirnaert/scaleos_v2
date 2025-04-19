@@ -1,7 +1,7 @@
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 import pytest
-from django.core import mail
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -13,8 +13,15 @@ from scaleos.users.tests import model_factories as user_factories
 
 
 @pytest.mark.django_db
-def test_htmx_finish_reservation_bad_email(client):
+@patch("webpush.utils.get_templatetag_context", return_value={})
+def test_htmx_finish_reservation_bad_email(mock_context, client):
     reservation = reservation_factories.ReservationFactory()
+
+    # Simulate an active organization ID in the session
+    session = client.session
+    session["active_organization_id"] = reservation.organization_id
+    session.save()
+
     headers = {"HTTP_HX-Request": "true"}
     url = reverse(
         "reservations_htmx:finish_reservation",
@@ -28,7 +35,9 @@ def test_htmx_finish_reservation_bad_email(client):
         **headers,
     )
     assert response.status_code == 200
-    assert "this is not a valid email address" in str(response.content)
+    assert "email address 'jkd' must be at least 5 characters long" in str(
+        response.content,
+    )
 
 
 @pytest.mark.django_db
@@ -51,26 +60,33 @@ def test_htmx_finish_reservation_reservation_does_not_exist(client):
 
 
 @pytest.mark.django_db
-def test_htmx_finish_reservation_reservation_is_successfull(client):
-    assert len(mail.outbox) == 0
+def test_htmx_finish_reservation_reservation_is_not_successfull_because_not_auto_confirmed(  # noqa: E501
+    client,
+):
     a_uuid = "c221ac76-3829-4e3d-975a-3504e3332ccc"
     to_email = "my_email@hotmail.com"
     a_reservation = reservation_factories.ReservationFactory(public_key=a_uuid)
+
+    # Simulate an active organization ID in the session
+    session = client.session
+    session["active_organization_id"] = a_reservation.organization_id
+    session.save()
+
     headers = {"HTTP_HX-Request": "true"}
     url = reverse(
         "reservations_htmx:finish_reservation",
         kwargs={"reservation_public_key": a_uuid},
     )
     data = urlencode({"confirmation_email_address": to_email})
-    response = client.post(
+
+    request = client.post(
         url,
         data,
         content_type="application/x-www-form-urlencoded",
         **headers,
     )
-    assert response.status_code == 200
-    assert len(mail.outbox) == 1
-    assert mail.outbox[0].to == [to_email]
+
+    assert request.status_code == 200
     assert not a_reservation.requester_confirmed
 
 
@@ -80,10 +96,21 @@ def test_htmx_finish_reservation_reservation_is_successfull_as_authenticated(cli
     to_email = "my_email@hotmail.com"
     a_password = "slen)3ij2"  # noqa: S105
     user = user_factories.UserFactory(email=to_email, password=a_password)
-    reservation_factories.ReservationFactory(
+
+    reservation = reservation_factories.EventReservationFactory(
         user_id=user.pk,
         public_key=a_uuid,
     )
+    reservation_factories.ReservationLineFactory(
+        reservation_id=reservation.pk,
+        amount=1,
+    )
+
+    # Simulate an active organization ID in the session
+    session = client.session
+    session["active_organization_id"] = reservation.organization_id
+    session.save()
+
     headers = {"HTTP_HX-Request": "true"}
     url = reverse(
         "reservations_htmx:finish_reservation",
@@ -98,6 +125,7 @@ def test_htmx_finish_reservation_reservation_is_successfull_as_authenticated(cli
         **headers,
     )
     assert response.status_code == 200
+    assert reservation.is_confirmed
 
 
 @pytest.mark.django_db
@@ -114,7 +142,8 @@ def test_htmx_event_reservation_without_pricing(client):
 
 
 @pytest.mark.django_db
-def test_htmx_event_reservation_with_pricing(client):
+@patch("webpush.utils.get_templatetag_context", return_value={})
+def test_htmx_event_reservation_with_pricing(mock_context, client):
     age_price_matrix = payment_factories.AgePriceMatrixFactory()
     payment_factories.AgePriceMatrixItemFactory(
         age_price_matrix_id=age_price_matrix.pk,
@@ -137,7 +166,8 @@ def test_htmx_event_reservation_with_pricing(client):
 
 
 @pytest.mark.django_db
-def test_htmx_event_reservation_total_price(client):
+@patch("webpush.utils.get_templatetag_context", return_value={})
+def test_htmx_event_reservation_total_price(mock_context, client):
     a_uuid = "c221ac76-3829-4e3d-975a-3504e3332bdd"
     reservation_factories.EventReservationFactory(public_key=a_uuid)
     headers = {"HTTP_HX-Request": "true"}
@@ -150,7 +180,8 @@ def test_htmx_event_reservation_total_price(client):
 
 
 @pytest.mark.django_db
-def test_htmx_update_reservation_line(client):
+@patch("webpush.utils.get_templatetag_context", return_value={})
+def test_htmx_update_reservation_line(mock_context, client):
     reservation_line_uuid = "c221ac76-3829-4e3d-975a-3504e5332bdd"
 
     event = event_factories.EventFactory.create()
@@ -180,7 +211,8 @@ def test_htmx_update_reservation_line(client):
 
 
 @pytest.mark.django_db
-def test_htmx_update_reservation_line_with_two(client):
+@patch("webpush.utils.get_templatetag_context", return_value={})
+def test_htmx_update_reservation_line_with_two(mock_context, client):
     reservation_line_uuid = "c221ac76-3829-4e3d-975a-3504e5332bdd"
 
     event = event_factories.EventFactory.create()
@@ -197,8 +229,8 @@ def test_htmx_update_reservation_line_with_two(client):
     session["event_reservation_id"] = event_reservation.pk
     session.save()  # Save the session
 
-    headers = {"HTTP_HX-Request": "true"}
-    data = {"amount": 2}
+    headers = {"HTTP_HX-Request": "true", "HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
+    data = {f"{reservation_line.html_public_key}_amount": 2}
     url = reverse(
         "reservations_htmx:update_reservation_line",
         kwargs={"reservationline_public_key": reservation_line.public_key},

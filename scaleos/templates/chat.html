@@ -1,0 +1,32 @@
+{% extends 'page.html' %}
+
+{% block content %}
+  <h2>Chat about Organizations</h2>
+  <div class="chat-box" id="chat-box">
+    {% for message in thread.messages.all %}
+      <div class="message {% if message.sender == 'user' %}user-message{% else %}ai-message{% endif %}">
+        <p>{{ message.text }}</p>
+      </div>
+    {% endfor %}
+  </div>
+  <form hx-post="{% url 'organizations:chat_response' %}"
+        hx-target="#chat-box"
+        hx-swap="beforeend"
+        hx-trigger="submit">
+    {% csrf_token %}
+    <input type="hidden" name="thread_id" value="{{ thread.id }}" />
+    <input type="text"
+           name="message"
+           id="message"
+           placeholder="Ask about an organization..."
+           required />
+    <button type="submit">Send</button>
+  </form>
+  <script>
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+      // Scroll to the bottom of the chat box after new content is added
+      const chatBox = document.getElementById('chat-box');
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+  </script>
+{% endblock content %}

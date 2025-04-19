@@ -11,8 +11,12 @@ from drf_spectacular.views import SpectacularAPIView
 from drf_spectacular.views import SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
 from scaleos.users.views import custom_set_password
+from django.conf.urls.i18n import i18n_patterns
 
 urlpatterns = [
+    path(
+        "i18n/", include("django.conf.urls.i18n")
+    ),  # This enables the language switcher
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path(
         "about/",
@@ -35,6 +39,10 @@ urlpatterns = [
     path(
         "qr/",
         include("qr_code.urls", namespace="qr_code"),
+    ),
+    path(
+        "notification/",
+        include("scaleos.notifications.urls", namespace="notifications"),
     ),
     path(
         "core/",

@@ -2,6 +2,8 @@ import uuid
 
 from autoslug import AutoSlugField
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -63,3 +65,17 @@ class PublicKeyField(models.Model):
     def html_public_key(self):
         """Prefixed because a html id may not start with a number"""
         return f"htmlPK{str(self.public_key).replace('-', '')}"
+
+
+class OriginFields(models.Model):
+    origin_content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    origin_object_id = models.PositiveIntegerField(null=True, blank=True)
+    origin = GenericForeignKey("origin_content_type", "origin_object_id")
+
+    class Meta:
+        abstract = True
