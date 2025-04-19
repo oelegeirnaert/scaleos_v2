@@ -272,10 +272,10 @@ class Command(BaseCommand):
             person_id=person_tamara.pk,
         )
 
-        tamara_phone, created = hr_models.PersonTelephoneNumber.objects.get_or_create(
+        hr_models.PersonTelephoneNumber.objects.get_or_create(
             person_id=person_tamara.pk,
             telephone_number="+32476422939",
-            telephone_type=hr_models.PersonTelephoneNumber.Telephone_Type.MOBILE,
+            telephone_type=hr_models.PersonTelephoneNumber.TelephoneType.MOBILE,
         )
 
     def create_seminar_concept(self, organization):
