@@ -9,6 +9,7 @@ from django.db.models import CharField
 from django.db.models import EmailField
 from django.db.models import ImageField
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill
@@ -64,9 +65,9 @@ class User(AbstractUser, AdminLinkMixin):
         """
         return reverse("users:detail", kwargs={"pk": self.id})
 
-    @property
+    @cached_property
     def has_organizations(self):
-        if not hasattr(self, "person"):
+        if not hasattr(self, "person") or self.person is None:
             return False
         return self.person.owning_organizations.count() > 0
 
@@ -76,7 +77,7 @@ class User(AbstractUser, AdminLinkMixin):
             return None
         return self.person.primary_telephone_number
 
-    @property
+    @cached_property
     def is_email_verified(self):
         return EmailAddress.objects.filter(user=self, verified=True).exists()
 
@@ -106,3 +107,11 @@ class User(AbstractUser, AdminLinkMixin):
             return default_first_language
 
         return "en"
+
+    @property
+    def has_notifications(self):
+        return self.notifications.count() > 0
+
+    @cached_property
+    def has_reservations(self):
+        return self.reservations.count() > 0

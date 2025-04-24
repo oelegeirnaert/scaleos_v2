@@ -5,7 +5,7 @@ from celery.result import EagerResult
 from django.core import mail
 from django.utils import timezone
 
-from scaleos.reservations import task as reservation_tasks
+from scaleos.reservations import tasks as reservation_tasks
 from scaleos.reservations.tests import model_factories as reservation_factories
 from scaleos.users.tests.model_factories import UserFactory
 

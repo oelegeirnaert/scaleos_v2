@@ -41,7 +41,7 @@ class LogInfoFields(models.Model):
         related_name="%(class)s_modifications",
         on_delete=models.CASCADE,
         null=True,
-        blank=False,
+        blank=True,
     )
 
     class Meta:

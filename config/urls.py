@@ -28,7 +28,7 @@ urlpatterns = [
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
-    path("user/", include("scaleos.users.urls", namespace="users")),
+    path("my/", include("scaleos.users.urls", namespace="users")),
     path(
         "account/email/password/set/",
         custom_set_password,

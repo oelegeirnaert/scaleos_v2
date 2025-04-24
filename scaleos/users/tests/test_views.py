@@ -43,7 +43,7 @@ class TestUserUpdateView:
         request.user = user
 
         view.request = request
-        assert view.get_success_url() == f"/user/{user.pk}/"
+        assert view.get_success_url() == f"/my/{user.pk}/"
 
     def test_get_object(self, user: User, rf: RequestFactory):
         view = UserUpdateView()
@@ -82,7 +82,7 @@ class TestUserRedirectView:
         request.user = user
 
         view.request = request
-        assert view.get_redirect_url() == f"/user/{user.pk}/"
+        assert view.get_redirect_url() == f"/my/{user.pk}/"
 
 
 class TestUserDetailView:
@@ -105,6 +105,37 @@ class TestUserDetailView:
 
 
 @pytest.mark.django_db
+def test_user_can_see_his_organizations(admin_client):
+    # inspired by: https://djangostars.com/blog/django-pytest-testing/
+    from scaleos.organizations.tests.model_factories import OrganizationFactory
+
+    public_key = uuid4()
+    OrganizationFactory(public_key=public_key)
+
+    url = reverse(
+        "users:organization",
+    )
+    response = admin_client.get(url)
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_user_can_see_his_specific_organization(admin_client):
+    # inspired by: https://djangostars.com/blog/django-pytest-testing/
+    from scaleos.organizations.tests.model_factories import OrganizationFactory
+
+    public_key = uuid4()
+    OrganizationFactory(public_key=public_key)
+
+    url = reverse(
+        "users:organization",
+        kwargs={"organization_public_key": public_key},
+    )
+    response = admin_client.get(url)
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_user_can_see_his_reservations(admin_client):
     # inspired by: https://djangostars.com/blog/django-pytest-testing/
     from scaleos.reservations.tests.model_factories import ReservationFactory
@@ -113,7 +144,23 @@ def test_user_can_see_his_reservations(admin_client):
     ReservationFactory(public_key=public_key)
 
     url = reverse(
-        "users:reservations",
+        "users:reservation",
+    )
+    response = admin_client.get(url)
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_user_can_see_his_specific_reservation(admin_client):
+    # inspired by: https://djangostars.com/blog/django-pytest-testing/
+    from scaleos.reservations.tests.model_factories import ReservationFactory
+
+    public_key = uuid4()
+    ReservationFactory(public_key=public_key)
+
+    url = reverse(
+        "users:reservation",
+        kwargs={"reservation_public_key": public_key},
     )
     response = admin_client.get(url)
     assert response.status_code == 200

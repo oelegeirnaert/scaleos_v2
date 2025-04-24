@@ -3,8 +3,8 @@ import logging
 from uuid import uuid4
 
 from dateutil.relativedelta import relativedelta
-from django.core.exceptions import ValidationError
 from django.db import models
+from django.forms import ValidationError
 from django.utils.translation import gettext_lazy as _
 from polymorphic.models import PolymorphicModel
 
@@ -164,6 +164,7 @@ class CustomerConcept(Concept, LogInfoFields):
         ).exists():
             msg = _("This is not one of your customers")
             raise ValidationError({"customer": msg})
+
         super().clean()
 
     def save(self, *args, **kwargs):

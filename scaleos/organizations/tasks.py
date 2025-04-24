@@ -176,7 +176,7 @@ def import_resengo_row(row, organization_id=None, force_overwrite=None):  # noqa
     organization_customer, organization_customer_created = (
         organization_models.OrganizationCustomer.objects.get_or_create(
             organization_id=organization_id,
-            b2c_id=person.pk,
+            person_id=person.pk,
         )
     )
     if organization_customer_created:

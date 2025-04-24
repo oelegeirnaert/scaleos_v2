@@ -4,17 +4,48 @@ from polymorphic.admin import PolymorphicChildModelAdmin
 from polymorphic.admin import PolymorphicChildModelFilter
 from polymorphic.admin import PolymorphicInlineSupportMixin
 from polymorphic.admin import PolymorphicParentModelAdmin
+from polymorphic.admin import StackedPolymorphicInline
 
 from scaleos.organizations import models as organization_models
 
 # Register your models here.
 
 
-class OrganizationOwnerInlineAdmin(admin.TabularInline):
-    model = organization_models.OrganizationOwner
-    extra = 0
-    show_change_link = True
-    autocomplete_fields = ["person"]
+class OrganizationMemberInlineAdmin(StackedPolymorphicInline):
+    """
+    An inline for a polymorphic model.
+    The actual form appearance of each row is determined by
+    the child inline that corresponds with the actual model type.
+    """
+
+    class OrganizationOwnerInlineAdmin(StackedPolymorphicInline.Child):
+        model = organization_models.OrganizationOwner
+        show_change_link = True
+
+    class OrganizationEmployeeInlineAdmin(StackedPolymorphicInline.Child):
+        model = organization_models.OrganizationEmployee
+        show_change_link = True
+
+    class OrganizationCustomerInlineAdmin(StackedPolymorphicInline.Child):
+        model = organization_models.OrganizationCustomer
+        show_change_link = True
+
+    class OrganizationMemberInlineAdmin(StackedPolymorphicInline.Child):
+        model = organization_models.OrganizationMember
+        show_change_link = True
+
+    class B2BCustomerInlineAdmin(StackedPolymorphicInline.Child):
+        model = organization_models.B2BCustomer
+        show_change_link = True
+
+    model = organization_models.OrganizationMember
+    child_inlines = (
+        OrganizationOwnerInlineAdmin,
+        OrganizationEmployeeInlineAdmin,
+        OrganizationCustomerInlineAdmin,
+        OrganizationMemberInlineAdmin,
+        B2BCustomerInlineAdmin,
+    )
 
 
 class OrganizationStylingInlineAdmin(admin.TabularInline):
@@ -29,14 +60,6 @@ class OrganizationPaymentMethodInlineAdmin(admin.TabularInline):
     show_change_link = True
 
 
-class OrganizationCustomerInlineAdmin(admin.TabularInline):
-    model = organization_models.OrganizationCustomer
-    extra = 0
-    show_change_link = True
-    autocomplete_fields = ["b2c", "b2b"]
-    fk_name = "organization"
-
-
 @admin.register(organization_models.Enterprise)
 class EnterpriseAdmin(
     LeafletGeoAdminMixin,
@@ -47,8 +70,8 @@ class EnterpriseAdmin(
     readonly_fields = ["slug", "public_key"]
     # define custom features here
     inlines = [
-        OrganizationOwnerInlineAdmin,
-        OrganizationCustomerInlineAdmin,
+        # OrganizationOwnerInlineAdmin,
+        # OrganizationCustomerInlineAdmin,
         OrganizationStylingInlineAdmin,
         OrganizationPaymentMethodInlineAdmin,
     ]
@@ -67,11 +90,6 @@ class OrganizationAdmin(LeafletGeoAdminMixin, PolymorphicParentModelAdmin):
     readonly_fields = ["slug"]
 
 
-@admin.register(organization_models.OrganizationCustomer)
-class OrganizationCustomerAdmin(admin.ModelAdmin):
-    pass
-
-
 @admin.register(organization_models.OrganizationStyling)
 class OrganizationStylingAdmin(admin.ModelAdmin):
     pass
@@ -80,3 +98,36 @@ class OrganizationStylingAdmin(admin.ModelAdmin):
 @admin.register(organization_models.OrganizationPaymentMethod)
 class OrganizationPaymentMethodAdmin(admin.ModelAdmin):
     pass
+
+
+@admin.register(organization_models.OrganizationMember)
+class OrganizationMemberAdmin(PolymorphicParentModelAdmin):
+    base_model = organization_models.OrganizationMember
+    child_models = [
+        organization_models.OrganizationMember,
+        organization_models.OrganizationOwner,
+        organization_models.OrganizationEmployee,
+        organization_models.OrganizationCustomer,
+        organization_models.B2BCustomer,
+    ]
+    list_filter = [PolymorphicChildModelFilter]
+
+
+@admin.register(organization_models.OrganizationOwner)
+class OrganizationOwnerAdmin(PolymorphicChildModelAdmin):
+    base_model = organization_models.OrganizationMember
+
+
+@admin.register(organization_models.OrganizationEmployee)
+class OrganizationEmployeeAdmin(PolymorphicChildModelAdmin):
+    base_model = organization_models.OrganizationMember
+
+
+@admin.register(organization_models.OrganizationCustomer)
+class OrganizationCustomerAdmin(PolymorphicChildModelAdmin):
+    base_model = organization_models.OrganizationMember
+
+
+@admin.register(organization_models.B2BCustomer)
+class B2BCustomerAdmin(PolymorphicChildModelAdmin):
+    base_model = organization_models.OrganizationCustomer

@@ -7,6 +7,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
+from scaleos.organizations import models as organization_models
 from scaleos.shared.fields import LogInfoFields
 from scaleos.shared.mixins import AdminLinkMixin
 
@@ -83,6 +84,10 @@ class Person(
         if telephone_num and telephone_num.telephone_number:
             return telephone_num.telephone_number
         return None
+
+    @property
+    def owning_organizations(self):
+        return organization_models.OrganizationOwner.objects.filter(person_id=self.pk)
 
 
 class PersonAddress(AdminLinkMixin):

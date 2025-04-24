@@ -136,7 +136,7 @@ class Organization(
 
         customer, created = OrganizationCustomer.objects.get_or_create(
             organization=self,
-            b2c_id=person.id,
+            person_id=person.id,
         )
         if created:
             logger.info(
@@ -150,110 +150,126 @@ class Organization(
         return customer
 
 
-class OrganizationOwner(AdminLinkMixin):
+class OrganizationMember(PolymorphicModel, AdminLinkMixin, LogInfoFields):
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
-        related_name="owners",
+        related_name="members",
         null=True,
         blank=False,
     )
     person = models.ForeignKey(
         "hr.Person",
-        related_name="owning_organizations",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=False,
-    )
-
-
-class OrganizationEmployee(AdminLinkMixin):
-    organization = models.ForeignKey(
-        Organization,
-        on_delete=models.CASCADE,
-        related_name="employees",
-        null=True,
-        blank=False,
-    )
-    person = models.ForeignKey(
-        "hr.Person",
-        related_name="employers",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=False,
-    )
-
-
-class OrganizationCustomer(AdminLinkMixin, CardModel):
-    organization = models.ForeignKey(
-        Organization,
-        related_name="customers",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=False,
-    )
-    b2c = models.ForeignKey(
-        "hr.Person",
-        related_name="customer_at_organizations",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
-    b2b = models.ForeignKey(
-        Organization,
-        related_name="suppliers",
+        related_name="members",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
     )
 
-    is_b2b = models.BooleanField(default=False)
-    is_b2c = models.BooleanField(default=False)
+    class Meta:
+        verbose_name = _("organization member")
+        verbose_name_plural = _("organization members")
+
+    def __str__(self):
+        if self.person and self.organization:
+            return f"{self.person} - {self.organization}"
+        if self.person:
+            return f"{self.person}"
+        return super().__str__()
+
+    def clean(self):
+        if not isinstance(self, B2BCustomer):
+            msg = _("please choose your member")
+            raise ValidationError({"person": msg})
+
+
+class OrganizationOwner(OrganizationMember):
+    class Meta:
+        verbose_name = _("organization owner")
+        verbose_name_plural = _("organization owners")
+
+    def clean(self):
+        if (
+            OrganizationOwner.objects.filter(
+                person=self.person,
+                organization=self.organization,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            msg = _("this person is already owner from the organization")
+            raise ValidationError(msg)
+        return super().clean()
+
+
+class OrganizationEmployee(OrganizationMember):
+    class Meta:
+        verbose_name = _("organization employee")
+        verbose_name_plural = _("organization employees")
+
+    def clean(self):
+        if (
+            OrganizationEmployee.objects.filter(
+                person=self.person,
+                organization=self.organization,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            msg = _("this person is already employee in the organization")
+            raise ValidationError(msg)
+        return super().clean()
+
+
+class OrganizationCustomer(OrganizationMember):
+    def clean(self):
+        if (
+            OrganizationCustomer.objects.filter(
+                person=self.person,
+                organization=self.organization,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            msg = _("this person is already a customer from the organization")
+            raise ValidationError(msg)
+        return super().clean()
 
     class Meta:
         verbose_name = _("organization customer")
         verbose_name_plural = _("organization customers")
 
-    def __str__(self):
-        prefix = ""
-        if self.b2c:
-            prefix = _("B2C")
-            return f"{prefix}: {self.b2c} ({self.organization})"
-        if self.b2b:
-            prefix = _("B2B")
-            return f"{prefix}: {self.b2b} ({self.organization})"
-        return super().__str__()
 
-    def save(self, *args, **kwargs):
-        self.apply_b2b_b2c_rules()
-        super().save(*args, **kwargs)
+class B2BCustomer(OrganizationCustomer):
+    b2b = models.ForeignKey(
+        Organization,
+        related_name="suppliers",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+    )
 
     def clean(self):
-        if self.b2c and self.b2b:
-            msg = _(
-                "your customer needs to be a person OR an organization, not both",
-            )
-            raise ValidationError({"b2b": msg, "b2c": msg})
-
-        if self.b2b is None and self.b2c is None:
-            msg = _(
-                "your customer needs to be a person OR an organization",
-            )
-            raise ValidationError({"b2b": msg, "b2c": msg})
-
         if self.organization == self.b2b:
             msg = _("you cannot add yourself as a customer")
             raise ValidationError({"b2b": msg})
 
+        if (
+            B2BCustomer.objects.filter(
+                customer=self.customer,
+                organization=self.organization,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            msg = _("this customer is already in the organization")
+            raise ValidationError(msg)
+
         return super().clean()
 
-    def apply_b2b_b2c_rules(self):
-        self.is_b2b = False
-        self.is_b2c = False
-        if self.b2b:
-            self.is_b2b = True
-        if self.b2c:
-            self.is_b2c = True
+    class Meta:
+        verbose_name = _("b2b customer")
+        verbose_name_plural = _("b2b customers")
 
 
 class Enterprise(Organization):

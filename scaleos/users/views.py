@@ -90,7 +90,14 @@ def custom_set_password(request):
 
 
 @login_required
-def reservations(request):
+def account(request):
+    context = {}
+    context["user"] = request.user
+    return render(request, request.user.page_template, context)
+
+
+@login_required
+def reservation(request, reservation_public_key=None):
     from scaleos.reservations.models import Reservation
 
     user = request.user
@@ -103,7 +110,20 @@ def reservations(request):
 
 
 @login_required
-def organizations(request):
+def notification(request, notification_public_key=None):
+    from scaleos.notifications.models import UserNotification
+
+    user = request.user
+    notifications = UserNotification.objects.filter(to_user_id=user.pk)
+    return render(
+        request,
+        user.page_template,
+        {"user": user, "notifications": notifications},
+    )
+
+
+@login_required
+def organization(request, organization_public_key=None):
     from scaleos.organizations.models import Organization
 
     user = request.user

@@ -17,6 +17,27 @@ class OrganizationFactory(
         model = organization_models.Organization
 
 
+class OrganizationMemberFactory(
+    DjangoModelFactory[organization_models.OrganizationMember],
+):
+    class Meta:
+        model = organization_models.OrganizationMember
+
+
+class OrganizationEmployeeFactory(
+    DjangoModelFactory[organization_models.OrganizationEmployee],
+):
+    class Meta:
+        model = organization_models.OrganizationEmployee
+
+
+class B2BCustomerFactory(
+    DjangoModelFactory[organization_models.B2BCustomer],
+):
+    class Meta:
+        model = organization_models.B2BCustomer
+
+
 class OrganizationOwnerFactory(
     DjangoModelFactory[organization_models.OrganizationOwner],
 ):
