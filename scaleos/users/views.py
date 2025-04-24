@@ -14,10 +14,28 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView
 from django.views.generic import RedirectView
 from django.views.generic import UpdateView
+from django.views.i18n import set_language
 
 from scaleos.users.models import User
 
 logger = logging.getLogger(__name__)
+
+
+def custom_set_language(request):
+    response = set_language(request)
+
+    if request.user.is_authenticated:
+        language = request.POST.get("language")
+        if language is None:
+            return response
+
+        if not hasattr(request.user, "website_language"):
+            return response
+
+        request.user.website_language = language
+        request.user.save(update_fields=["website_language"])
+
+    return response
 
 
 class UserDetailView(LoginRequiredMixin, DetailView):

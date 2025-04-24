@@ -27,7 +27,7 @@ alias mklanec='docker compose -f docker-compose-postgis.local.yml run --rm djang
 alias mkpersons='docker compose -f docker-compose-postgis.local.yml run --rm django python manage.py create_persons'
 
 #i18n
-alias devtrans='manage makemessages -a'
+alias devtrans='manage makemessages -a --extension=html,txt,email,py'
 alias devtranscompile="manage compilemessages"
 
 # WebPages

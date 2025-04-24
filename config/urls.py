@@ -12,8 +12,10 @@ from drf_spectacular.views import SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
 from scaleos.users.views import custom_set_password
 from django.conf.urls.i18n import i18n_patterns
+from scaleos.users.views import custom_set_language
 
 urlpatterns = [
+    path("i18n/setlang/", custom_set_language, name="set_language"),
     path(
         "i18n/", include("django.conf.urls.i18n")
     ),  # This enables the language switcher
@@ -43,6 +45,10 @@ urlpatterns = [
     path(
         "notification/",
         include("scaleos.notifications.urls", namespace="notifications"),
+    ),
+    path(
+        "htmx/notification/",
+        include("scaleos.notifications.urls_htmx", namespace="notifications_htmx"),
     ),
     path(
         "core/",

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
+import logging
 from typing import ClassVar
 
+from allauth.account.models import EmailAddress
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db.models import CharField
 from django.db.models import EmailField
@@ -9,10 +12,13 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill
+from webpush.models import PushInformation
 
 from scaleos.shared.mixins import AdminLinkMixin
 
 from .managers import UserManager
+
+logger = logging.getLogger(__name__)
 
 
 class User(AbstractUser, AdminLinkMixin):
@@ -28,6 +34,13 @@ class User(AbstractUser, AdminLinkMixin):
     last_name = None  # type: ignore[assignment]
     email = EmailField(_("email address"), unique=True)
     username = None  # type: ignore[assignment]
+    website_language = CharField(
+        verbose_name=_("website language"),
+        max_length=50,
+        choices=settings.LANGUAGES,
+        default="",
+        blank=True,
+    )
 
     avatar = ImageField(upload_to="avatars", null=True, blank=True)
     avatar_thumbnail = ImageSpecField(
@@ -62,3 +75,34 @@ class User(AbstractUser, AdminLinkMixin):
         if not hasattr(self, "person"):
             return None
         return self.person.primary_telephone_number
+
+    @property
+    def is_email_verified(self):
+        return EmailAddress.objects.filter(user=self, verified=True).exists()
+
+    @property
+    def has_webpush(self):
+        return PushInformation.objects.filter(user=self).exists()
+
+    def get_primary_language(self):
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Trying to get the primary language of the user")
+        if not hasattr(self, "person"):
+            logger.debug("The user has no person linked, returning website language")
+            return self.website_language
+
+        if not hasattr(self.person, "mother_tongue"):
+            logger.debug("The person has no mother tongue")
+            return self.website_language
+
+        language = self.person.mother_tongue
+        if language:
+            logger.debug("The person has a mother tongue: %s", language)
+            return language
+
+        default_first_language = settings.LANGUAGES[0][0]
+        if default_first_language:
+            logger.debug("Using default first language %s", default_first_language)
+            return default_first_language
+
+        return "en"

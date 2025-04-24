@@ -1,0 +1,40 @@
+{% load i18n static %}
+
+{% if event.card_description %}
+  <div id="{{ event.html_public_key }}eventinfo">
+    {% if show_info %}
+      <div>
+        <h1 class="text-4xl text-gray-300 sm:text-5xl lg:text-6xl">{{ event.name }}</h1>
+        <div class="p-5">{{ event.card_description }}</div>
+      </div>
+      <button class="inline-flex mt-2 rounded-sm border border-gray-600 bg-gray-600 px-12 py-3 text-sm font-medium text-white hover:bg-transparent hover:text-gray-600 focus:ring-3 focus:outline-hidden"
+              hx-get="{% url 'events_htmx:event_info' event.public_key %}?hide"
+              hx-target="#{{ event.html_public_key }}eventinfo"
+              hx-swap="innerHTML"
+              hx-trigger="click">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 20 20"
+             fill="currentColor"
+             class="size-5">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" />
+        </svg>
+        <span class="pl-2 text-sm font-bold">{% trans 'hide info'|upper %}</span>
+      </button>
+    {% else %}
+      <button class="inline-flex mt-2 rounded-sm border border-gray-600 bg-gray-600 px-12 py-3 text-sm font-medium text-white hover:bg-transparent hover:text-gray-600 focus:ring-3 focus:outline-hidden"
+              hx-get="{% url 'events_htmx:event_info' event.public_key %}?show"
+              hx-trigger="click"
+              hx-target="#{{ event.html_public_key }}eventinfo"
+              hx-swap="innerHTML">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 20 20"
+             fill="currentColor"
+             class="size-5">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd" />
+        </svg>
+        <span class="pl-2 text-sm font-bold">{% trans 'show info'|upper %}</span>
+      </button>
+    {% endif %}
+    {% include 'staff.html' with obj=event %}
+  </div>
+{% endif %}

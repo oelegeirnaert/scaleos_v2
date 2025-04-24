@@ -103,10 +103,7 @@ def test_brunch_reservation_for_waerboom(faker):
         amount=number_of_babies,
         price_matrix_item_id=baby_price_matrix_item.pk,
     )
-    assert (
-        number_of_babies * the_baby_price
-        == baby_reservation_line.total_price.vat_included
-    )
+    assert baby_reservation_line.total_price is None
 
     number_of_children = 5
     children_reservation_line = reservation_factories.ReservationLineFactory.create(
@@ -142,8 +139,7 @@ def test_brunch_reservation_for_waerboom(faker):
     )
 
     assert (
-        baby_reservation_line.total_price.vat_included
-        + children_reservation_line.total_price.vat_included
+        children_reservation_line.total_price.vat_included
         + adolescent_reservation_line.total_price.vat_included
         + adults_reservation_line.total_price.vat_included
         == brunch_reservation.get_total_price().vat_included
@@ -395,7 +391,7 @@ def test_total_price_vat_included_no_price(faker):
         amount=3,
         price_matrix_item=age_price_matrix_item,
     )
-    assert reservation_line.total_price.vat_included == Money(0, EUR)
+    assert reservation_line.total_price is None
 
 
 @pytest.mark.django_db
@@ -410,15 +406,16 @@ def test_event_reservation_is_automatically_confired_by_organization_when_there_
         amount=1,
     )
     assert event.free_spots == 10
-    event_reservation.requester_confirm()
+    assert event_reservation.requester_confirm()
     assert event_reservation.requester_confirmed
-    event_reservation.organization_confirm()
+    assert event_reservation.organization_confirm()
     assert event_reservation.organization_confirmed
+    event.refresh_from_db()
     assert event.free_spots == 9
 
 
 @pytest.mark.django_db
-def test_event_can_have_a_waitlist(faker):
+def test_event_can_have_a_waitlist(faker, verified_user):
     event_reservation_settings = reservation_factories.EventReservationSettingsFactory()
     event = event_factories.BirthdayEventFactory(
         reservation_settings_id=event_reservation_settings.pk,
@@ -435,11 +432,21 @@ def test_event_can_have_a_waitlist(faker):
 
     event_reservation_big_group = reservation_factories.EventReservationFactory(
         event_id=event.pk,
+        user_id=verified_user.pk,
     )
     reservation_factories.ReservationLineFactory(
         reservation_id=event_reservation_big_group.pk,
         amount=30,
     )
+
+    assert event_reservation_big_group.requester_confirm() is True
     assert event_reservation_big_group.organization_auto_confirm() is False
     assert event_reservation_big_group.on_waitinglist_since is not None
     assert event_reservation_big_group.is_confirmed is False
+
+
+@pytest.mark.django_db
+def test_organization_cannot_autoconfirm_when_user_not_verified(faker):
+    event = event_factories.BirthdayEventFactory()
+    event_reservation = reservation_factories.EventReservationFactory(event_id=event.pk)
+    assert event_reservation.organization_auto_confirm() is False

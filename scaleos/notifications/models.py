@@ -1,6 +1,7 @@
-import contextlib
 import logging
+from enum import Enum
 
+from allauth.account.models import EmailConfirmation
 from celery.exceptions import NotRegistered
 from celery.result import AsyncResult
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.db import models
 from django.forms import ValidationError
 from django.urls import NoReverseMatch
 from django.urls import reverse
+from django.utils import translation
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from kombu.exceptions import OperationalError
@@ -20,6 +22,7 @@ from webpush import send_user_notification
 from config import celery_app
 from scaleos.notifications import tasks as notification_tasks
 from scaleos.organizations import models as organization_models
+from scaleos.organizations.functions import get_software_owner
 from scaleos.shared.fields import LogInfoFields
 from scaleos.shared.fields import PublicKeyField
 from scaleos.shared.functions import get_base_url_from_string
@@ -74,13 +77,6 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
         null=True,
     )
 
-    language = models.CharField(
-        max_length=50,
-        choices=settings.LANGUAGES,
-        default="",
-        blank=True,
-    )
-
     title = models.CharField(max_length=255, default="", blank=True)
     message = models.TextField(blank=True, default="")
     button_text = models.CharField(max_length=255, default="", blank=True)
@@ -92,7 +88,7 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
         choices=ToBeSendInterval.choices,
         default=ToBeSendInterval.SECONDS,
     )
-    sent_on = models.DateTimeField(null=True, blank=True)
+    sent_on = models.DateTimeField(verbose_name=_("sent on"), null=True, blank=True)
     seen_on = models.DateTimeField(null=True, blank=True)
     expires_on = models.DateTimeField(null=True, blank=True)
     dismissed_on = models.DateTimeField(null=True, blank=True)
@@ -150,7 +146,16 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
                 )
             except NoReverseMatch:
                 pass
+            except AttributeError:
+                pass
         return None
+
+    @property
+    def unsubscribe_link(self):
+        return reverse(
+            "notifications:unsubscribe",
+            kwargs={"notification_public_key": self.public_key},
+        )
 
     @property
     def send_in_amount_in_seconds(self):
@@ -183,15 +188,21 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
     @property
     def base_url(self):
         logger.debug("Getting base url")
-        if (
-            self.sending_organization
-            and hasattr(self.sending_organization, "internal_url")
-            and not is_blank(self.sending_organization.internal_url)
-        ):
-            base_url = get_base_url_from_string(self.sending_organization.internal_url)
-            logger.debug(base_url)
-            return get_base_url_from_string(base_url)
-        return "https://scaleos.com"
+        try:
+            if (
+                self.sending_organization
+                and hasattr(self.sending_organization, "internal_url")
+                and not is_blank(self.sending_organization.internal_url)
+            ):
+                base_url = get_base_url_from_string(
+                    self.sending_organization.internal_url,
+                )
+                logger.debug(base_url)
+                return get_base_url_from_string(base_url)
+        except KeyError:
+            return "https://scaleos.com"
+        else:
+            return "https://scaleos.com"
 
     @cached_property
     def open_notification_url(self):
@@ -204,14 +215,15 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
     def save(self, *args, **kwargs):
         is_new = self._state.adding  # True if this is a new object
 
-        self.set_language()
-        from django.utils.translation import activate
+        if hasattr(self, "language") and self.language:
+            translation.activate(self.language)
 
-        activate(self.language)
-
+        self.set_sending_organization()
         self.set_title()
         self.set_message()
         self.set_button_text()
+
+        translation.deactivate()
 
         super().save(*args, **kwargs)
 
@@ -343,36 +355,100 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
         translate_button_text = _("click here")
         self.button_text = translate_button_text
 
-    def set_language(self):
-        if not is_blank(self.language):
+    def set_sending_organization(self):
+        logger.debug("Set sending organization")
+        if self.sending_organization:
+            logger.debug("is already set")
             return
 
-        if (
-            hasattr(self, "notification")
-            and hasattr(self.notification, "to_user")
-            and hasattr(self.notification.to_user, "person")
-            and hasattr(self.notification.to_user.person, "mother_tongue")
-        ):
-            self.language = self.notification.to_user.person.mother_tongue
+        the_owner = get_software_owner()
+        if the_owner:
+            logger.debug("The sending organization is the software owner.")
+            self.sending_organization_id = the_owner.pk
             return
 
-        self.language = "nl"
+        logger.debug("We cannot set a sending organization")
+        self.sending_organization = None
 
 
 class UserNotification(Notification):
+    class NotificationChannel(Enum):
+        MAIL = "mail"
+        WEBPUSH = "webpush"
+        LETTER = "letter"
+        VOICECALL = "voicecall"
+        SMS = "sms"
+
     to_user = models.ForeignKey(
         user_models.User,
+        verbose_name=_("to user"),
         on_delete=models.CASCADE,
         related_name="notifications",
         null=True,
     )
+
+    language = models.CharField(
+        max_length=50,
+        choices=settings.LANGUAGES,
+        default="",
+        blank=True,
+    )
+
+    def save(self, *args, **kwargs):
+        if self.to_user:
+            self.language = self.to_user.get_primary_language()
+        return super().save(*args, **kwargs)
+
+    def send_webpush(self, notification_settings, to_user_id):
+        if not self.to_user.has_webpush:
+            logger.info("The user has no webpush")
+            return False
+
+        if self.about_content_type:
+            logger.info(self.about_content_type.model_class())
+            if self.about_content_type.model_class() == EmailConfirmation:
+                logger.warning("Never send a push when email needs to be confirmed")
+                return False
+
+        logger.debug("Trying to send a webpush notification")
+        if notification_settings.disabled_webpush_notifications_on:
+            logger.info(
+                "The user disabled webpush notifications on %s",
+                notification_settings.disabled_webpush_notifications_on,
+            )
+            return False
+
+        if not hasattr(self, "webpush_notification"):
+            WebPushNotification.objects.create(
+                notification_id=self.pk,
+                user_id=to_user_id,
+            ).send()
+            return True
+
+        logger.info("Webpush already sent.")
+        return False
+
+    def send_mail(self, notification_settings, to_user_id):
+        logger.debug("Trying to send a mail notification")
+        if notification_settings.disabled_email_notifications_on:
+            logger.info(
+                "The user disabled email notifications on %s",
+                notification_settings.disabled_email_notifications_on,
+            )
+        elif not hasattr(self, "mail_notification"):
+            MailNotification.objects.create(
+                user_id=to_user_id,
+                notification_id=self.pk,
+            ).send()
+        else:
+            logger.info("Mail already sent.")
 
     def send(self):
         logger.debug("Send notification for user %s", self.pk)
 
         if self.to_user is None:
             logger.warning("we cannot send a user notification without a user")
-            return
+            return False
 
         to_user_id = self.to_user.pk
         notification_settings, created = UserNotificationSettings.objects.get_or_create(
@@ -386,40 +462,11 @@ class UserNotification(Notification):
                 "The user disabled all notifications on %s",
                 notification_settings.disabled_all_notifications_on,
             )
-            return
+            return False
 
-        logger.debug("Getting mother tongue of the user %s", to_user_id)
-        language = settings.LANGUAGES[0][0]
-        with contextlib.suppress(AttributeError):
-            language = self.to_user.person.mother_tongue
-
-        logger.debug("Communication will happen in %s", language)
-
-        if notification_settings.disabled_webpush_notifications_on:
-            logger.info(
-                "The user disabled webpush notifications on %s",
-                notification_settings.disabled_webpush_notifications_on,
-            )
-        elif not hasattr(self, "webpush_notification"):
-            WebPushNotification.objects.create(
-                notification_id=self.pk,
-                user_id=to_user_id,
-            ).send()
-        else:
-            logger.info("Webpush already sent.")
-
-        if notification_settings.disabled_email_notifications_on:
-            logger.info(
-                "The user disabled email notifications on %s",
-                notification_settings.disabled_email_notifications_on,
-            )
-        elif not hasattr(self, "mail_notification"):
-            MailNotification.objects.create(
-                user_id=to_user_id,
-                notification_id=self.pk,
-            ).send()
-        else:
-            logger.info("Mail already sent.")
+        self.send_webpush(notification_settings, to_user_id)
+        self.send_mail(notification_settings, to_user_id)
+        return True
 
 
 class OrganizationNotification(Notification):
@@ -535,13 +582,44 @@ class MailNotification(LogInfoFields):
         related_name="mail_notifications",
         null=True,
     )
+    to_email_addresses = models.TextField(
+        blank=False,
+        default="",
+        help_text=_("Use a comma ',' as the separator"),
+    )
+    cc_email_addresses = models.TextField(
+        blank=True,
+        default="",
+        help_text=_("Use a comma ',' as the separator"),
+    )
+    bcc_email_addresses = models.TextField(
+        blank=True,
+        default="",
+        help_text=_("Use a comma ',' as the separator"),
+    )
 
     subject = models.CharField(max_length=255, default="", blank=True)
     body = models.TextField(blank=True, default="")
     html_body = models.TextField(blank=True, default="")
 
     def send(self):
-        logger.debug("Trying to send a mail notification to %s", self.user.email)
+        if is_blank(self.to_email_addresses):
+            if self.user and self.user.email:
+                self.to_email_addresses = self.user.email
+
+            elif hasattr(self, "to_user"):
+                self.to_email_addresses = self.to_user.email
+
+            self.save(update_fields=["to_email_addresses"])
+
+        recipient_list = self.to_email_addresses.split(",")
+        cc_list = self.cc_email_addresses.split(",")
+        bcc_list = self.bcc_email_addresses.split(",")
+
+        logger.debug("Trying to send a mail notification TO: %s", recipient_list)
+        logger.debug("Trying to send a mail notification CC: %s", cc_list)
+        logger.debug("Trying to send a mail notification BCC: %s", bcc_list)
+
         # https://pypi.org/project/django-templated-email/
         send_templated_mail(
             template_name=self.notification.mail_template,
@@ -551,13 +629,15 @@ class MailNotification(LogInfoFields):
             subject=self.subject,
             message=self.body,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[self.user.email],
+            recipient_list=recipient_list,
+            cc=cc_list,
+            bcc=bcc_list,
             html_message=self.html_body,
         )
         logger.info("Mail notification sent.")
 
 
-class UserNotificationSettings(AdminLinkMixin, LogInfoFields):
+class UserNotificationSettings(AdminLinkMixin, LogInfoFields, PublicKeyField):
     user = models.OneToOneField(
         user_models.User,
         on_delete=models.CASCADE,

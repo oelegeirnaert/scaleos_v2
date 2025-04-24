@@ -1,3 +1,5 @@
+import contextlib
+
 from django.apps import AppConfig
 
 
@@ -6,4 +8,5 @@ class ReservationsConfig(AppConfig):
     name = "scaleos.reservations"
 
     def ready(self):
-        pass  # Import signals to make sure they are registered
+        with contextlib.suppress(ImportError):
+            import scaleos.reservations.signals  # noqa: F401

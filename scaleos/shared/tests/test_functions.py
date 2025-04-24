@@ -1,4 +1,11 @@
+import ipaddress
+
+import pytest
+from django.contrib.auth.models import AnonymousUser
+from django.test import RequestFactory
+
 from scaleos.shared.functions import birthday_cleaning
+from scaleos.shared.functions import get_client_ip
 from scaleos.shared.functions import mobile_phone_number_cleaning
 from scaleos.shared.functions import valid_email_address
 
@@ -75,3 +82,71 @@ class TestValidEmailAddress:
         is_valid, msg = valid_email_address("oelegeirnaert@hotmail.com")
         assert is_valid is True
         assert msg == ""
+
+
+@pytest.fixture
+def factory():
+    return RequestFactory()
+
+
+def test_get_client_ip_from_remote_addr(factory):
+    request = factory.get("/")
+    request.user = AnonymousUser()
+    request.META["REMOTE_ADDR"] = "192.168.1.1"
+
+    ip = get_client_ip(request)
+    assert ip == "192.168.1.1"
+
+
+def test_get_client_ip_from_x_forwarded_for(factory):
+    request = factory.get("/")
+    request.user = AnonymousUser()
+    request.META["HTTP_X_FORWARDED_FOR"] = "203.0.113.42, 70.41.3.18, 150.172.238.178"
+    request.META["REMOTE_ADDR"] = "192.168.1.1"  # should be ignored
+
+    ip = get_client_ip(request)
+    assert ip == "203.0.113.42"
+
+
+def test_get_client_ip_with_single_forwarded_ip(factory):
+    request = factory.get("/")
+    request.META["HTTP_X_FORWARDED_FOR"] = "8.8.8.8"
+    ip = get_client_ip(request)
+    assert ip == "8.8.8.8"
+
+
+def test_get_client_ip_defaults_to_remote_addr(factory):
+    request = factory.get("/")
+    # No HTTP_X_FORWARDED_FOR set, but REMOTE_ADDR will default to 127.0.0.1
+    ip = get_client_ip(request)
+    assert ip == "127.0.0.1"
+
+
+def test_get_client_ip_returns_valid_ip(factory):
+    request = factory.get("/")
+    request.META["HTTP_X_FORWARDED_FOR"] = "192.0.2.123"
+    ip = get_client_ip(request)
+
+    # Validate that it's a valid IP (IPv4 or IPv6)
+    try:
+        ipaddress.ip_address(ip)
+    except ValueError:
+        pytest.fail(f"{ip} is not a valid IP address")
+
+
+@pytest.mark.parametrize(
+    "header_ip",
+    [
+        "203.0.113.1",  # IPv4
+        "2001:0db8:85a3::8a2e:370:7334",  # IPv6
+    ],
+)
+def test_get_client_ip_valid_format(factory, header_ip):
+    request = factory.get("/")
+    request.META["HTTP_X_FORWARDED_FOR"] = header_ip
+    ip = get_client_ip(request)
+
+    try:
+        ipaddress.ip_address(ip)
+    except ValueError:
+        pytest.fail(f"{ip} is not a valid IP address")

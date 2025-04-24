@@ -247,6 +247,7 @@ TEMPLATES = [
                 "scaleos.utils.context_processors.hideable_page_parts",
                 "scaleos.utils.context_processors.theme_colors",
                 "scaleos.organizations.context_processors.organization_context",
+                "scaleos.organizations.context_processors.software_owner",
             ],
         },
     },
@@ -422,7 +423,7 @@ LEAFLET_CONFIG = {
 TEMPLATED_EMAIL_BACKEND = "templated_email.backends.vanilla_django"
 TEMPLATED_EMAIL_TEMPLATE_DIR = "email_templates/"  # Path inside the templates folder
 TEMPLATED_EMAIL_FILE_EXTENSION = "email"
-ACCOUNT_EMAIL_CONFIRMATION_EMAIL = "scaleos.core.tasks.send_custom_templated_email"
+# ACCOUNT_EMAIL_CONFIRMATION_EMAIL = "scaleos.core.tasks.send_custom_templated_email"
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
 ACCOUNT_EMAIL_CONFIRMATION_HMAC = True
@@ -440,3 +441,12 @@ WEBPUSH_SETTINGS = {
     "VAPID_PRIVATE_KEY": env("VAPID_PRIVATE_KEY"),
     "VAPID_ADMIN_EMAIL": env("VAPID_ADMIN_EMAIL"),
 }
+
+SOFTWARE_OWNING_COMPANY_REGISTERED_ID = env(
+    "SOFTWARE_OWNING_COMPANY_REGISTERED_ID",
+    default="0770914131",
+)
+SOFTWARE_OWNING_COMPANY_REGISTERED_COUNTRY = env(
+    "SOFTWARE_OWNING_COMPANY_REGISTERED_COUNTRY",
+    default="BE",
+)

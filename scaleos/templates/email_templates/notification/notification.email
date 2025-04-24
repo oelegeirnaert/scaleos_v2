@@ -1,16 +1,19 @@
-{% block subject %} New notification from {{ notification.sending_organization.name }}{% endblock %}
+{% load i18n %}
+{% block subject %} {% trans 'new notification from'|capfirst %} {{ notification.sending_organization.name }}{% endblock %}
 
 {% block plain %}
-Hi {{ notification.to_user.person.first_name|default:notification.to_user.email }},
+{% trans 'hi'|capfirst %} {{ notification.to_user.person.first_name|default:notification.to_user.email }},
 
-Thank you for signing up at {{ notification.sending_organization.name }}! To get started, please confirm your email address by clicking the link below:
+{{notification.message}}
 
+
+{% trans 'copy and paste the following link into your favorite browser'|capfirst %}:
 {{ notification.button_link }}
 
-If you did not request this, you can safely ignore this email.
+{% trans 'if you did not request this, you can safely ignore this email'|capfirst %}.
 
-Best,
-The {{ site_name }} Team
+{% trans 'best regards'|capfirst %},
+{{ notification.sending_organization.name }}
 {% endblock %}
 
 {% block html %}
@@ -90,26 +93,28 @@ The {{ site_name }} Team
 <body>
     <div class="container">
         <!-- Logo -->
-        {% if notification.sending_organization.styling.fav_icon.url %}
+        {% if notification and notification.sending_organization and notification.sending_organization.styling and notification.sending_organization.styling.fav_icon %}
         <img src="{{notification.base_url}}{{notification.sending_organization.styling.fav_icon.url}}" alt="{{ site_name }} Logo" class="logo">
         {% endif %}
 
         <h2 style="margin-bottom: 30px;">{{notification.title}}</h2>
+        <p style="margin-bottom: 20px;">{% trans 'hi'|capfirst %} {{ notification.to_user.person.first_name|default:notification.to_user.email }},</p>
         <p>{{notification.message}}</p>
 
         <!-- Call-to-Action Button -->
         <p><a href="{{ notification.button_link }}" class="button">{{notification.button_text}}</a></p>
 
-        <p style="margin-top: 15px;">If the button doesn’t work for you, copy and paste the following link into your browser:</p>
+
+        <p style="margin-top: 15px;">{% trans 'if the button doesn’t work for you'|capfirst %}, {% trans 'copy and paste the following link into your favorite browser'|lower %}:</p>
         <p><a href="{{ notification.button_link }}">{{ notification.button_link }}</a></p>
 
-        <p style="margin-top: 30px; color: #777;">If you did not request this, you can ignore this email.</p>
+        <p style="margin-top: 30px; color: #777;">{% trans 'if you did not request this, you can safely ignore this email'|capfirst %}.</p>
 
         <div class="footer">
-            <p>Best regards,</p>
-            <p><strong>The {{ notification.sending_organization.name }} Team</strong></p>
+            <p>{% trans 'best regards'|capfirst %},</p>
+            <p><strong>{{ notification.sending_organization.name }}</strong></p>
             <p class="unsubscribe">
-                🌳 Save the nature, disable your mails and subscribe to our push messages | <a href="https://yourwebsite.com/unsubscribe" style="color: #777;">Unsubscribe</a>
+                🌳 {% trans 'save the nature, disable your mails and subscribe to our push messages'|capfirst %}  | <a href="{{notification.unsubscribe_link}}" style="color: #777;">Unsubscribe</a>
             </p>
 
         </div>

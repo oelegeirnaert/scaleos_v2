@@ -1,0 +1,12 @@
+{% load i18n %}
+
+{% if event_updates.count > 0 %}
+  <div class="mt-10 mb-2">
+    <h1 class="text-4xl text-gray-300 sm:text-5xl lg:text-6xl">{% trans 'latest updates'|capfirst %}</h1>
+    <div class="m-5">
+      {% for event_update in event_updates %}
+        {% include event_update.detail_template with o=event_update %}
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}

@@ -22,7 +22,10 @@ class UserAdmin(HijackUserAdminMixin, auth_admin.UserAdmin):
     add_form = UserAdminCreationForm
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        (_("Personal info"), {"fields": ("name", "avatar")}),
+        (
+            _("Personal info"),
+            {"fields": ("name", "avatar", "website_language", "has_webpush")},
+        ),
         (
             _("Permissions"),
             {
@@ -49,3 +52,4 @@ class UserAdmin(HijackUserAdminMixin, auth_admin.UserAdmin):
             },
         ),
     )
+    readonly_fields = ["has_webpush"]

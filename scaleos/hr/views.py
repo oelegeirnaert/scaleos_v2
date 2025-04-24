@@ -9,6 +9,8 @@ from scaleos.hr import models as hr_models
 
 logger = logging.getLogger(__name__)
 
+# views/language.py
+
 
 @login_required
 @cache_page(60 * 15)

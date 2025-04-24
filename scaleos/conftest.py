@@ -1,9 +1,14 @@
 from unittest.mock import patch
 
 import pytest
+from allauth.account.models import EmailAddress
+from django.contrib.auth import get_user_model
+from faker import Faker
 
 from scaleos.users.models import User
 from scaleos.users.tests.model_factories import UserFactory
+
+faker = Faker()
 
 
 @pytest.fixture(autouse=True)
@@ -26,3 +31,27 @@ def celery_eager(settings):
 def patch_webpush_context():
     with patch("webpush.utils.get_templatetag_context", return_value={}):
         yield
+
+
+@pytest.fixture
+def verified_user(db):
+    User = get_user_model()  # noqa: N806
+    email = faker.email(domain="hotmail.com")
+    password = faker.password()
+
+    # Create user
+    user = User.objects.create_user(
+        email=email,
+        password=password,
+    )
+
+    # Mark email as verified
+    EmailAddress.objects.create(
+        user=user,
+        email=email,
+        verified=True,
+        primary=True,
+    )
+
+    user.raw_password = password  # optional, in case you need to log in
+    return user

@@ -135,3 +135,17 @@ class BreakfastEventFactory(DjangoModelFactory[event_models.BreakfastEvent]):
 class LunchEventFactory(DjangoModelFactory[event_models.LunchEvent]):
     class Meta:
         model = event_models.LunchEvent
+
+
+class EventUpdateFactory(DjangoModelFactory[event_models.EventUpdate]):
+    event = SubFactory(EventFactory)
+
+    class Meta:
+        model = event_models.EventUpdate
+
+
+class EventMessageFactory(DjangoModelFactory[event_models.EventMessage]):
+    event = SubFactory(EventFactory)
+
+    class Meta:
+        model = event_models.EventMessage

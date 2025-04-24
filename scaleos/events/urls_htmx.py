@@ -10,4 +10,14 @@ urlpatterns = [
         vw_htmx.concept,
         name="concept",
     ),
+    path(
+        "event/<uuid:event_public_key>/info",
+        vw_htmx.event_info,
+        name="event_info",
+    ),
+    path(
+        "event/<uuid:event_public_key>/updates",
+        vw_htmx.event_updates,
+        name="event_updates",
+    ),
 ]

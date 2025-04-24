@@ -18,6 +18,7 @@ def test_event_has_free_capacity(faker):  # noqa: PLR0915
     assert event.free_spots == "∞"
 
     event.maximum_number_of_guests = 100
+    event.save()
 
     assert event.free_spots == 100
     assert event.free_percentage == 100
@@ -46,6 +47,7 @@ def test_event_has_free_capacity(faker):  # noqa: PLR0915
     assert event_reservation1.organization_confirmed
     assert event_reservation1.is_confirmed
 
+    event.refresh_from_db()
     assert event.free_spots == 70
     assert event.free_percentage == 70
     assert event.reserved_percentage == 30
@@ -61,6 +63,8 @@ def test_event_has_free_capacity(faker):  # noqa: PLR0915
     event_reservation2.lines.set(event_reservation2_reservation_lines)
     event_reservation2.requester_confirm()
     event_reservation2.organization_confirm()
+    event.refresh_from_db()
+
     assert event.free_spots == 60
     assert event.free_percentage == 60
     assert event.reserved_percentage == 40
@@ -76,6 +80,7 @@ def test_event_has_free_capacity(faker):  # noqa: PLR0915
     event_reservation3.lines.set(event_reservation3_reservation_lines)
     event_reservation3.requester_confirm()
     event_reservation3.organization_confirm()
+    event.refresh_from_db()
     assert event.free_spots == 0
     assert event.free_percentage == 0
     assert event.reserved_percentage == 100
@@ -91,6 +96,7 @@ def test_event_has_free_capacity(faker):  # noqa: PLR0915
     event_reservation4.lines.set(event_reservation4_reservation_lines)
     event_reservation4.requester_confirm()
     event_reservation4.organization_confirm()
+    event.refresh_from_db()
     assert event.free_spots == 0
     assert event.free_percentage == 0
     assert event.reserved_percentage == 100

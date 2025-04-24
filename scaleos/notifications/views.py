@@ -3,6 +3,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
+
+# views/language.py
 from templated_email import get_templated_mail
 
 from scaleos.notifications import models as notification_models
@@ -61,3 +63,14 @@ def notificationsettings(request):
     notification_settings = request.user.notification_settings
     context["notification_settings"] = notification_settings
     return render(request, notification_settings.page_template, context)
+
+
+def unsubscribe(request, notification_public_key=None):
+    context = {}
+    notification = get_object_or_404(
+        notification_models.Notification,
+        public_key=notification_public_key,
+    )
+    context["notification"] = notification
+    request.session["active_organization_id"] = notification.sending_organization.pk
+    return render(request, "notifications/notification/unsubscribe.html", context)

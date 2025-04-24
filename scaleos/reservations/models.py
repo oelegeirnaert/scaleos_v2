@@ -7,6 +7,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
+from django.utils import translation
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from moneyed import EUR
@@ -79,6 +80,19 @@ class Reservation(
         null=True,
         blank=True,
         help_text=_("the moment the reservation has been made"),
+    )
+    expired_on = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("the moment the reservation is no longer valid"),
+    )
+    confirmed_on = models.DateTimeField(
+        verbose_name=_(
+            "confirmed on",
+        ),
+        null=True,
+        blank=True,
+        help_text=_("the moment the reservation has been confirmed from both parties"),
     )
     on_waitinglist_since = models.DateTimeField(
         verbose_name=_(
@@ -190,6 +204,8 @@ class Reservation(
                     email_confirmation_link = request.build_absolute_uri(
                         reverse("account_confirm_email", args=[email_confirmation.key]),
                     )
+                email_confirmation.sent = ITS_NOW
+                email_confirmation.save()
 
                 WaitingUserEmailConfirmation.objects.create(
                     reservation_id=self.pk,
@@ -203,10 +219,36 @@ class Reservation(
             logger.debug("We have customer %s", customer.pk)
 
         self.user_id = user.pk
+        if request:
+            language = translation.get_language()
+            if language:
+                user.website_language = language
+                user.save(update_fields=["website_language"])
         self.save(update_fields=["user_id"])
+
+    def update_confirmation_moment(self):
+        confrimation_state = self.get_confirmation_state()
+        if confrimation_state:
+            logger.debug("Updating the reservation confirmation moment")
+            self.confirmed_on = ITS_NOW
+            if isinstance(self, EventReservation):
+                self.event.add_reserved_spots(self.total_amount)
+        else:
+            logger.debug("Removing the confirmation moment")
+            self.confirmed_on = None
+        self.save(update_fields=["confirmed_on"])
 
     def organization_auto_confirm(self):
         logger.debug("Trying to auto confirm the reserveration for the organization")
+
+        send_notification = True
+        if not self.user.is_email_verified:
+            logger.info(
+                "do not sent a notification yet, \
+                      because the email is not yet confirmed",
+            )
+            return False
+
         if isinstance(self, EventReservation):
             logger.debug("This is an event reservation")
             if not hasattr(self, "event") or self.event is None:
@@ -223,15 +265,16 @@ class Reservation(
 
             event = self.event
             if event.has_capacity_for(self):
-                self.organization_confirm()
+                self.organization_confirm(send_notification=send_notification)
                 return True
+
             logger.warning("The event is full, so if cannot be confirmed automatically")
             self.on_waitinglist_since = ITS_NOW
             self.save(update_fields=["on_waitinglist_since"])
             logger.debug("Create an update")
             OrganizationTemporarilyRejected.objects.create(
                 reservation_id=self.pk,
-                send_notification=True,
+                send_notification=send_notification,
                 reason=OrganizationTemporarilyRejected.RejectReason.EVENT_FULL,
             )
             return False
@@ -271,7 +314,7 @@ class Reservation(
             self.pk,
         )
         self.update_payment_request()
-
+        self.update_confirmation_moment()
         return True
 
     @property
@@ -334,6 +377,7 @@ class Reservation(
             "The reservation %s has now been confirmed by the requester",
             self.pk,
         )
+        self.update_confirmation_moment()
         return True
 
     @property
@@ -435,15 +479,21 @@ class Reservation(
             return _("canceled")
         return _("pending")
 
-    @property
-    def is_confirmed(self):
+    def get_confirmation_state(self):
+        logger.debug("getting the confirmation state for the reservation")
         org_status = self.latest_organization_update
         req_status = self.latest_requester_update
 
         if org_status and req_status:
             if org_status.is_confirmed and req_status.is_confirmed:
+                logger.debug("The reservation is confirmed from both parties")
                 return True
+        logger.debug("The reservation is not confirmed")
         return False
+
+    @property
+    def is_confirmed(self):
+        return self.confirmed_on is not None
 
 
 class EventReservation(Reservation):
@@ -831,21 +881,21 @@ class ReservationLine(AdminLinkMixin, PublicKeyField):
         ordering = ["pk"]
 
     @property
-    def total_price(self) -> Price:  # noqa: PLR0911
+    def total_price(self) -> Price | None:  # noqa: PLR0911
         if self.amount == 0:
             logger.info("The amount of persons is 0, thus returning an empty price")
-            return Price(vat_included=Money(0, EUR))
+            return None
 
         if self.price_matrix_item is None:
-            return Price(vat_included=Money(0, EUR))
+            return None
 
         a_price = self.price_matrix_item.current_price
         if a_price is None:
-            return Price(vat_included=Money(0, EUR))
+            return None
 
         if a_price.vat_included.amount == 0:
             logger.info("The price is 0, thus returning an empty price")
-            return Price(vat_included=Money(0, EUR))
+            return None
 
         if self.amount == 1:
             return a_price

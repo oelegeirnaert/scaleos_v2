@@ -17,9 +17,9 @@ def store_success_in_db(sender=None, result=None, **kwargs):
     kwargs_ = kwargs.get("kwargs", {})
     logger.debug("Storing SUCCESS result for task %s", task_id)
 
-    if not task_id:
+    if task_id is None:
         logger.warning("Task ID is missing. Could not store success.")
-        return  # You can choose to raise an error or return silently
+        return False  # You can choose to raise an error or return silently
 
     TaskResult.objects.update_or_create(
         task_id=task_id,
@@ -32,6 +32,7 @@ def store_success_in_db(sender=None, result=None, **kwargs):
             "meta": json.dumps({"args": args, "kwargs": kwargs_}),
         },
     )
+    return True
 
 
 @task_failure.connect
@@ -41,9 +42,9 @@ def store_failure_in_db(sender=None, exception=None, traceback=None, **kwargs):
     args = kwargs.get("args", [])
     kwargs_ = kwargs.get("kwargs", {})
 
-    if not task_id:
+    if task_id is None:
         logger.warning("Task ID is missing. Could not store failure.")
-        return  # You can choose to raise an error or return silently
+        return False  # You can choose to raise an error or return silently
 
     logger.warning("Storing FAILURE result for task %s: %s", task_id, exception)
 
@@ -58,3 +59,4 @@ def store_failure_in_db(sender=None, exception=None, traceback=None, **kwargs):
             "meta": json.dumps({"args": args, "kwargs": kwargs_}),
         },
     )
+    return True

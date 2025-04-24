@@ -305,16 +305,6 @@
                     <li>
                       <a href="#" class="text-gray-700 transition hover:opacity-75">Live Chat</a>
                     </li>
-                    <li>
-                      <form class="text-gray-700 transition hover:opacity-75"
-                            action="{% url 'hijack:acquire' %}"
-                            method="post">
-                        {% csrf_token %}
-                        <input type="hidden" name="user_pk" value="124" />
-                        <button type="submit">Login as Tamara</button>
-                        <input type="hidden" name="next" value="{{ request.path }}" />
-                      </form>
-                    </li>
                   </ul>
                 </div>
                 <div>
@@ -336,7 +326,7 @@
                 </div>
               </div>
             </div>
-            <p class="text-xs text-gray-500">2022. Company Name. All rights reserved.</p>
+            <p class="text-xs text-gray-500">2022. {{ software_owner }}. All rights reserved.</p>
           </div>
         </footer>
       {% endblock footer %}

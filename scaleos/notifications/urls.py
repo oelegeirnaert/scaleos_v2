@@ -19,4 +19,9 @@ urlpatterns = [
         view=notification_views.notification,
         name="notification",
     ),
+    path(
+        "unsubscribe/<str:notification_public_key>",
+        notification_views.unsubscribe,
+        name="unsubscribe",
+    ),
 ]

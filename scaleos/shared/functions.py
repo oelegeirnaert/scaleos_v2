@@ -214,3 +214,12 @@ def get_base_url_from_string(full_url: str) -> str:
         netloc = f"{hostname}:{port}"
 
     return f"{scheme}://{netloc}"
+
+
+def get_client_ip(request):
+    x_forwarded_for = request.headers.get("x-forwarded-for")
+    return (
+        x_forwarded_for.split(",")[0]
+        if x_forwarded_for
+        else request.META.get("REMOTE_ADDR")
+    )

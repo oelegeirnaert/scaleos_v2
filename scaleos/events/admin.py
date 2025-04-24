@@ -14,6 +14,28 @@ from scaleos.shared.admin import LogInfoAdminMixin
 # Register your models here.
 
 
+class EventUpdateInlineAdmin(StackedPolymorphicInline):
+    """
+    An inline for a polymorphic model.
+    The actual form appearance of each row is determined by
+    the child inline that corresponds with the actual model type.
+    """
+
+    class EventUpdateInlineAdmin(StackedPolymorphicInline.Child):
+        model = event_models.EventUpdate
+        show_change_link = True
+
+    class EventMessageInlineAdmin(StackedPolymorphicInline.Child):
+        model = event_models.EventMessage
+        show_change_link = True
+
+    model = event_models.EventUpdate
+    child_inlines = (
+        EventUpdateInlineAdmin,
+        EventMessageInlineAdmin,
+    )
+
+
 class ConceptPriceMatrixInlineAdmin(admin.TabularInline):
     model = event_models.ConceptPriceMatrix
     extra = 0
@@ -232,12 +254,12 @@ class EventAdmin(PolymorphicParentModelAdmin):
 
 
 @admin.register(event_models.SingleEvent)
-class SingleEventAdmin(PolymorphicChildModelAdmin):
+class SingleEventAdmin(PolymorphicInlineSupportMixin, PolymorphicChildModelAdmin):
     base_model = event_models.Event  # Explicitly set here!
     # define custom features here
     readonly_fields = ["free_spots", "free_percentage", "slug", "warnings"]
     list_display = ["__str__", "duplicator", "slug"]
-    inlines = [EventAttendeeInlineAdmin, *EventAdmin.inlines]
+    inlines = [EventAttendeeInlineAdmin, EventUpdateInlineAdmin, *EventAdmin.inlines]
 
 
 @admin.register(event_models.ConceptPriceMatrix)
@@ -330,3 +352,19 @@ class LunchEventAdmin(PolymorphicChildModelAdmin):
     # define custom features here
     readonly_fields = ["free_spots", "free_percentage", "slug", "warnings"]
     inlines = [EventAttendeeInlineAdmin]
+
+
+@admin.register(event_models.EventUpdate)
+class EventUpdateAdmin(PolymorphicParentModelAdmin):
+    base_model = event_models.EventUpdate
+    child_models = [
+        event_models.EventUpdate,  # Delete once a submodel has been added.
+        event_models.EventMessage,
+    ]
+    list_filter = [PolymorphicChildModelFilter]
+
+
+@admin.register(event_models.EventMessage)
+class EventMessageAdmin(PolymorphicChildModelAdmin):
+    base_model = event_models.EventUpdate  # Explicitly set here!
+    # define custom features here

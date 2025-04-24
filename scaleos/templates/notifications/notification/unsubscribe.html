@@ -1,0 +1,24 @@
+{% extends 'page.html' %}
+
+{% load i18n %}
+
+{% block content %}
+  {{ notification }}
+  {{ notification.about_content_type }}
+  {% if notification.to_user.notification_settings.disabled_email_notifications_on %}
+    {{ notification.to_user.notification_settings.disabled_email_notifications_on }}
+  {% else %}
+    <button hx-get="{% url 'notifications_htmx:disable' notification.to_user.notification_settings.public_key %}?popup"
+            hx-target=".modal.content"
+            hx-swap-oob="true"
+            class="group mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-{{ TAILWIND_THEME_COLORS.primary }} px-5 py-3 text-white transition focus:ring-3 focus:ring-yellow-400 focus:outline-hidden sm:mt-0 sm:w-auto">
+      <svg xmlns="http://www.w3.org/2000/svg"
+           viewBox="0 0 20 20"
+           fill="currentColor"
+           class="size-5">
+        <path d="M10 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM16.25 5.75a.75.75 0 0 0-1.5 0v2h-2a.75.75 0 0 0 0 1.5h2v2a.75.75 0 0 0 1.5 0v-2h2a.75.75 0 0 0 0-1.5h-2v-2Z" />
+      </svg>
+      <span class="text-sm font-semibold">{% trans 'disable mail notification'|upper %}</span>
+    </button>
+  {% endif %}
+{% endblock content %}

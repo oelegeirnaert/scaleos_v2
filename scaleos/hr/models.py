@@ -88,6 +88,7 @@ class Person(
 class PersonAddress(AdminLinkMixin):
     person = models.ForeignKey(
         Person,
+        verbose_name=_("person"),
         related_name="addresses",
         on_delete=models.CASCADE,
         null=True,
@@ -95,6 +96,7 @@ class PersonAddress(AdminLinkMixin):
     )
     address = models.OneToOneField(
         "geography.Address",
+        verbose_name=_("address"),
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -110,7 +112,7 @@ class PersonLanguage(AdminLinkMixin, LogInfoFields):
         blank=False,
     )
     language = models.CharField(
-        verbose_name=_("Language"),
+        verbose_name=_("language"),
         max_length=50,
         choices=settings.LANGUAGES,
         default="",

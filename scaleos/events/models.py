@@ -236,6 +236,7 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
         null=True,
         blank=True,
     )
+
     minimum_number_of_guests = models.IntegerField(
         verbose_name=_(
             "minimum number of guests",
@@ -249,6 +250,12 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
         ),
         null=True,
         blank=True,
+    )
+    reserved_spots = models.IntegerField(
+        verbose_name=_(
+            "reserved spots",
+        ),
+        default=0,
     )
     reservation_settings = models.ForeignKey(
         "reservations.EventReservationSettings",
@@ -324,8 +331,7 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
         logger.debug("returning maximum number of guests")
         return self.maximum_number_of_guests  # pragma: no cover
 
-    @property
-    def reserved_spots(self):
+    def get_reserved_spots(self):
         logger.debug("calculating the reserved spots")
         number_of_reserved_spots = sum(
             r.total_amount for r in self.reservations.all() if r.is_confirmed
@@ -446,6 +452,10 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
             logger.debug("Final capacity result: %s", result)
             return result
         return False
+
+    def add_reserved_spots(self, the_amount):
+        self.reserved_spots += the_amount
+        self.save(update_fields=["reserved_spots"])
 
 
 class SingleEvent(Event):
@@ -1015,3 +1025,47 @@ class AttendeeRole(AdminLinkMixin):
     class Meta:
         verbose_name = _("attendee role")
         verbose_name_plural = _("attendee roles")
+
+
+class EventUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
+    class InformType(models.TextChoices):
+        NOBODY = "NOBODY", _("nobody")
+        ALL_GUESTS = "ALL_GUESTS", _("all guests")
+        ALL_RESERVATION_REQUESTERS = (
+            "ALL_RESERVATION_REQUESTERS",
+            _("all reservation requesters"),
+        )
+
+    combined_choices = InformType.choices + AttendeeRole.RoleType.choices
+
+    event = models.ForeignKey(
+        Event,
+        related_name="updates",
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    inform = models.CharField(
+        verbose_name=_(
+            "inform",
+        ),
+        max_length=50,
+        choices=combined_choices,
+        default=InformType.NOBODY,
+        help_text=_("who do we need to inform"),
+    )
+
+
+class EventMessage(EventUpdate):
+    message = models.TextField(verbose_name=_("message"), default="", blank=False)
+    visible_from = models.DateTimeField(
+        verbose_name=_(
+            "visible from",
+        ),
+        null=True,
+    )
+    visible_till = models.DateTimeField(
+        verbose_name=_(
+            "visible till",
+        ),
+        null=True,
+    )

@@ -36,6 +36,7 @@ class Organization(
         related_name="organization",
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
     )
     internal_url = models.URLField(
         null=True,

@@ -1,7 +1,7 @@
 {
     "editor.codeActionsOnSave": {
-      "source.fixAll": true,
-      "source.fixAll.ruff": true
+      "source.fixAll": "explicit",
+      "source.fixAll.ruff": "explicit"
     },
     "python.formatting.provider": "ruff",
     "ruff.lintOnSave": true,

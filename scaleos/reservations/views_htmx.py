@@ -10,7 +10,9 @@ from django.views.decorators.cache import never_cache
 from scaleos.events import models as event_models
 from scaleos.organizations.context_processors import organization_context
 from scaleos.reservations import models as reservation_models
+from scaleos.reservations.functions import get_organization_from_reservation
 from scaleos.shared import views_htmx as shared_htmx
+from scaleos.shared.decorators import limit_unauthenticated_submissions
 from scaleos.shared.functions import valid_email_address
 from scaleos.shared.mixins import ITS_NOW
 from scaleos.shared.views_htmx import htmx_response
@@ -118,6 +120,7 @@ def event_reservation(request, event_public_key):
 
 
 def update_reservation_line(request, reservationline_public_key):
+    logger.setLevel(logging.DEBUG)
     logger.debug(list(request.POST.items()))
     shared_htmx.do_htmx_post_checks(request)
     logger.debug("ready with htmx checks")
@@ -156,7 +159,7 @@ def update_reservation_line(request, reservationline_public_key):
         logger.info("The amount is lower than ZERO, force setting it to 0")
         the_amount = 0
     reservationline.amount = the_amount
-    reservationline.save()
+    reservationline.save(update_fields=["amount"])
 
     template_used = reservationline.detail_template
     logger.debug("Template used: %s", template_used)
@@ -230,6 +233,11 @@ def event_reservation_total_price(request, eventreservation_public_key):
     return return_it(msg)
 
 
+@limit_unauthenticated_submissions(
+    form_id="public_reservation_finish",
+    limit=5,
+    timeout=3600,
+)
 def finish_reservation(request, reservation_public_key):
     shared_htmx.do_htmx_post_checks(request)
 
@@ -245,6 +253,9 @@ def finish_reservation(request, reservation_public_key):
         return HttpResponse(msg)
 
     active_organization_id = request.session.get("active_organization_id", None)
+    if active_organization_id is None:
+        active_organization_id = get_organization_from_reservation(reservation)
+
     if active_organization_id is None:
         msg = _("we don't know to which organization this reservation belongs")
         reservation_models.InvalidReservation.objects.create(

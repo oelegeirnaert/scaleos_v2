@@ -9,7 +9,6 @@ from scaleos.events.tests import model_factories as event_factories
 from scaleos.payments.tests import model_factories as payment_factories
 from scaleos.reservations import models as reservation_models
 from scaleos.reservations.tests import model_factories as reservation_factories
-from scaleos.users.tests import model_factories as user_factories
 
 
 @pytest.mark.django_db
@@ -91,14 +90,14 @@ def test_htmx_finish_reservation_reservation_is_not_successfull_because_not_auto
 
 
 @pytest.mark.django_db
-def test_htmx_finish_reservation_reservation_is_successfull_as_authenticated(client):
+def test_htmx_finish_reservation_reservation_is_successfull_as_authenticated(
+    client,
+    verified_user,
+):
     a_uuid = "c221ac76-3829-4e3d-975a-3504e3332ccc"
-    to_email = "my_email@hotmail.com"
-    a_password = "slen)3ij2"  # noqa: S105
-    user = user_factories.UserFactory(email=to_email, password=a_password)
 
     reservation = reservation_factories.EventReservationFactory(
-        user_id=user.pk,
+        user_id=verified_user.pk,
         public_key=a_uuid,
     )
     reservation_factories.ReservationLineFactory(
@@ -116,8 +115,8 @@ def test_htmx_finish_reservation_reservation_is_successfull_as_authenticated(cli
         "reservations_htmx:finish_reservation",
         kwargs={"reservation_public_key": a_uuid},
     )
-    data = urlencode({"confirmation_email_address": to_email})
-    client.login(username=to_email, password=a_password)
+    data = urlencode({"confirmation_email_address": verified_user.email})
+    client.force_login(verified_user)
     response = client.post(
         url,
         data,
@@ -125,6 +124,7 @@ def test_htmx_finish_reservation_reservation_is_successfull_as_authenticated(cli
         **headers,
     )
     assert response.status_code == 200
+    reservation.refresh_from_db()
     assert reservation.is_confirmed
 
 

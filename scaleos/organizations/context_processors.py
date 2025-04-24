@@ -1,5 +1,6 @@
 import logging
 
+from scaleos.organizations.functions import get_software_owner
 from scaleos.organizations.models import Organization
 
 logger = logging.getLogger(__name__)
@@ -26,3 +27,9 @@ def organization_context(request):
 
     logger.debug("returning none")
     return {}
+
+
+def software_owner(request):
+    return {
+        "software_owner": get_software_owner(),
+    }
