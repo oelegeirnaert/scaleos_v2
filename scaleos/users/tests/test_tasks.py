@@ -22,7 +22,7 @@ def test_user_count(settings):
     assert task_result.result == batch_size
 
 
-def test_create_confirmation_notification(settings, client):
+def test_create_confirmation_notification(settings, client, clear_redis_cache):
     assert len(mail.outbox) == 0
 
     factory = RequestFactory()

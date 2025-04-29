@@ -17,7 +17,7 @@ def notification(request, notification_public_key=None):
     context = {}
     if notification_public_key is None and request.user.is_authenticated:
         notifications = notification_models.Notification.objects.filter(
-            user_id=request.user.id,
+            public_key=notification_public_key,
         )
         context["details"] = notifications
         return render(request, "detail_list.html", context)

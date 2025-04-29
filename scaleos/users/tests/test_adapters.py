@@ -1,25 +1,21 @@
 import re
-from unittest.mock import patch
 
 import pytest
 from allauth.account.models import EmailAddress
 from allauth.account.models import EmailConfirmation
-from django.contrib.auth import get_user_model
 from django.core import mail
 from django.urls import reverse
 
-from scaleos.notifications.models import MailNotification
 from scaleos.notifications.models import UserNotification
 from scaleos.notifications.models import WebPushNotification
 from scaleos.users.adapters import AccountAdapter  # adjust path if needed
-
-User = get_user_model()
+from scaleos.users.tests import model_factories as user_factories
 
 
 @pytest.mark.django_db
-@patch("scaleos.notifications.models.MailNotification.send")
-def test_send_email_confirmation_creates_notifications(mock_send, rf):
-    user = User.objects.create(email="john@example.com")
+def test_send_email_confirmation_creates_notifications(rf, clear_redis_cache):
+    assert len(mail.outbox) == 0
+    user = user_factories.UserFactory.create(email="john@example.com")
     email_address = EmailAddress.objects.create(
         user=user,
         email=user.email,
@@ -34,7 +30,6 @@ def test_send_email_confirmation_creates_notifications(mock_send, rf):
     adapter.send_email_confirmation(request, email_confirmation, signup=True)
 
     user_notification = UserNotification.objects.get(to_user=user)
-    mail_notification = MailNotification.objects.get(notification=user_notification)
     push_notification = WebPushNotification.objects.filter(
         notification=user_notification,
     ).exists()
@@ -43,10 +38,13 @@ def test_send_email_confirmation_creates_notifications(mock_send, rf):
         "when we need to confirm an email adress, we may not do it via a push"
     )
 
-    mail_notification.refresh_from_db()
-    assert mail_notification.to_email_addresses == [user.email]
-    assert mail_notification.to_email_addresses.split(",") == [user.email]
-    assert len(mail_notification.to_email_addresses.split(",")) == 1, (
+    user_notification.mail_notification.refresh_from_db()
+
+    assert user_notification.mail_notification.to_email_addresses == user.email
+
+    assert (
+        len(user_notification.mail_notification.to_email_addresses.split(",")) == 1
+    ), (
         "only one email address should be in the list, \
               otherwise another email can confirm the link"
     )
@@ -54,18 +52,16 @@ def test_send_email_confirmation_creates_notifications(mock_send, rf):
         "it may not be send via webpush, \
             otherwise we cannot check if it is a valid email"
     )
-    assert mail_notification.notification == user_notification
-    assert mock_send.called, "MailNotification.send() should have been called"
+    assert len(mail.outbox) == 1
 
 
 @pytest.mark.django_db
-def test_full_password_reset_flow(client):
-    User = get_user_model()  # noqa: N806
+def test_full_password_reset_flow(client, clear_redis_cache):
     email = "testuser@example.com"
     old_password = "oldpassword123"  # noqa: S105
     new_password = "newsecurepassword456"  # noqa: S105
 
-    User.objects.create_user(email=email, password=old_password)
+    user_factories.UserFactory.create(email=email, password=old_password)
 
     # Step 1: Request password reset
     reset_url = reverse("account_reset_password")

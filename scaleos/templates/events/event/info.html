@@ -5,7 +5,7 @@
     {% if show_info %}
       <div>
         <h1 class="text-4xl text-gray-300 sm:text-5xl lg:text-6xl">{{ event.name }}</h1>
-        <div class="p-5">{{ event.card_description }}</div>
+        <div class="p-5">{{ event.card_description|linebreaksbr|safe }}</div>
       </div>
       <button class="inline-flex mt-2 rounded-sm border border-gray-600 bg-gray-600 px-12 py-3 text-sm font-medium text-white hover:bg-transparent hover:text-gray-600 focus:ring-3 focus:outline-hidden"
               hx-get="{% url 'events_htmx:event_info' event.public_key %}?hide"

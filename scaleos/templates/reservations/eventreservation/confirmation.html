@@ -26,7 +26,8 @@
              name="customer_telephone"
              value="{{ request.user.primary_telephone_number|default_if_none:'' }}"
              placeholder="+32479121212"
-             class="mt-1 p-2 bg-neutral-50/50 w-full rounded-md border-gray-200 shadow-xs" />
+             class="mt-1 p-2 bg-neutral-50/50 w-full rounded-md border-gray-200 shadow-xs"
+             {% if event_reservation.applicable_reservation_settings.telephone_nuber_required %}required{% endif %} />
     </div>
     <div>
       <label for="customer_comment"

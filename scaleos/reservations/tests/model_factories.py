@@ -70,6 +70,29 @@ class OrganizationConfirmFactory(
         model = reservation_models.OrganizationConfirm
 
 
+class GuestInviteFactory(
+    ReservationUpdateFactory,
+    DjangoModelFactory[reservation_models.GuestInvite],
+):
+    class Meta:
+        model = reservation_models.GuestInvite
+
+
+class OrganizationTemporarilyRejectedFactory(
+    ReservationUpdateFactory,
+    DjangoModelFactory[reservation_models.OrganizationTemporarilyRejected],
+):
+    class Meta:
+        model = reservation_models.OrganizationTemporarilyRejected
+
+
+class ReservationSettingsFactory(
+    DjangoModelFactory[reservation_models.ReservationSettings],
+):
+    class Meta:
+        model = reservation_models.ReservationSettings
+
+
 class OrganizationCancelFactory(
     ReservationUpdateFactory,
     DjangoModelFactory[reservation_models.OrganizationCancel],

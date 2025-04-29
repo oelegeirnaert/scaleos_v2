@@ -13,6 +13,8 @@ from rest_framework.authtoken.views import obtain_auth_token
 from scaleos.users.views import custom_set_password
 from django.conf.urls.i18n import i18n_patterns
 from scaleos.users.views import custom_set_language
+from django.utils.translation import gettext_lazy as _
+
 
 urlpatterns = [
     path("i18n/setlang/", custom_set_language, name="set_language"),
@@ -43,7 +45,7 @@ urlpatterns = [
         include("qr_code.urls", namespace="qr_code"),
     ),
     path(
-        "notification/",
+        "notification",
         include("scaleos.notifications.urls", namespace="notifications"),
     ),
     path(

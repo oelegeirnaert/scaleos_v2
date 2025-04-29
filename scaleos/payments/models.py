@@ -1,4 +1,3 @@
-import decimal
 import logging
 
 from admin_ordering.models import OrderableModel
@@ -8,6 +7,8 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Sum
+from django.db.models import Value
+from django.db.models.functions import Coalesce
 from django.forms import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -18,6 +19,7 @@ from moneyed import EUR
 from moneyed import Money
 from polymorphic.models import PolymorphicModel
 
+from scaleos.payments.functions import ReferenceGenerator
 from scaleos.shared.fields import LogInfoFields
 from scaleos.shared.fields import NameField
 from scaleos.shared.fields import OriginFields
@@ -530,6 +532,18 @@ class PaymentRequest(AdminLinkMixin, LogInfoFields, OriginFields, PublicKeyField
         null=True,
         blank=True,
     )
+    structured_reference_be = models.CharField(
+        max_length=20,
+        blank=True,
+        editable=False,
+    )
+    structured_reference_sepa = models.CharField(
+        max_length=25,  # "RF" + 2 digits + up to 21 characters
+        null=True,
+        unique=True,  # Important: references should be unique
+        blank=True,  # Allow blank at first (can generate later)
+        editable=False,  # Optional: hide in Django admin forms
+    )
 
     @property
     def to_pay(self) -> Price | None:
@@ -540,35 +554,101 @@ class PaymentRequest(AdminLinkMixin, LogInfoFields, OriginFields, PublicKeyField
 
     @property
     def already_paid(self):
-        result = (
-            self.payments.all()
-            .aggregate(
-                already_paid=Sum("amount_received"),
-            )
-            .get("already_paid", 0.00)
+        if self.to_pay and self.to_pay.vat_included:
+            result = self.get_paid_payments([self.to_pay.vat_included.currency.code])
+            if result:
+                return result
+        return None
+
+    def get_paid_payments(self, expected_currencies=None):
+        grouped = self.payments.values(
+            "paid_amount_currency",
+        ).annotate(  # Group by currency
+            already_paid=Coalesce(
+                Sum("paid_amount"),
+                Value(0),
+                output_field=MoneyField(
+                    max_digits=14,
+                    decimal_places=2,
+                ),  # <<< ADD THIS
+            ),
         )
-        if result is None:
-            return 0.00
+
+        result = {
+            item["paid_amount_currency"]: Money(
+                item["already_paid"],
+                item["paid_amount_currency"],
+            )
+            for item in grouped
+        }
+
+        if expected_currencies:
+            for currency_code in expected_currencies:
+                if currency_code not in result:
+                    result[currency_code] = Money(0, currency_code)
+
         return result
 
     @property
     def still_to_pay(self):
-        try:
-            return decimal.Decimal(self.to_pay.input_price.amount) - decimal.Decimal(
-                self.already_paid,
-            )
-        except Exception:
-            logger.exception("We cannot get the remaining amount to pay.")
+        return self.get_remaining_to_pay()
 
-        return 0.0
+    def get_remaining_to_pay(self, expected_currencies=None):
+        if self.to_pay and self.to_pay.vat_included:
+            paid = self.get_paid_payments(expected_currencies=expected_currencies)
+
+            requested_currency = self.to_pay.vat_included.currency.code
+
+            paid_amount = paid.get(requested_currency, Money(0, requested_currency))
+
+            remaining_amount = self.to_pay.vat_included - paid_amount
+
+            return {requested_currency: remaining_amount}
+        return None
 
     @property
     def fully_paid(self):
-        return self.still_to_pay <= 0.0
+        if self.still_to_pay:
+            if self.to_pay and self.to_pay.vat_included:
+                to_pay = self.still_to_pay[
+                    self.to_pay.vat_included.currency.code
+                ].amount
+                return to_pay <= 0.0
+        return None
 
     @property
     def payment_methods(self):
         return self.to_organization.payment_methods.all()
+
+    def save(self, *args, **kwargs):
+        if not self.structured_reference_be:
+            # Use the invoice number as base number
+            self.structured_reference_be = (
+                ReferenceGenerator.generate_structured_reference(
+                    base_number=self.pk,
+                    decorated=True,
+                )
+            )
+        else:
+            # Optional: validate manually if needed
+            ReferenceGenerator.validate_structured_reference(
+                self.structured_reference_be,
+            )
+
+        if not self.structured_reference_sepa:
+            self.structured_reference_sepa = (
+                ReferenceGenerator.generate_iso11649_reference(base_number=self.pk)
+            )
+
+        super().save(*args, **kwargs)
+
+    def structured_reference_plain(self):
+        """Returns plain numeric version (without slashes and +++)."""
+
+        return ReferenceGenerator.to_plain(self.structured_reference_be)
+
+    def __str__(self):
+        return f"Payment Request #{self.pk}"
 
     def set_price_to_pay(self, price_to_pay: Price):
         logger.debug("setting price to pay")
@@ -654,13 +734,7 @@ class Payment(
         null=True,
     )
 
-    amount_to_request = MoneyField(
-        max_digits=15,
-        decimal_places=2,
-        default_currency="EUR",
-        null=True,
-    )
-    amount_paid = MoneyField(
+    paid_amount = MoneyField(
         max_digits=15,
         decimal_places=2,
         default_currency="EUR",
@@ -668,20 +742,10 @@ class Payment(
         blank=True,
     )
     paid_on = models.DateTimeField(null=True, blank=True)
-    amount_received = MoneyField(
-        max_digits=15,
-        decimal_places=2,
-        default_currency="EUR",
-        null=True,
-        blank=True,
-    )
-    received_on = models.DateTimeField(null=True, blank=True)
-    confirmed_on = models.DateTimeField(null=True, blank=True)
 
 
 class EPCMoneyTransferPayment(Payment):
     from_iban = IBANField(include_countries=IBAN_SEPA_COUNTRIES, null=True, blank=True)
-    to_iban = IBANField(include_countries=IBAN_SEPA_COUNTRIES, null=True, blank=False)
 
 
 class EventReservationPaymentSettings(PaymentSettings):
@@ -763,10 +827,49 @@ class EventReservationPaymentSettings(PaymentSettings):
             payment_proposal.save()
 
 
-class EventReservationPaymentCondition(AdminLinkMixin, LogInfoFields):
+class PaymentCondition(PolymorphicModel, AdminLinkMixin, LogInfoFields):
+    class ToBePaidInterval(models.TextChoices):
+        SECONDS = "seconds", _("seconds")
+        MINUTES = "minutes", _("minutes")
+        HOURS = "hours", _("hour")
+        DAYS = "days", _("days")
+        WEEKS = "weeks", _("weeks")
+        MONTHS = "months", _("months")
+        YEARS = "years", _("years")
+
+    to_be_paid_time_amount = models.IntegerField(
+        null=True,
+        default=5,
+    )
+
+    to_be_paid_interval = models.CharField(
+        max_length=50,
+        choices=ToBePaidInterval.choices,
+        default=ToBePaidInterval.DAYS,
+    )
+
+    price = GenericRelation(
+        Price,
+        content_type_field="unique_origin_content_type",
+        object_id_field="unique_origin_object_id",
+    )
+
+    is_warranty = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = _("payment condition")
+        verbose_name_plural = _("payment conditions")
+        ordering = ["-created_on"]
+
+
+class EventReservationPaymentCondition(PaymentCondition):
     class PrepaymentType(models.TextChoices):
         FULL_PRICE = "FULL_PRICE", _("full price")
         FIXED_PRICE = "FIXED_PRICE", _("fixed price")
+        FIXED_PRICE_PER_PERSON = (
+            "FIXED_PRICE_PER_PERSON",
+            _("fixed price per person"),
+        )
         PERCENTAGE_OF_TOTAL_PRICE = (
             "PERCENTAGE_OF_TOTAL_PRICE",
             _("percentage of total price"),
@@ -783,15 +886,10 @@ class EventReservationPaymentCondition(AdminLinkMixin, LogInfoFields):
         AFTER_END_OF_EVENT = "AFTER_END_OF_EVENT", _("after the event ended")
         AT_START_OF_EVENT = "AT_START_OF_EVENT", _("at the start of the event")
         AT_END_OF_EVENT = "AT_END_OF_EVENT", _("at the end of the event")
-
-    class ToBePaidInterval(models.TextChoices):
-        SECONDS = "seconds", _("seconds")
-        MINUTES = "minutes", _("minutes")
-        HOURS = "hours", _("hour")
-        DAYS = "days", _("days")
-        WEEKS = "weeks", _("weeks")
-        MONTHS = "months", _("months")
-        YEARS = "years", _("years")
+        AFTER_RESERVATION_CONFRIMATION = (
+            "AFTER_RESERVATION_CONFRIMATION",
+            _("after the reservation confirmation"),
+        )
 
     event_reservation_payment_settings = models.ForeignKey(
         EventReservationPaymentSettings,
@@ -802,17 +900,6 @@ class EventReservationPaymentCondition(AdminLinkMixin, LogInfoFields):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-    )
-
-    to_be_paid_time_amount = models.IntegerField(
-        null=True,
-        default=5,
-    )
-
-    to_be_paid_interval = models.CharField(
-        max_length=50,
-        choices=ToBePaidInterval.choices,
-        default=ToBePaidInterval.DAYS,
     )
 
     payment_moment = models.CharField(
@@ -826,11 +913,7 @@ class EventReservationPaymentCondition(AdminLinkMixin, LogInfoFields):
         choices=PrepaymentType.choices,
         default=PrepaymentType.FIXED_PRICE,
     )
-    price = GenericRelation(
-        Price,
-        content_type_field="unique_origin_content_type",
-        object_id_field="unique_origin_object_id",
-    )
+
     only_when_group_exceeds = models.IntegerField(
         null=True,
         blank=True,
@@ -844,7 +927,6 @@ class EventReservationPaymentCondition(AdminLinkMixin, LogInfoFields):
         max_digits=6,
         decimal_places=2,
     )
-    is_warranty = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = _("event reservation payment condition")
@@ -882,6 +964,8 @@ class EventReservationPaymentCondition(AdminLinkMixin, LogInfoFields):
                 starting_string = f"{_('remaining price')}"
             case self.PrepaymentType.FIXED_PRICE:
                 starting_string = f"{_('fixed price')}"
+            case self.PrepaymentType.FIXED_PRICE_PER_PERSON:
+                starting_string = f"{_('fixed price per person')}"
             case self.PrepaymentType.PERCENTAGE_OF_TOTAL_PRICE:
                 percentage = self.percentage_of_total_price
                 percentage_text = _("% of total price")
@@ -981,20 +1065,8 @@ class EventReservationPaymentCondition(AdminLinkMixin, LogInfoFields):
         if not hasattr(event_reservation, "event") or event_reservation.event is None:
             return None
 
-        condition_only_when_exceeding = self.only_when_group_exceeds
-        if condition_only_when_exceeding:
-            logger.info(
-                "The condition should only be applied when exceeding %s persons",
-                condition_only_when_exceeding,
-            )
-            group_is_x_persons = event_reservation.total_amount
-            logger.info("The group has %s persons", group_is_x_persons)
-            if group_is_x_persons is None or group_is_x_persons == 0:
-                logger.info("The total amount of the reservation is 0 or None")
-                return None
-
-            if group_is_x_persons < condition_only_when_exceeding:
-                return None
+        if self.condition_applicable(event_reservation) is False:
+            return None
 
         match self.prepayment_type:
             case self.PrepaymentType.FULL_PRICE:
@@ -1005,6 +1077,12 @@ class EventReservationPaymentCondition(AdminLinkMixin, LogInfoFields):
                 if self.current_price is None:
                     return None
                 return self.current_price
+            case self.prepayment_type.FIXED_PRICE_PER_PERSON:
+                logger.info("Fixed price per person condition")
+                the_price = self.price.first()
+                if the_price:
+                    return the_price.multiply(event_reservation.total_amount)
+
             case self.PrepaymentType.PERCENTAGE_OF_TOTAL_PRICE:
                 logger.info("Percentage of total price condition")
                 if self.percentage_of_total_price is None:
@@ -1013,10 +1091,63 @@ class EventReservationPaymentCondition(AdminLinkMixin, LogInfoFields):
                     self.percentage_of_total_price,
                 )
             case self.PrepaymentType.REMAINING_PRICE:
-                logger.info("Remaining price condition")
-                return event_reservation.get_total_price()
+                return self.get_remaining_price()
 
         return None
+
+    def condition_applicable(self, event_reservation):
+        condition_only_when_exceeding = self.only_when_group_exceeds
+        if condition_only_when_exceeding:
+            logger.info(
+                "The condition should only be applied when exceeding %s persons",
+                condition_only_when_exceeding,
+            )
+            group_is_x_persons = event_reservation.total_amount
+            logger.info("The group has %s persons", group_is_x_persons)
+            if group_is_x_persons is None or group_is_x_persons == 0:
+                logger.info("The total amount of the reservation is 0 or None")
+                return False
+
+            if group_is_x_persons < condition_only_when_exceeding:
+                return False
+        return True
+
+    def get_remaining_price(self, event_reservation):
+        logger.debug("Remaining price condition")
+        if event_reservation.payment_request is None:
+            logger.info(
+                "we cannot calculate the remaining price \
+                    when teh payment request is None",
+            )
+            return None
+
+        if event_reservation.payment_request.to_pay is None:
+            logger.info(
+                "we cannot calculate the remaining price \
+                        if we do not know how much to pay",
+            )
+            return None
+
+        if event_reservation.payment_request.already_paid is None:
+            logger.info("Nothing is paid yet, returning the total price")
+            return event_reservation.get_total_price()
+
+        if event_reservation.payment_request.to_pay.vat_included is None:
+            logger.info(
+                "We do not know how much the price with VAT included is",
+            )
+
+        to_pay = event_reservation.payment_request.to_pay.vat_included
+        needed_currency = (
+            event_reservation.payment_request.to_pay.vat_included.currency.code
+        )
+        already_paid = event_reservation.payment_request.already_paid[needed_currency]
+
+        if already_paid >= to_pay:
+            logger.info("There is already more paid than needed")
+            return Money(0, needed_currency)
+
+        return to_pay - already_paid
 
 
 class PaymentMethod(PolymorphicModel, AdminLinkMixin, LogInfoFields, PublicKeyField):

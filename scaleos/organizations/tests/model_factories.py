@@ -1,11 +1,17 @@
+from factory import SubFactory
 from factory.django import DjangoModelFactory
+from faker import Faker
 
 from scaleos.organizations import models as organization_models
+
+faker = Faker()
 
 
 class EnterpriseFactory(
     DjangoModelFactory[organization_models.Enterprise],
 ):
+    name = faker.company()
+
     class Meta:
         model = organization_models.Enterprise
 
@@ -13,6 +19,8 @@ class EnterpriseFactory(
 class OrganizationFactory(
     DjangoModelFactory[organization_models.Organization],
 ):
+    name = faker.company()
+
     class Meta:
         model = organization_models.Organization
 
@@ -20,6 +28,8 @@ class OrganizationFactory(
 class OrganizationMemberFactory(
     DjangoModelFactory[organization_models.OrganizationMember],
 ):
+    organization = SubFactory(OrganizationFactory)
+
     class Meta:
         model = organization_models.OrganizationMember
 

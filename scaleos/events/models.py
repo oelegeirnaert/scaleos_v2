@@ -58,6 +58,7 @@ class Concept(PolymorphicModel, NameField, AdminLinkMixin, CardModel, PublicKeyF
         null=True,
         blank=True,
     )
+
     event_reservation_payment_settings = models.ForeignKey(
         "payments.EventReservationPaymentSettings",
         verbose_name=_(
@@ -258,6 +259,7 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
         ),
         default=0,
     )
+
     reservation_settings = models.ForeignKey(
         "reservations.EventReservationSettings",
         verbose_name=_(
@@ -267,6 +269,7 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
         null=True,
         blank=True,
     )
+
     event_reservation_payment_settings = models.ForeignKey(
         "payments.EventReservationPaymentSettings",
         verbose_name=_(
@@ -374,9 +377,6 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
 
     @property
     def applicable_reservation_settings(self):
-        if self.allow_reservations is False:
-            return None
-
         if self.reservation_settings:
             return self.reservation_settings
 
@@ -386,21 +386,11 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
         return None
 
     @property
-    def applicable_payment_settings(self):
-        if self.payment_settings:
-            return self.payment_settings
-
-        if self.concept.payment_settings:
-            return self.concept.payment_settings
-
-        return None
-
-    @property
     def applicable_event_reservation_payment_settings(self):
         if self.event_reservation_payment_settings:
             return self.event_reservation_payment_settings
 
-        if self.concept.event_reservation_payment_settings:
+        if self.concept and self.concept.event_reservation_payment_settings:
             return self.concept.event_reservation_payment_settings
 
         return None
@@ -592,6 +582,19 @@ class SingleEvent(Event):
 
         logger.debug("Time based checking if the reservations are closed.")
         return self.reservations_closed_on < ITS_NOW
+
+    @property
+    def applicable_reservation_settings(self):
+        if self.allow_reservations is False:
+            return None
+
+        if self.reservation_settings:
+            return self.reservation_settings
+
+        if self.concept and self.concept.reservation_settings:
+            return self.concept.reservation_settings
+
+        return None
 
 
 class DanceEvent(SingleEvent):
@@ -1057,6 +1060,7 @@ class EventUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
 
 
 class EventMessage(EventUpdate):
+    title = models.CharField(verbose_name=_("title"), default="", blank=False)
     message = models.TextField(verbose_name=_("message"), default="", blank=False)
     visible_from = models.DateTimeField(
         verbose_name=_(

@@ -2,6 +2,7 @@
 import logging
 from typing import ClassVar
 
+import pytz
 from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -34,6 +35,11 @@ class User(AbstractUser, AdminLinkMixin):
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
     email = EmailField(_("email address"), unique=True)
+    timezone = CharField(
+        max_length=64,
+        choices=[(tz, tz) for tz in pytz.common_timezones],
+        default="Europe/Brussels",
+    )
     username = None  # type: ignore[assignment]
     website_language = CharField(
         verbose_name=_("website language"),
@@ -115,3 +121,17 @@ class User(AbstractUser, AdminLinkMixin):
     @cached_property
     def has_reservations(self):
         return self.reservations.count() > 0
+
+    def set_first_and_family_name(
+        self,
+        first_name,
+        family_name,
+        *,
+        overwrite_existing=False,
+    ):
+        if hasattr(self, "person"):
+            self.person.set_first_and_family_name(
+                first_name,
+                family_name,
+                overwrite_existing=overwrite_existing,
+            )

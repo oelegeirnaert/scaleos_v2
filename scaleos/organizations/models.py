@@ -160,7 +160,8 @@ class OrganizationMember(PolymorphicModel, AdminLinkMixin, LogInfoFields):
     )
     person = models.ForeignKey(
         "hr.Person",
-        related_name="members",
+        related_name="memberships",
+        verbose_name=_("person"),
         on_delete=models.CASCADE,
         null=True,
         blank=True,

@@ -196,6 +196,7 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
     "hijack.middleware.HijackUserMiddleware",
+    "scaleos.users.middleware.UserTimezoneMiddleware",
 ]
 
 # STATIC

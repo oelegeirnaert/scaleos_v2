@@ -67,12 +67,24 @@ class AdminLinkMixin(models.Model):
         return f"{self.app_label}/{self.model_name}/page.html"
 
     @cached_property
-    def page_button(self):
+    def page_url(self):
         try:
             url = reverse(
                 f"{self.app_label}:{self.model_name}",
                 args=[self.public_key],
             )
+            logger.debug("The page url is: %s", url)
+
+        except Exception as e:  # noqa: BLE001
+            logger.info(e)
+        else:
+            return url
+        return None
+
+    @cached_property
+    def page_button(self):
+        the_url = self.page_url
+        if the_url:
             return mark_safe(  # noqa: S308
                 f"""
                 <a class="mt-2 inline-block rounded-sm border
@@ -80,13 +92,12 @@ class AdminLinkMixin(models.Model):
                 text-sm font-medium text-white
                 hover:bg-transparent hover:text-gray-600
                 focus:ring-3 focus:outline-hidden"
-                href="{url}">
+                href="{self.page_url}">
                 open {self.verbose_name}
                 </a>
                 """,
             )
-        except Exception as e:  # noqa: BLE001
-            logger.info(e)
+        return None
 
     @cached_property
     def title_template(self):

@@ -60,13 +60,25 @@ class ReservationUpdateInlineAdmin(StackedPolymorphicInline):
         show_change_link = True
         readonly_fields = [*LogInfoAdminMixin.readonly_fields]
 
+    class GuestInviteInlineAdmin(StackedPolymorphicInline.Child):
+        model = reservation_models.GuestInvite
+        show_change_link = True
+        readonly_fields = [*LogInfoAdminMixin.readonly_fields]
+
+    class OrganizationTemporarilyRejectedInlineAdmin(StackedPolymorphicInline.Child):
+        model = reservation_models.OrganizationTemporarilyRejected
+        show_change_link = True
+        readonly_fields = [*LogInfoAdminMixin.readonly_fields]
+
     model = reservation_models.ReservationUpdate
     child_inlines = (
         OrganizationConfirmInlineAdmin,
         OrganizationCancelInlineAdmin,
         OrganizationRefuseInlineAdmin,
+        OrganizationTemporarilyRejectedInlineAdmin,
         RequesterConfirmInlineAdmin,
         RequesterCancelInlineAdmin,
+        GuestInviteInlineAdmin,
         WaitingUserEmailConfirmationInlineAdmin,
         InvalidReservationInlineAdmin,
     )
@@ -145,6 +157,7 @@ class ReservationUpdateAdmin(
         reservation_models.ReservationUpdate,
         reservation_models.OrganizationConfirm,
         reservation_models.OrganizationCancel,
+        reservation_models.OrganizationTemporarilyRejected,
         reservation_models.OrganizationRefuse,
         reservation_models.RequesterConfirm,
         reservation_models.RequesterCancel,
@@ -161,6 +174,21 @@ class OrganizationConfirmAdmin(PolymorphicChildModelAdmin, LogInfoAdminMixin):
 
 @admin.register(reservation_models.OrganizationCancel)
 class OrganizationCancelAdmin(PolymorphicChildModelAdmin, LogInfoAdminMixin):
+    base_model = reservation_models.ReservationUpdate  # Explicitly set here!
+    # define custom features here
+
+
+@admin.register(reservation_models.OrganizationTemporarilyRejected)
+class OrganizationTemporarilyRejectedAdmin(
+    PolymorphicChildModelAdmin,
+    LogInfoAdminMixin,
+):
+    base_model = reservation_models.ReservationUpdate  # Explicitly set here!
+    # define custom features here
+
+
+@admin.register(reservation_models.GuestInvite)
+class GuestInviteAdmin(PolymorphicChildModelAdmin, LogInfoAdminMixin):
     base_model = reservation_models.ReservationUpdate  # Explicitly set here!
     # define custom features here
 
@@ -209,6 +237,17 @@ class ReservationLineAdmin(admin.ModelAdmin):
     ]
 
 
+@admin.register(reservation_models.ReservationSettings)
+class ReservationSettingsAdmin(PolymorphicParentModelAdmin):
+    base_model = reservation_models.ReservationSettings
+    child_models = [
+        reservation_models.ReservationSettings,
+        reservation_models.EventReservationSettings,
+    ]
+    list_filter = [PolymorphicChildModelFilter]
+
+
 @admin.register(reservation_models.EventReservationSettings)
-class EventReservationSettingsAdmin(admin.ModelAdmin):
-    pass
+class EventReservationSettingsAdmin(PolymorphicChildModelAdmin):
+    base_model = reservation_models.ReservationSettings  # Explicitly set here!
+    # define custom features here

@@ -8,18 +8,19 @@ from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils import translation
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from moneyed import EUR
 from moneyed import Money
 from polymorphic.models import PolymorphicModel
 
 from scaleos.notifications import models as notification_models
+from scaleos.organizations import models as organization_models
 from scaleos.organizations.models import Organization
 from scaleos.payments.models import Price
 from scaleos.reservations.tasks import send_reservation_update_notification
 from scaleos.shared.fields import LogInfoFields
 from scaleos.shared.fields import PublicKeyField
+from scaleos.shared.functions import valid_email_address
 from scaleos.shared.mixins import ITS_NOW
 from scaleos.shared.mixins import AdminLinkMixin
 from scaleos.shared.models import CardModel
@@ -75,6 +76,22 @@ class Reservation(
         on_delete=models.CASCADE,
         null=True,
         blank=True,
+    )
+    start = models.DateTimeField(
+        verbose_name=_(
+            "start",
+        ),
+        null=True,
+        blank=True,
+        help_text=_("the moment the reservation starts"),
+    )
+    end = models.DateTimeField(
+        verbose_name=_(
+            "end",
+        ),
+        null=True,
+        blank=True,
+        help_text=_("the moment the reservation ends"),
     )
     finished_on = models.DateTimeField(
         null=True,
@@ -398,6 +415,13 @@ class Reservation(
                 return self.event.concept.event_reservation_payment_settings
         return None
 
+    @property
+    def applicable_reservation_settings(self):
+        if isinstance(self, EventReservation):
+            if self.event.applicable_reservation_settings:
+                return self.event.applicable_reservation_settings
+        return None
+
     def update_payment_request(self):
         from scaleos.payments.models import PaymentRequest
 
@@ -495,6 +519,41 @@ class Reservation(
     def is_confirmed(self):
         return self.confirmed_on is not None
 
+    def can_be_checked_in_by(self, user):
+        logger.debug("Checking if reservation can be checked in by user.")
+        if self.user_id == user.id:
+            logger.debug("yes, by the requester self")
+            return True, User
+
+        if not hasattr(user, "person") or user.person is None:
+            logger.debug("no because the user has no person")
+            return False, None
+
+        organization_id = self.organization_id
+        if organization_id is None:
+            logger.debug("no because the reservation has no organization")
+            return False, None
+
+        person_id_who_want_to_checkin = user.person_id
+        logger.info("person_id_who_want_to_checkin: %s", person_id_who_want_to_checkin)
+
+        if organization_models.OrganizationEmployee.objects.filter(
+            organization_id=organization_id,
+            person_id=person_id_who_want_to_checkin,
+        ).exists():
+            logger.debug("yes, by an employee")
+            return True, organization_models.OrganizationEmployee
+
+        if organization_models.OrganizationOwner.objects.filter(
+            organization_id=organization_id,
+            person_id=person_id_who_want_to_checkin,
+        ).exists():
+            logger.debug("yes, by the owner")
+            return True, organization_models.OrganizationOwner
+
+        logger.debug("no because there is no check for it")
+        return False, None
+
 
 class EventReservation(Reservation):
     event = models.ForeignKey(
@@ -551,6 +610,10 @@ class ReservationUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
 
     passed_action = _("updated")
 
+    @property
+    def notification_button_link(self):
+        return self.reservation.page_url
+
     def __str__(self):
         str_on = _("on")
         return f"{self.passed_action} {self.reservation} {str_on}: {self.created_on}"
@@ -604,6 +667,14 @@ class ReservationUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
                 about_content_object=self,
             )
             return True
+
+        if klass == GuestInvite:
+            logger.debug("Creating the guest notification object")
+            notification_models.UserNotification.objects.create(
+                sending_organization=self.reservation.organization,
+                to_user=self.to_user,
+                about_content_object=self,
+            )
         return False
 
 
@@ -710,6 +781,57 @@ class RequesterCancel(ReservationUpdate):
         return super().send_notification_logic(Organization)
 
 
+class GuestInvite(ReservationUpdate):
+    passed_action = _("guest invited")
+    notification_title_translation = _("you are invited")
+    notification_title = f"{notification_title_translation}. 👤".capitalize()
+    nmt = _("you are invited for a reservation")
+    nmt2 = _(
+        "open the reservation to get to know more about it",
+    )
+    notification_message = f"{nmt.capitalize()}.\n{nmt2.capitalize()}."
+
+    first_name = models.CharField(default="", blank=True)
+    family_name = models.CharField(default="", blank=True)
+    email_address = models.EmailField(default="", blank=True)
+
+    to_user = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    def send_notification_logic(self):
+        valid_email, invalid_reason = valid_email_address(self.email_address)
+        if not valid_email:
+            logger.info(
+                "the email is not valid (%s), so do not send the notification",
+                invalid_reason,
+            )
+            return False
+
+        to_user, created = User.objects.get_or_create(
+            email=self.email_address,
+        )
+        if created:
+            logger.info(
+                "We just created a new user with email %s via a guest invite",
+                self.email_address,
+            )
+            self.reservation.organization.add_b2c(to_user)
+
+        self.to_user_id = to_user.pk
+        self.save(update_fields=["to_user_id"])
+
+        to_user.set_first_and_family_name(
+            self.first_name,
+            self.family_name,
+            overwrite_existing=False,
+        )
+        return super().send_notification_logic(GuestInvite)
+
+
 class WaitingUserEmailConfirmation(ReservationUpdate):
     passed_action = _("waiting user email confirmation")
     notification_title_translation = _("please confirm your email address")
@@ -767,7 +889,24 @@ class InvalidReservation(ReservationUpdate):
         return super().send_notification_logic(Organization)
 
 
-class EventReservationSettings(AdminLinkMixin):
+class ReservationSettings(PolymorphicModel, AdminLinkMixin):
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+    )
+    telephone_number_required = models.BooleanField(
+        verbose_name=_("telephone number required"),
+        default=True,
+    )
+
+    class Meta:
+        verbose_name = _("reservation settings")
+        verbose_name_plural = _("reservation settings")
+
+
+class EventReservationSettings(ReservationSettings):
     class CloseReservationInterval(models.TextChoices):
         SECONDS = "seconds", _("seconds")
         MINUTES = "minutes", _("minutes")
@@ -779,16 +918,6 @@ class EventReservationSettings(AdminLinkMixin):
         AT_START = "at_start", _("at start")
         WHEN_ENDED = "on_end", _("when ended")
 
-    organization = models.ForeignKey(
-        "organizations.Organization",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=False,
-    )
-    telephone_number_required = models.BooleanField(
-        verbose_name=_("telephone number required"),
-        default=True,
-    )
     minimum_persons_per_reservation = models.IntegerField(
         verbose_name=_("minimum persons per reservation"),
         null=True,
@@ -831,30 +960,6 @@ class EventReservationSettings(AdminLinkMixin):
         blank=True,
         default=65,
     )
-
-    def __str__(self):
-        """
-        Display all properties of the model as key-value pairs.
-        """
-        properties = {}
-        for name in dir(self.__class__):
-            if not name.startswith("_"):
-                obj = getattr(self.__class__, name)
-
-                if isinstance(obj, property):
-                    try:
-                        value = getattr(self, name)
-                        properties[name] = value
-                    except Exception as e:  # noqa: BLE001
-                        properties[name] = f"Error getting value: {e}"
-
-        fields = {}
-        for field in self._meta.fields:
-            fields[field.name] = getattr(self, field.name)
-
-        return mark_safe(  # noqa: S308
-            f"{', '.join(f'{k}: {v!r}' for k, v in {**properties, **fields}.items())}",
-        )
 
     class Meta:
         verbose_name = _("event reservation settings")

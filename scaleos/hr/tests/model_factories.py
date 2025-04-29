@@ -9,7 +9,7 @@ from scaleos.hr import models as hr_models
 
 class PersonFactory(DjangoModelFactory[hr_models.Person]):
     primary_email_address = Faker("email")
-    name = Faker("first_name")
+    first_name = Faker("first_name")
     family_name = Faker("last_name")
     birthday = fuzzy.FuzzyDate(
         datetime.date(1960, 1, 1),

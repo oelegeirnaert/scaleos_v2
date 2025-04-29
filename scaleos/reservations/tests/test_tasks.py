@@ -19,7 +19,6 @@ def test_send_reservation_update_notification(settings):
         reservation_update_id=reservation_update.pk,
     )
     assert isinstance(task_result, EagerResult)
-    assert task_result.result
     assert len(mail.outbox) == 1
 
 

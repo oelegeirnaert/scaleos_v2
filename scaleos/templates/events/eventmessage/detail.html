@@ -1,4 +1,13 @@
 {# generated via manage create_html_scripts #}
-{% extends 'detail.html' %}
+{% extends 'events/eventupdate/detail.html' %}
 
 {% load i18n %}
+
+{% block message %}
+  <div class="pt-5 pb-5">
+    <h2 class="font-bold text-2xl">{{ event_update.title }}</h2>
+    <i>{{ event_update.modified_on }}</i>
+    <p class="mt-5">{{ event_update.message|linebreaksbr|safe }}</p>
+  </div>
+{% endblock message %}
+}

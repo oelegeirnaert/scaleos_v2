@@ -4,7 +4,7 @@
 {% block plain %}
 {% trans 'hi'|capfirst %} {{ notification.to_user.person.first_name|default:notification.to_user.email }},
 
-{{notification.message}}
+{{notification.message|linebreaksbr|safe}}
 
 
 {% trans 'copy and paste the following link into your favorite browser'|capfirst %}:
@@ -99,7 +99,7 @@
 
         <h2 style="margin-bottom: 30px;">{{notification.title}}</h2>
         <p style="margin-bottom: 20px;">{% trans 'hi'|capfirst %} {{ notification.to_user.person.first_name|default:notification.to_user.email }},</p>
-        <p>{{notification.message}}</p>
+        <p>{{notification.message|linebreaksbr|safe}}</p>
 
         <!-- Call-to-Action Button -->
         <p><a href="{{ notification.button_link }}" class="button">{{notification.button_text}}</a></p>

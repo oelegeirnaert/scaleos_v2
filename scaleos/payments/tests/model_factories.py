@@ -69,7 +69,13 @@ class PriceMatrixItemFactory(
         model = payment_models.PriceMatrixItem
 
 
+class PaymentConditionFactory(DjangoModelFactory[payment_models.PaymentCondition]):
+    class Meta:
+        model = payment_models.PaymentCondition
+
+
 class EventReservationPaymentConditionFactory(
+    PaymentConditionFactory,
     DjangoModelFactory[payment_models.EventReservationPaymentCondition],
 ):
     class Meta:

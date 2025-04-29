@@ -152,10 +152,11 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
 
     @property
     def unsubscribe_link(self):
-        return reverse(
+        the_path = reverse(
             "notifications:unsubscribe",
             kwargs={"notification_public_key": self.public_key},
         )
+        return f"{self.base_url}{the_path}"
 
     @property
     def send_in_amount_in_seconds(self):
@@ -222,6 +223,7 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
         self.set_title()
         self.set_message()
         self.set_button_text()
+        self.set_button_link()
 
         translation.deactivate()
 
@@ -355,6 +357,29 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
         translate_button_text = _("click here")
         self.button_text = translate_button_text
 
+    def set_button_link(self):
+        if not is_blank(self.button_link):
+            self.button_link = self.make_outgoing_link(self.button_link)
+            return
+
+        if hasattr(self, "notification"):
+            if hasattr(self.notification, "button_link"):
+                a_link = self.notification.button_link
+                if not a_link:
+                    self.button_link = self.make_outgoing_link(a_link)
+                    return
+
+        if hasattr(self, "about_content_object") and hasattr(
+            self.about_content_object,
+            "notification_button_link",
+        ):
+            a_link = self.about_content_object.notification_button_link
+            if not a_link:
+                self.button_link = self.make_outgoing_link(a_link)
+                return
+
+        self.button_link = self.base_url
+
     def set_sending_organization(self):
         logger.debug("Set sending organization")
         if self.sending_organization:
@@ -369,6 +394,11 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
 
         logger.debug("We cannot set a sending organization")
         self.sending_organization = None
+
+    def make_outgoing_link(self, link):
+        if "http" not in link:
+            return f"{self.base_url}{link}"
+        return link
 
 
 class UserNotification(Notification):
@@ -436,6 +466,10 @@ class UserNotification(Notification):
                 notification_settings.disabled_email_notifications_on,
             )
         elif not hasattr(self, "mail_notification"):
+            logger.debug(
+                "Trying to create a mail notification for user %s",
+                to_user_id,
+            )
             MailNotification.objects.create(
                 user_id=to_user_id,
                 notification_id=self.pk,
@@ -604,10 +638,13 @@ class MailNotification(LogInfoFields):
 
     def send(self):
         if is_blank(self.to_email_addresses):
+            logger.debug("To addresses is empty")
             if self.user and self.user.email:
+                logger.debug("Getting email from user")
                 self.to_email_addresses = self.user.email
 
             elif hasattr(self, "to_user"):
+                logger.debug("Getting email from TO-user")
                 self.to_email_addresses = self.to_user.email
 
             self.save(update_fields=["to_email_addresses"])

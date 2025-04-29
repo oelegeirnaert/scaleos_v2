@@ -2,7 +2,9 @@ import logging
 
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
+from django.views.decorators.cache import cache_page
 from django.views.decorators.cache import never_cache
+from django.views.decorators.vary import vary_on_headers
 
 from scaleos.events import models as event_models
 from scaleos.shared import views_htmx as shared_htmx
@@ -27,6 +29,8 @@ def concept(request, concept_public_key):
     return shared_htmx.htmx_response(request, return_string)
 
 
+@vary_on_headers("Accept-Language")
+@cache_page(60 * 15)
 def event_info(request, event_public_key):
     shared_htmx.do_htmx_get_checks(request)
     show_info = False
@@ -59,6 +63,8 @@ def event_info(request, event_public_key):
     return htmx_response(request, html_fragment)
 
 
+@vary_on_headers("Accept-Language")
+@cache_page(60 * 15)
 def event_updates(request, event_public_key):
     shared_htmx.do_htmx_get_checks(request)
     show_info = False

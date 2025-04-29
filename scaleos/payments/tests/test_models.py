@@ -644,30 +644,74 @@ class TestEventReservationPaymentCondition:
         )
         assert condition.get_price(event_reservation).vat_included == Money(10, EUR)
 
-    def test_get_price_remaining_price(self):
+    def test_get_price_fixed_price_per_person(self):
         matrix = payment_factories.AgePriceMatrixFactory(name="brunch prijzen 2024")
-        baby = payment_factories.AgePriceMatrixItemFactory(
-            from_age=0,
-            till_age=10,
+        adults = payment_factories.AgePriceMatrixItemFactory(
+            from_age=18,
+            till_age=77,
             age_price_matrix_id=matrix.pk,
         )
-        payment_factories.PriceFactory(vat_included=Money(10, EUR), unique_origin=baby)
+        payment_factories.PriceFactory(
+            vat_included=Money(10, EUR),
+            unique_origin=adults,
+        )
         event = event_factories.SingleEventFactory()
         event_reservation = reservation_factories.EventReservationFactory(
             event_id=event.pk,
         )
         line = reservation_factories.ReservationLineFactory(
             reservation=event_reservation,
-            amount=2,
-            price_matrix_item_id=baby.pk,
+            amount=3,
+            price_matrix_item_id=adults.pk,
         )
         payment_factories.PriceFactory(
             vat_included=Money(10, EUR),
             unique_origin=line,
         )
+        condition = payment_factories.EventReservationPaymentConditionFactory(
+            prepayment_type=payment_models.EventReservationPaymentCondition.PrepaymentType.FIXED_PRICE_PER_PERSON,
+            only_when_group_exceeds=1,
+        )
+        payment_factories.PriceFactory(
+            vat_included=Money(5, EUR),
+            unique_origin=condition,
+        )
+        assert condition.get_price(event_reservation).vat_included == Money(15, EUR)
+
+    def test_get_price_remaining_price(self):
+        payment_request = payment_factories.PaymentRequestFactory()
+        matrix = payment_factories.AgePriceMatrixFactory(name="brunch prijzen 2024")
+        adults = payment_factories.AgePriceMatrixItemFactory(
+            from_age=18,
+            till_age=77,
+            age_price_matrix_id=matrix.pk,
+        )
+        payment_factories.PriceFactory(
+            vat_included=Money(10, EUR),
+            unique_origin=adults,
+        )
+        event = event_factories.SingleEventFactory()
+        event_reservation = reservation_factories.EventReservationFactory(
+            event_id=event.pk,
+            payment_request_id=payment_request.pk,
+        )
+        line = reservation_factories.ReservationLineFactory(
+            reservation=event_reservation,
+            amount=2,
+            price_matrix_item_id=adults.pk,
+        )
+
+        payment_factories.PriceFactory(
+            vat_included=Money(10, EUR),
+            unique_origin=line,
+        )
+        payment_factories.PriceFactory(
+            vat_included=line.total_price.vat_included,
+            unique_origin=payment_request,
+        )
         payment_factories.PaymentFactory(
             payment_request=event_reservation.payment_request,
-            amount_received=Money(5, EUR),
+            paid_amount=Money(5, EUR),
         )
         condition = payment_factories.EventReservationPaymentConditionFactory(
             prepayment_type=payment_models.EventReservationPaymentCondition.PrepaymentType.REMAINING_PRICE,

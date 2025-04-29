@@ -9,6 +9,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 from scaleos.organizations import models as organization_models
 from scaleos.shared.fields import LogInfoFields
+from scaleos.shared.functions import is_blank
 from scaleos.shared.mixins import AdminLinkMixin
 
 logger = logging.getLogger(__name__)
@@ -18,8 +19,8 @@ logger = logging.getLogger(__name__)
 class Person(
     AdminLinkMixin,
 ):
-    name = models.CharField(default="")
-    family_name = models.CharField(default="")
+    first_name = models.CharField(verbose_name=_("first name"), default="")
+    family_name = models.CharField(verbose_name=_("family name"), default="")
     user = models.OneToOneField(
         get_user_model(),
         related_name="person",
@@ -54,8 +55,8 @@ class Person(
     birthday = models.DateField(null=True, blank=True)
 
     def __str__(self):
-        if self.name and self.family_name:
-            return f"{self.name} {self.family_name}"
+        if self.first_name and self.family_name:
+            return f"{self.first_name} {self.family_name}"
         return super().__str__()
 
     @property
@@ -88,6 +89,25 @@ class Person(
     @property
     def owning_organizations(self):
         return organization_models.OrganizationOwner.objects.filter(person_id=self.pk)
+
+    def set_first_and_family_name(
+        self,
+        first_name,
+        family_name,
+        *,
+        overwrite_existing=False,
+    ):
+        updated = False
+        if (overwrite_existing and self.first_name) or is_blank(self.first_name):
+            self.first_name = first_name
+            updated = True
+
+        if (overwrite_existing and self.family_name) or is_blank(self.family_name):
+            self.family_name = family_name
+            updated = True
+
+        if updated:
+            self.save(update_fields=["first_name", "family_name"])
 
 
 class PersonAddress(AdminLinkMixin):

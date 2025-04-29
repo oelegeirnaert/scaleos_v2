@@ -48,20 +48,6 @@ class VATPriceLineInlineAdmin(admin.TabularInline):
     readonly_fields = ["vat_included", "vat_excluded", "vat"]
 
 
-class EventReservationPaymentConditionInlineAdmin(LogInfoStackedInlineAdminMixin):
-    model = payment_models.EventReservationPaymentCondition
-    extra = 0
-    show_change_link = True
-
-    @admin.display(
-        description="Price",
-    )
-    def price_link(self, obj):
-        return price_link(self, obj)
-
-    readonly_fields = ["price_link"]
-
-
 class PriceLinkTabularStackedAdminMixin(admin.StackedInline):
     @admin.display(
         description="Price",
@@ -257,11 +243,13 @@ class PaymentRequestAdmin(
     inlines = [PaymentProposalInlineAdmin, PaymentInlineAdmin]
     readonly_fields = [
         "to_pay",
-        # "already_paid",
-        # "still_to_pay",
-        # "fully_paid",
+        "already_paid",
+        "still_to_pay",
+        "fully_paid",
         "payment_methods",
         "origin_link",
+        "structured_reference_be",
+        "structured_reference_sepa",
         *LogInfoAdminMixin.readonly_fields,
         *PriceLinkAdminMixin.readonly_fields,
     ]
@@ -300,6 +288,17 @@ class PaymentSettingsAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModel
     child_models = [
         payment_models.PaymentSettings,
         payment_models.EventReservationPaymentSettings,
+    ]
+    list_filter = [PolymorphicChildModelFilter]
+    list_display = ["id", "__str__"]
+
+
+@admin.register(payment_models.PaymentCondition)
+class PaymentConditionAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
+    base_model = payment_models.PaymentCondition
+    child_models = [
+        payment_models.PaymentCondition,
+        payment_models.EventReservationPaymentCondition,
     ]
     list_filter = [PolymorphicChildModelFilter]
     list_display = ["id", "__str__"]
@@ -347,12 +346,15 @@ class EventReservationPaymentSettingsAdmin(
     LogInfoAdminMixin,
 ):
     base_model = payment_models.PaymentSettings
-    inlines = [EventReservationPaymentConditionInlineAdmin]
 
 
 @admin.register(payment_models.EventReservationPaymentCondition)
-class EventReservationPaymentConditionAdmin(LogInfoAdminMixin):
-    pass
+class EventReservationPaymentConditionAdmin(
+    PolymorphicInlineSupportMixin,
+    PolymorphicChildModelAdmin,
+    LogInfoAdminMixin,
+):
+    base_model = payment_models.PaymentCondition
 
 
 @admin.register(payment_models.VATPriceLine)

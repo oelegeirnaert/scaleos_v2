@@ -7,11 +7,45 @@ from moneyed import Money
 
 from scaleos.events.tests import model_factories as event_factories
 from scaleos.hr.tests import model_factories as hr_factories
+from scaleos.notifications.models import UserNotification
+from scaleos.organizations import models as organization_models
+from scaleos.organizations.tests import model_factories as organization_factories
 from scaleos.payments.tests import model_factories as payment_factories
 from scaleos.reservations.tests import model_factories as reservation_factories
+from scaleos.users.models import User
 from scaleos.users.tests import model_factories as user_factories
 
 logger = logging.getLogger(__name__)
+
+pytestmark = pytest.mark.django_db
+
+
+class TestEventReservation:
+    def test_event_reservation_start_date_is_set_from_start_of_event(self):
+        event = event_factories.BirthdayEventFactory()
+        event_reservation = reservation_factories.EventReservationFactory(
+            event_id=event.pk,
+        )
+        assert event_reservation.start == event.starting_at
+        assert event_reservation.end == event.ending_on
+
+
+class TestGuestInvite:
+    def test_guest_invite_will_receive_a_notification(self):
+        organization = organization_factories.OrganizationFactory()
+        reservation = reservation_factories.ReservationFactory(
+            organization_id=organization.pk,
+        )
+        guest_invite = reservation_factories.GuestInviteFactory(
+            reservation_id=reservation.pk,
+        )
+
+        assert hasattr(guest_invite, "email_address")
+        guest_invite.email_address = "joske@hotmail.com"
+        guest_invite.send_notification_logic()
+
+        assert UserNotification.objects.count() == 1
+        assert organization_models.OrganizationCustomer.objects.count() == 1
 
 
 @pytest.mark.django_db
@@ -450,3 +484,43 @@ def test_organization_cannot_autoconfirm_when_user_not_verified(faker):
     event = event_factories.BirthdayEventFactory()
     event_reservation = reservation_factories.EventReservationFactory(event_id=event.pk)
     assert event_reservation.organization_auto_confirm() is False
+
+
+@pytest.mark.django_db
+def test_reservation_can_be_checked_in_by_user(faker, verified_user):
+    reservation = reservation_factories.ReservationFactory(user_id=verified_user.pk)
+    result, result_type = reservation.can_be_checked_in_by(verified_user)
+    assert result
+    assert result_type == User
+
+
+@pytest.mark.django_db
+def test_reservation_can_be_checked_in_by_organization_employee(faker, verified_user):
+    organization = organization_models.Organization.objects.create()
+    organization_employee = organization_models.OrganizationEmployee.objects.create(
+        person_id=verified_user.person.pk,
+        organization_id=organization.pk,
+    )
+    reservation = reservation_factories.ReservationFactory(
+        user_id=verified_user.pk,
+        organization_id=organization.id,
+    )
+    result, result_type = reservation.can_be_checked_in_by(organization_employee)
+    assert result
+    assert result_type == organization_models.OrganizationEmployee
+
+
+@pytest.mark.django_db
+def test_reservation_can_be_checked_in_by_organization_owner(faker, verified_user):
+    organization = organization_models.Organization.objects.create()
+    organization_owner = organization_models.OrganizationOwner.objects.create(
+        person_id=verified_user.person.pk,
+        organization_id=organization.pk,
+    )
+    reservation = reservation_factories.ReservationFactory(
+        user_id=verified_user.pk,
+        organization_id=organization.id,
+    )
+    result, result_type = reservation.can_be_checked_in_by(organization_owner)
+    assert result
+    assert result_type == organization_models.OrganizationOwner

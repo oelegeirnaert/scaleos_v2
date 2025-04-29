@@ -1,7 +1,8 @@
 from django.contrib import admin
+from polymorphic.admin import PolymorphicInlineSupportMixin
 
 from scaleos.hr import models as hr_models
-from scaleos.organizations.admin import OrganizationOwnerInlineAdmin
+from scaleos.organizations.admin import OrganizationMemberInlineAdmin
 from scaleos.shared.admin import LogInfoInlineAdminMixin
 
 
@@ -25,20 +26,20 @@ class PersonLanguageInlineAdmin(LogInfoInlineAdminMixin):
 
 
 @admin.register(hr_models.Person)
-class PersonAdmin(admin.ModelAdmin):
+class PersonAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
     list_display = [
         "__str__",
         "user",
-        "name",
+        "first_name",
         "family_name",
         "primary_email_address",
         "primary_telephone_number",
     ]
     readonly_fields = ["age", "primary_telephone_number"]
-    search_fields = ["name", "national_number"]
+    search_fields = ["first_name", "family_name", "national_number"]
     inlines = [
         PersonAddressInlineAdmin,
-        OrganizationOwnerInlineAdmin,
+        OrganizationMemberInlineAdmin,
         PersonTelephoneNumberInlineAdmin,
         PersonLanguageInlineAdmin,
     ]
