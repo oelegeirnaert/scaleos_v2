@@ -1,0 +1,5 @@
+<form hx-post="{% url 'events_htmx:concept_filter' %}"
+      hx-trigger="load, change delay:1s"
+      hx-target="#concept_results">
+</form>
+<div id="concept_results"></div>

@@ -3,7 +3,9 @@ import logging
 from colorfield.fields import ColorField
 from django.conf import settings
 from django.contrib.gis.db import models
+from django.db.models import Q
 from django.forms import ValidationError
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 from modeltranslation.translator import translator
@@ -13,10 +15,24 @@ from scaleos.hr.models import Person
 from scaleos.shared.fields import LogInfoFields
 from scaleos.shared.fields import NameField
 from scaleos.shared.fields import PublicKeyField
+from scaleos.shared.mixins import ITS_NOW
 from scaleos.shared.mixins import AdminLinkMixin
 from scaleos.shared.models import CardModel
 
 logger = logging.getLogger(__name__)
+
+
+class OrganizationField(models.Model):
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        related_name="%(class)s_list",
+        null=True,
+        blank=False,
+    )
+
+    class Meta:
+        abstract = True
 
 
 # Create your models here.
@@ -73,6 +89,59 @@ class Organization(
 
     def events_open_for_reservation(self):
         return self.events.filter(allow_reservations=True)
+
+    @property
+    def b2b_concepts(self):
+        from scaleos.events.models import Concept
+
+        return Concept.objects.filter(
+            Q(organizer_id=self.pk)
+            & (
+                Q(segment=Concept.SegmentType.B2B) | Q(segment=Concept.SegmentType.BOTH)
+            ),
+        )
+
+    @property
+    def b2c_concepts(self):
+        from scaleos.events.models import Concept
+
+        return Concept.objects.filter(
+            Q(organizer_id=self.pk)
+            & (
+                Q(segment=Concept.SegmentType.B2C) | Q(segment=Concept.SegmentType.BOTH)
+            ),
+        )
+
+    @property
+    def all_concepts(self):
+        from scaleos.events.models import Concept
+
+        return Concept.objects.filter(organizer_id=self.pk)
+
+    @property
+    def upcoming_public_events(self):
+        from scaleos.events.models import SingleEvent
+
+        return SingleEvent.objects.filter(
+            starting_at__gte=ITS_NOW,
+            concept__organizer_id=self.pk,
+        )
+
+    @property
+    def upcoming_public_b2b_events(self):
+        from scaleos.events.models import Concept
+
+        return self.upcoming_public_events.filter(
+            concept__segment=Concept.SegmentType.B2B,
+        )
+
+    @property
+    def upcoming_public_b2c_events(self):
+        from scaleos.events.models import Concept
+
+        return self.upcoming_public_events.filter(
+            concept__segment=Concept.SegmentType.B2C,
+        )
 
     def translate(self):  # noqa: C901
         try:
@@ -148,6 +217,9 @@ class Organization(
             logger.debug("The customer already exists")
 
         return customer
+
+    def get_event_types_with_count(self):
+        return self.organizing_events.all()
 
 
 class OrganizationMember(PolymorphicModel, AdminLinkMixin, LogInfoFields):
@@ -282,6 +354,35 @@ class Enterprise(Organization):
         verbose_name = _("enterprise")
         verbose_name_plural = _("enterprises")
 
+    @cached_property
+    def vat_number(self):
+        return f"{self.registered_country}{self.registration_id}"
+
+    @property
+    def headquarter(self):
+        hq = self.addresses.first()
+        if hq:
+            return hq.address
+        return None
+
+
+class OrganizationAddress(AdminLinkMixin):
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="addresses",
+        null=True,
+        blank=False,
+    )
+    address = models.ForeignKey(
+        "geography.Address",
+        verbose_name=_(
+            "address",
+        ),
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+
 
 class OrganizationStyling(AdminLinkMixin):
     organization = models.OneToOneField(
@@ -300,6 +401,8 @@ class OrganizationStyling(AdminLinkMixin):
     primary_color = ColorField(default="#FFFFFF")
     secondary_color = ColorField(default="#FFFFFF")
     text_color = ColorField(default="#000000")
+    primary_button_color = ColorField(default="#FFFFFF")
+    primary_button_text_color = ColorField(default="#000000")
 
 
 class OrganizationPaymentMethod(AdminLinkMixin, LogInfoFields):

@@ -79,3 +79,32 @@ class OriginFields(models.Model):
 
     class Meta:
         abstract = True
+
+
+class SegmentField(models.Model):
+    class SegmentType(models.TextChoices):
+        B2B = "B2B", _("b2b")
+        B2C = "B2C", _("b2c")
+        BOTH = "BOTH", _("both")
+
+    segment = models.CharField(
+        verbose_name=_(
+            "segment",
+        ),
+        max_length=50,
+        choices=SegmentType.choices,
+        default=SegmentType.BOTH,
+    )
+
+    class Meta:
+        abstract = True
+
+    @property
+    def segment_name(self):
+        if self.segment == self.SegmentType.B2B:
+            return _("businesses")
+        if self.segment == self.SegmentType.B2C:
+            return _("private individuals")
+        if self.segment == self.SegmentType.BOTH:
+            return _("everyone")
+        return self.get_segment_display()

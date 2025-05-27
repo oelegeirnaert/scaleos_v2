@@ -9,9 +9,18 @@ from polymorphic.admin import PolymorphicParentModelAdmin
 from polymorphic.admin import StackedPolymorphicInline
 
 from scaleos.events import models as event_models
+from scaleos.notifications.models import Notification
 from scaleos.shared.admin import LogInfoAdminMixin
+from scaleos.shared.admin import build_generic_relation_link
+from scaleos.timetables.models import TimeTable
 
 # Register your models here.
+
+
+class ConceptImageInlineAdmin(admin.TabularInline):
+    model = event_models.ConceptImage
+    extra = 0
+    show_change_link = True
 
 
 class EventUpdateInlineAdmin(StackedPolymorphicInline):
@@ -123,6 +132,10 @@ class EventInlineAdmin(StackedPolymorphicInline):
         model = event_models.StayOver
         show_change_link = True
 
+    class EventMixInlineAdmin(StackedPolymorphicInline.Child):
+        model = event_models.EventMix
+        show_change_link = True
+
     model = event_models.SingleEvent
     child_inlines = (
         WeddingInlineAdmin,
@@ -139,7 +152,12 @@ class EventInlineAdmin(StackedPolymorphicInline):
         PresentationInlineAdmin,
         LivePerformanceInlineAdmin,
         StayOverInlineAdmin,
+        EventMixInlineAdmin,
     )
+
+
+class ChildEventInlineAdmin(EventInlineAdmin):
+    fk_name = "parent"
 
 
 @admin.register(event_models.EventDuplicator)
@@ -163,22 +181,32 @@ class ConceptAdmin(PolymorphicInlineSupportMixin, PolymorphicParentModelAdmin):
         event_models.Concept,  # Delete once a submodel has been added.
         event_models.CustomerConcept,
     ]
-    list_filter = [PolymorphicChildModelFilter, "segment"]
-    list_display = ["id", "name"]
+    list_filter = [PolymorphicChildModelFilter, "segment", "organizer"]
+    list_display = ["id", "name", "organizer", "segment"]
     search_fields = ["name"]
-    inlines = [ConceptPriceMatrixInlineAdmin, EventInlineAdmin]
-    readonly_fields = ["public_key", "starting_at", "ending_on"]
+    inlines = [ConceptPriceMatrixInlineAdmin, EventInlineAdmin, ConceptImageInlineAdmin]
+    readonly_fields = ["public_key", "starting_at", "ending_on", "timetable_link"]
+
+    @admin.display(
+        description=_("timetable link"),
+    )
+    def timetable_link(self, obj):
+        return build_generic_relation_link(
+            obj,
+            field_name="timetable",
+            related_model=TimeTable,
+        )
 
 
 @admin.register(event_models.CustomerConcept)
 class CustomerConceptAdmin(
+    ConceptAdmin,
     PolymorphicInlineSupportMixin,
     PolymorphicChildModelAdmin,
     LogInfoAdminMixin,
 ):
     base_model = event_models.Concept
     inlines = [*ConceptAdmin.inlines]
-    readonly_fields = [*ConceptAdmin.readonly_fields]
 
 
 @admin.register(event_models.BrunchEvent)
@@ -221,12 +249,6 @@ class ReceptionEventAdmin(PolymorphicChildModelAdmin):
     # define custom features here
 
 
-@admin.register(event_models.DinnerEvent)
-class DinnerEventAdmin(PolymorphicChildModelAdmin):
-    base_model = event_models.SingleEvent  # Explicitly set here!
-    # define custom features here
-
-
 @admin.register(event_models.DanceEvent)
 class DanceEventAdmin(PolymorphicChildModelAdmin):
     base_model = event_models.SingleEvent  # Explicitly set here!
@@ -245,9 +267,18 @@ class EventAdmin(PolymorphicParentModelAdmin):
         event_models.DanceEvent,
         event_models.BirthdayEvent,
         event_models.WeddingEvent,
+        event_models.BreakEvent,
+        event_models.TeamBuildingEvent,
+        event_models.PresentationEvent,
+        event_models.MeetingEvent,
+        event_models.LivePerformanceEvent,
+        event_models.BreakfastEvent,
+        event_models.LunchEvent,
+        event_models.StayOver,
+        event_models.EventMix,
     ]
     list_filter = [PolymorphicChildModelFilter]
-    list_display = ["id", "name"]
+    list_display = ["id", "name", "concept", "organizer"]
     search_fields = ["name"]
     readonly_fields = ["warnings"]
     inlines = [EventFloorInlineAdmin]
@@ -257,9 +288,29 @@ class EventAdmin(PolymorphicParentModelAdmin):
 class SingleEventAdmin(PolymorphicInlineSupportMixin, PolymorphicChildModelAdmin):
     base_model = event_models.Event  # Explicitly set here!
     # define custom features here
-    readonly_fields = ["free_spots", "free_percentage", "slug", "warnings"]
-    list_display = ["__str__", "duplicator", "slug"]
+    readonly_fields = [
+        "free_spots",
+        "free_percentage",
+        "slug",
+        "warnings",
+        "public_key",
+    ]
+    list_display = [
+        "__str__",
+        "starting_at",
+        "ending_on",
+        "duplicator",
+        "slug",
+        "parent",
+    ]
     inlines = [EventAttendeeInlineAdmin, EventUpdateInlineAdmin, *EventAdmin.inlines]
+    list_filter = ["parent", "concept"]
+
+
+@admin.register(event_models.DinnerEvent)
+class DinnerEventAdmin(SingleEventAdmin):
+    base_model = event_models.SingleEvent  # Explicitly set here!
+    # define custom features here
 
 
 @admin.register(event_models.ConceptPriceMatrix)
@@ -331,11 +382,19 @@ class MeetingEventAdmin(PolymorphicChildModelAdmin):
 
 
 @admin.register(event_models.LivePerformanceEvent)
-class LivePerformanceEventAdmin(PolymorphicChildModelAdmin):
+class LivePerformanceEventAdmin(SingleEventAdmin):
     base_model = event_models.SingleEvent  # Explicitly set here!
     # define custom features here
-    readonly_fields = ["free_spots", "free_percentage", "slug", "warnings"]
+
     inlines = [EventAttendeeInlineAdmin]
+
+
+@admin.register(event_models.EventMix)
+class EventMixAdmin(SingleEventAdmin):
+    base_model = event_models.SingleEvent  # Explicitly set here!
+    # define custom features here
+
+    inlines = [EventAttendeeInlineAdmin, ChildEventInlineAdmin]
 
 
 @admin.register(event_models.BreakfastEvent)
@@ -354,6 +413,14 @@ class LunchEventAdmin(PolymorphicChildModelAdmin):
     inlines = [EventAttendeeInlineAdmin]
 
 
+@admin.register(event_models.StayOver)
+class StayOverAdmin(PolymorphicChildModelAdmin):
+    base_model = event_models.SingleEvent  # Explicitly set here!
+    # define custom features here
+    readonly_fields = ["free_spots", "free_percentage", "slug", "warnings"]
+    inlines = [EventAttendeeInlineAdmin]
+
+
 @admin.register(event_models.EventUpdate)
 class EventUpdateAdmin(PolymorphicParentModelAdmin):
     base_model = event_models.EventUpdate
@@ -362,9 +429,20 @@ class EventUpdateAdmin(PolymorphicParentModelAdmin):
         event_models.EventMessage,
     ]
     list_filter = [PolymorphicChildModelFilter]
+    readonly_fields = ["notification_link"]
+
+    @admin.display(
+        description=_("notification link"),
+    )
+    def notification_link(self, obj):
+        return build_generic_relation_link(
+            obj,
+            field_name="notification",
+            related_model=Notification,
+        )
 
 
 @admin.register(event_models.EventMessage)
-class EventMessageAdmin(PolymorphicChildModelAdmin):
+class EventMessageAdmin(EventUpdateAdmin, PolymorphicChildModelAdmin):
     base_model = event_models.EventUpdate  # Explicitly set here!
     # define custom features here

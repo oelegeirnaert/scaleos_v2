@@ -3,20 +3,26 @@ import logging
 from uuid import uuid4
 
 from dateutil.relativedelta import relativedelta
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from django.db.models import Q
 from django.forms import ValidationError
 from django.utils.translation import gettext_lazy as _
 from polymorphic.models import PolymorphicModel
 
+from scaleos.catering.models import CateringField
+from scaleos.organizations.models import B2BCustomer
 from scaleos.organizations.models import OrganizationCustomer
 from scaleos.reservations.models import EventReservationSettings
 from scaleos.reservations.models import Reservation
 from scaleos.shared.fields import LogInfoFields
 from scaleos.shared.fields import NameField
 from scaleos.shared.fields import PublicKeyField
+from scaleos.shared.fields import SegmentField
 from scaleos.shared.mixins import ITS_NOW
 from scaleos.shared.mixins import AdminLinkMixin
 from scaleos.shared.models import CardModel
+from scaleos.timetables.models import TimeTable
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +31,15 @@ logger = logging.getLogger(__name__)
 MAX_PERCENTAGE = 100
 
 
-class Concept(PolymorphicModel, NameField, AdminLinkMixin, CardModel, PublicKeyField):
-    class SEGMENT(models.TextChoices):
-        B2B = "B2B", _("b2b")
-        B2C = "B2C", _("b2c")
-        BOTH = "BOTH", _("both")
-
+class Concept(
+    PolymorphicModel,
+    NameField,
+    AdminLinkMixin,
+    CardModel,
+    PublicKeyField,
+    SegmentField,
+    CateringField,
+):
     organizer = models.ForeignKey(
         "organizations.Organization",
         verbose_name=_(
@@ -40,13 +49,14 @@ class Concept(PolymorphicModel, NameField, AdminLinkMixin, CardModel, PublicKeyF
         on_delete=models.CASCADE,
         null=True,
     )
-    segment = models.CharField(
+
+    slogan = models.CharField(
         verbose_name=_(
-            "segment",
+            "slogan",
         ),
-        max_length=50,
-        choices=SEGMENT.choices,
-        default=SEGMENT.BOTH,
+        default="",
+        blank=True,
+        max_length=255,
     )
 
     reservation_settings = models.ForeignKey(
@@ -67,6 +77,15 @@ class Concept(PolymorphicModel, NameField, AdminLinkMixin, CardModel, PublicKeyF
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+    )
+
+    timetable = GenericRelation(
+        TimeTable,
+        verbose_name=_(
+            "timetable",
+        ),
+        content_type_field="content_type",
+        object_id_field="object_id",
     )
 
     class Meta:
@@ -112,8 +131,9 @@ class Concept(PolymorphicModel, NameField, AdminLinkMixin, CardModel, PublicKeyF
     @property
     def upcoming_events(self):
         return self.events.filter(
-            singleevent__starting_at__gte=ITS_NOW,
+            singleevent__ending_on__gte=ITS_NOW,
             allow_reservations=True,
+            singleevent__parent__isnull=True,
         )
 
     @property
@@ -123,6 +143,27 @@ class Concept(PolymorphicModel, NameField, AdminLinkMixin, CardModel, PublicKeyF
     @property
     def ending_on(self):
         return self.events.order_by("-singleevent__ending_on").first().ending_on
+
+
+class ConceptImage(LogInfoFields):
+    concept = models.ForeignKey(
+        Concept,
+        verbose_name=_(
+            "concept",
+        ),
+        on_delete=models.CASCADE,
+        related_name="images",
+        null=True,
+    )
+    image = models.ForeignKey(
+        "files.ImageFile",
+        verbose_name=_(
+            "image",
+        ),
+        on_delete=models.CASCADE,
+        related_name="images",
+        null=True,
+    )
 
 
 class CustomerConcept(Concept, LogInfoFields):
@@ -169,10 +210,10 @@ class CustomerConcept(Concept, LogInfoFields):
         super().clean()
 
     def save(self, *args, **kwargs):
-        if self.customer and self.customer.is_b2b:
-            self.segment = Concept.SEGMENT.B2B
-        if self.customer and self.customer.is_b2c:
-            self.segment = Concept.SEGMENT.B2C
+        if isinstance(self.customer, B2BCustomer):
+            self.segment = Concept.SegmentType.B2B
+        else:
+            self.segment = Concept.SegmentType.B2C
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
@@ -258,6 +299,7 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
             "reserved spots",
         ),
         default=0,
+        blank=True,
     )
 
     reservation_settings = models.ForeignKey(
@@ -290,6 +332,12 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
     class Meta:
         verbose_name = _("event")
         verbose_name_plural = _("events")
+
+    @property
+    def organizer(self):
+        if self.concept and self.concept.organizer:
+            return self.concept.organizer
+        return None
 
     @property
     def has_unlimited_spots(self):
@@ -332,7 +380,7 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
         logger.info("""We dont know how much reserved spots,
             so we don't know how to calculated the free spots""")  # pragma: no cover
 
-        logger.debug("returning maximum number of guests")
+        logger.debug("returning maximum number of guests")  # pragma: no cover
         return self.maximum_number_of_guests  # pragma: no cover
 
     def get_reserved_spots(self):
@@ -351,6 +399,7 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
 
     @property
     def reserved_percentage(self):
+        logger.debug("calculating the reserved percentage")
         if (
             hasattr(self, "reserved_spots")
             and self.reserved_spots is not None
@@ -397,21 +446,24 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
 
     @property
     def show_progress_bar(self):
+        logger.debug("Checking if progress bar needs to be shown")
         if self.applicable_reservation_settings is None:
+            logger.debug("No because we do not have settings")
             return False
 
         if self.applicable_reservation_settings.always_show_progress_bar:
+            logger.debug("Always show progress bar from settings")
             return True
-
-        reserved_capacity = self.reserved_percentage
-        if reserved_capacity is None:
-            return False
 
         show_progress_bar_treshold = self.applicable_reservation_settings.show_progress_bar_when_x_percentage_reached  # noqa: E501
         if show_progress_bar_treshold is None:
+            logger.debug("no because we do not have any treshold")
             return False
 
-        return show_progress_bar_treshold < reserved_capacity
+        reserved_percentage = self.reserved_percentage
+        logger.debug("show progress bar treshold: %s", show_progress_bar_treshold)
+        logger.debug("reserved capacity: %s", reserved_percentage)
+        return show_progress_bar_treshold <= reserved_percentage
 
     @property
     def warnings(self):
@@ -448,14 +500,39 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
         self.reserved_spots += the_amount
         self.save(update_fields=["reserved_spots"])
 
+    def latest_updates(self):
+        return self.updates.filter(
+            Q(visible_from__gte=ITS_NOW, visible_till__lte=ITS_NOW)
+            | Q(visible_till__isnull=True),
+        ).order_by("-created_at")
 
-class SingleEvent(Event):
+
+class SingleEvent(Event, CateringField):
     class STATUS(models.TextChoices):
         UPCOMING = "UPCOMING", _("upcoming")
         ONGOING = "ONGOING", _("ongoing")
         ENDED = "ENDED", _("ended")
         UNKNOWN = "UNKNOWN", _("unknown")
 
+    catering = models.ForeignKey(
+        "catering.Catering",
+        verbose_name=_(
+            "catering",
+        ),
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    parent = models.ForeignKey(
+        "EventMix",
+        verbose_name=_(
+            "parent",
+        ),
+        on_delete=models.CASCADE,
+        related_name="children",
+        null=True,
+        blank=True,
+    )
     show_in_ongoing_events = models.BooleanField(
         verbose_name=_(
             "show in ongoing events",
@@ -571,17 +648,34 @@ class SingleEvent(Event):
         return None
 
     @property
-    def reservations_are_closed(self):
-        logger.debug("Checking if the reservations are closed...")
+    def is_open_for_reservations(self):
+        logger.debug("Checking if the reservations are open...")
+        if self.applicable_reservation_settings is None:
+            logger.debug("No reservations settings")
+            return False
+
         if self.allow_reservations is False:
             logger.debug("Reservations are not allowed")
             return False
 
-        if self.reservations_closed_on is None:
+        if self.allow_reservations and self.reservations_closed_on is None:
             return True
 
+        logger.debug("Time based checking if the reservations are open.")
+        return self.reservations_closed_on >= ITS_NOW
+
+    @property
+    def reservations_are_closed(self):
+        logger.debug("Checking if the reservations are closed...")
+        if self.allow_reservations is False:
+            logger.debug("Reservations are not allowed")
+            return True
+
+        if self.allow_reservations and self.reservations_closed_on is None:
+            return False
+
         logger.debug("Time based checking if the reservations are closed.")
-        return self.reservations_closed_on < ITS_NOW
+        return self.reservations_closed_on <= ITS_NOW
 
     @property
     def applicable_reservation_settings(self):
@@ -595,6 +689,25 @@ class SingleEvent(Event):
             return self.concept.reservation_settings
 
         return None
+
+    @property
+    def applicable_catering(self):
+        if self.catering:
+            return self.catering
+
+        if self.concept and self.concept.catering:
+            return self.concept.catering
+
+        return None
+
+
+class EventMix(SingleEvent):
+    class Meta:
+        verbose_name = _("mix of events")
+        verbose_name_plural = _("mix of events")
+
+    def public_events(self):
+        return self.children.all().order_by("starting_at")
 
 
 class DanceEvent(SingleEvent):
@@ -623,7 +736,7 @@ class BirthdayEvent(SingleEvent):
             warnings.append(_("please add at least the birthday person to your guests"))
         elif (
             self.attendees.filter(
-                attendeerole__role=AttendeeRole.GUEST_ROLE.BIRTHDAY_PERSON,
+                attendeerole__role=AttendeeRole.RoleType.BIRTHDAY_PERSON,
             ).count()
             == 0
         ):
@@ -647,8 +760,8 @@ class WeddingEvent(SingleEvent):
         elif (
             self.attendees.filter(
                 attendees__role__in=[
-                    AttendeeRole.GUEST_ROLE.GROOM,
-                    AttendeeRole.GUEST_ROLE.BRIDE,
+                    AttendeeRole.RoleType.GROOM,
+                    AttendeeRole.RoleType.BRIDE,
                 ],
             ).count()
             == 0
@@ -664,6 +777,18 @@ class DinnerEvent(SingleEvent):
         verbose_name = _("dinner")
         verbose_name_plural = _("dinners")
 
+    @property
+    def warnings(self):
+        warnings = []
+        if self.catering is None:
+            warnings.append(_("your event has no catering yet"))
+            return warnings
+
+        if not self.catering.has_dinner_menu:
+            warnings.append(_("your catering does not have a dinner menu"))
+
+        return warnings
+
 
 class LunchEvent(SingleEvent):
     ICON = "local_dining"
@@ -671,6 +796,18 @@ class LunchEvent(SingleEvent):
     class Meta:
         verbose_name = _("lunch")
         verbose_name_plural = _("lunches")
+
+    @property
+    def warnings(self):
+        warnings = []
+        if self.catering is None:
+            warnings.append(_("your event has no catering yet"))
+            return warnings
+
+        if not self.catering.has_lunch_menu:
+            warnings.append(_("your catering does not have a lunch menu"))
+
+        return warnings
 
 
 class MeetingEvent(SingleEvent):
@@ -687,6 +824,18 @@ class BreakfastEvent(SingleEvent):
     class Meta:
         verbose_name = _("breakfast")
         verbose_name_plural = _("breakfasts")
+
+    @property
+    def warnings(self):
+        warnings = []
+        if self.catering is None:
+            warnings.append(_("your event has no catering yet"))
+            return warnings
+
+        if not self.catering.has_dinner_menu:
+            warnings.append(_("your catering does not have a dinner menu"))
+
+        return warnings
 
 
 class LivePerformanceEvent(SingleEvent):
@@ -711,6 +860,18 @@ class BrunchEvent(SingleEvent):
     class Meta:
         verbose_name = _("brunch")
         verbose_name_plural = _("brunches")
+
+    @property
+    def warnings(self):
+        warnings = []
+        if self.catering is None:
+            warnings.append(_("your event has no catering yet"))
+            return warnings
+
+        if not self.catering.has_brunch_menu:
+            warnings.append(_("your catering does not have a brunch menu"))
+
+        return warnings
 
 
 class TeamBuildingEvent(SingleEvent):
@@ -988,6 +1149,9 @@ class AttendeeRole(AdminLinkMixin):
         COOK = "COOK", _("cook")
         CATERER = "CATERER", _("caterer")
         SPEAKER = "SPEAKER", _("speaker")
+        SECURITY_GUARD = "SECURITY_GUARD", _("security guard")
+        STEWARD = "STEWARD", _("steward")
+        PARKING_ASSISTANT = "PARKING_ASSISTANT", _("parking assistant")
         OTHER = "OTHER", _("other")
 
     role = models.CharField(
@@ -1057,6 +1221,12 @@ class EventUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
         default=InformType.NOBODY,
         help_text=_("who do we need to inform"),
     )
+    notification = GenericRelation(
+        "notifications.Notification",
+        related_query_name="reservation_updates",
+        content_type_field="about_content_type",
+        object_id_field="about_object_id",
+    )
 
 
 class EventMessage(EventUpdate):
@@ -1073,4 +1243,5 @@ class EventMessage(EventUpdate):
             "visible till",
         ),
         null=True,
+        blank=True,
     )

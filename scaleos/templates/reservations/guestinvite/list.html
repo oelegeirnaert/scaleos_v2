@@ -1,0 +1,10 @@
+{# generated via manage create_html_scripts #}
+{% extends 'base.html' %}
+
+{% load i18n %}
+
+{% block content %}
+  {% for guestinvite in guestinvite_list %}
+    {% include guestinvite.detail_template %}
+  {% endfor %}
+{% endblock content %}

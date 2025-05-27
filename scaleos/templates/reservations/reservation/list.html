@@ -1,0 +1,11 @@
+{# generated via manage create_html_scripts #}
+{% extends 'base.html' %}
+
+{% load i18n %}
+
+{% block content %}
+  {% for reservation in reservation_list %}
+    {{ reservation.detail_template }}
+    {% include reservation.detail_template %}
+  {% endfor %}
+{% endblock content %}

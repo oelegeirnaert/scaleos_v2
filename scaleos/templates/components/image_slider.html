@@ -1,0 +1,23 @@
+<div x-data="() => imageSlider({ images: [
+  {% for card_image in card.images.all %}'{{ card_image.image.image.url }}',{% endfor %}
+  ], transition: '{{ card.transition }}', interval: {{ card.transition_interval }}, duration: {{ card.transition_duration|default:700 }} })" x-init="start()" class="relative w-full h-full mx-auto overflow-hidden rounded-t-md">
+  <!-- Slides -->
+  <template x-for="(image, index) in images" :key="index">
+    <div class="absolute inset-0 w-full h-full transition-all ease-in-out"
+         :class="{ 'opacity-100 pointer-events-auto z-20': index === current, 'opacity-0 pointer-events-none z-10': index !== current,  'transition-opacity duration-[duration]': transition === 'fade',  'transform scale-110 duration-[duration]': transition === 'zoom' && index === current, 'transform scale-100 duration-[duration]': transition === 'zoom' && index !== current,  'transform rotate-y-0 duration-[duration]': transition === 'flip' && index === current, 'transform rotate-y-180 duration-[duration]': transition === 'flip' && index !== current, }"
+         :style="{ 'transition-duration': duration + 'ms', 'transform': transition === 'slide' ? `translateX(${(index - current) * 100}%)` : '' }">
+      <img :src="image"
+           alt="slider image"
+           class="w-full h-full object-cover z-10" />
+    </div>
+  </template>
+  <!-- Navigation Buttons -->
+  <button @click="prev"
+          class="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-75 p-2 rounded-full shadow text-2xl">
+    ‹
+  </button>
+  <button @click="next"
+          class="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-75 p-2 rounded-full shadow text-2xl">
+    ›
+  </button>
+</div>

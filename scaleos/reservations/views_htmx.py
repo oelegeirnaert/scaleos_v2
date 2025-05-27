@@ -10,7 +10,7 @@ from django.views.decorators.cache import never_cache
 from scaleos.events import models as event_models
 from scaleos.organizations.context_processors import organization_context
 from scaleos.reservations import models as reservation_models
-from scaleos.reservations.functions import get_organization_from_reservation
+from scaleos.reservations.functions import get_organization_id_from_reservation
 from scaleos.shared import views_htmx as shared_htmx
 from scaleos.shared.decorators import limit_unauthenticated_submissions
 from scaleos.shared.functions import valid_email_address
@@ -254,7 +254,7 @@ def finish_reservation(request, reservation_public_key):
 
     active_organization_id = request.session.get("active_organization_id", None)
     if active_organization_id is None:
-        active_organization_id = get_organization_from_reservation(reservation)
+        active_organization_id = get_organization_id_from_reservation(reservation)
 
     if active_organization_id is None:
         msg = _("we don't know to which organization this reservation belongs")

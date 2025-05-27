@@ -11,6 +11,34 @@ from scaleos.organizations import models as organization_models
 # Register your models here.
 
 
+class OrganizationInlineAdmin(StackedPolymorphicInline):
+    """
+    An inline for a polymorphic model.
+    The actual form appearance of each row is determined by
+    the child inline that corresponds with the actual model type.
+    """
+
+    class OrganizationInlineAdmin(StackedPolymorphicInline.Child):
+        model = organization_models.Organization
+        show_change_link = True
+
+    class EnterpriseInlineAdmin(StackedPolymorphicInline.Child):
+        model = organization_models.Enterprise
+        show_change_link = True
+
+    model = organization_models.Organization
+    child_inlines = (
+        OrganizationInlineAdmin,
+        EnterpriseInlineAdmin,
+    )
+
+
+class OrganizationAddressInlineAdmin(admin.TabularInline):
+    model = organization_models.OrganizationAddress
+    extra = 0
+    show_change_link = True
+
+
 class OrganizationMemberInlineAdmin(StackedPolymorphicInline):
     """
     An inline for a polymorphic model.
@@ -60,25 +88,12 @@ class OrganizationPaymentMethodInlineAdmin(admin.TabularInline):
     show_change_link = True
 
 
-@admin.register(organization_models.Enterprise)
-class EnterpriseAdmin(
+@admin.register(organization_models.Organization)
+class OrganizationAdmin(
     LeafletGeoAdminMixin,
     PolymorphicInlineSupportMixin,
-    PolymorphicChildModelAdmin,
+    PolymorphicParentModelAdmin,
 ):
-    base_model = organization_models.Organization  # Explicitly set here!
-    readonly_fields = ["slug", "public_key"]
-    # define custom features here
-    inlines = [
-        # OrganizationOwnerInlineAdmin,
-        # OrganizationCustomerInlineAdmin,
-        OrganizationStylingInlineAdmin,
-        OrganizationPaymentMethodInlineAdmin,
-    ]
-
-
-@admin.register(organization_models.Organization)
-class OrganizationAdmin(LeafletGeoAdminMixin, PolymorphicParentModelAdmin):
     base_model = organization_models.Organization
     child_models = [
         organization_models.Organization,  # Delete once a submodel has been added.
@@ -88,6 +103,22 @@ class OrganizationAdmin(LeafletGeoAdminMixin, PolymorphicParentModelAdmin):
     list_display = ["name"]
     search_fields = ["number", "name"]
     readonly_fields = ["slug"]
+    inlines = [
+        OrganizationAddressInlineAdmin,
+        OrganizationMemberInlineAdmin,
+        OrganizationStylingInlineAdmin,
+        OrganizationPaymentMethodInlineAdmin,
+    ]
+
+
+@admin.register(organization_models.Enterprise)
+class EnterpriseAdmin(
+    OrganizationAdmin,
+    PolymorphicChildModelAdmin,
+):
+    base_model = organization_models.Organization  # Explicitly set here!
+    readonly_fields = ["slug", "public_key"]
+    # define custom features here
 
 
 @admin.register(organization_models.OrganizationStyling)

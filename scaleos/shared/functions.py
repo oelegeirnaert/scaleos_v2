@@ -182,6 +182,9 @@ def valid_email_address(email_address) -> tuple[bool, str]:  # noqa: PLR0911
 
 def is_blank(value):
     logger.debug("Checking if value is blank: '%s'", value)
+    if value is None:
+        return True
+
     value = str(value)
     result = not value or not value.strip()
     if result:

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% load i18n %}
+
+{% block content %}
+  ask segment = {{ ask_segment }}
+  {{ request.session.segment }}
+  <h1>{{ website }}</h1>
+  <h2 class="mt-4">Main Menu</h2>
+  <ul>
+    {% for menu_item in website.main_menu %}
+      {% if request.session.segment == "BOTH" %}
+        <li>
+          <a href="{% url 'websites:page' website.domain_name menu_item.slug %}">{{ menu_item.menu_item_name }}</a>
+        </li>
+      {% else %}
+        {% if request.session.segment == menu_item.segment or menu_item.segment == "BOTH" %}
+          <li>
+            <a href="{% url 'websites:page' website.domain_name menu_item.slug %}">{{ menu_item.menu_item_name }}</a>
+          </li>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  </ul>
+  <h2 class="mt-4">pages</h2>
+  <ul>
+    {% for page in website.published_pages %}<li>{{ page }}</li>{% endfor %}
+  </ul>
+  <h2 class="mt-4">Footer Menu</h2>
+  <ul>
+    {% for menu_item in website.footer_menu %}<li>{{ menu_item }}</li>{% endfor %}
+  </ul>
+{% endblock content %}

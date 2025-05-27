@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 from polymorphic.admin import PolymorphicChildModelAdmin
 from polymorphic.admin import PolymorphicChildModelFilter
 from polymorphic.admin import PolymorphicInlineSupportMixin
@@ -7,6 +8,7 @@ from polymorphic.admin import StackedPolymorphicInline
 
 from scaleos.notifications import models as notification_models
 from scaleos.shared.admin import LogInfoAdminMixin
+from scaleos.shared.admin import generic_fk_admin_link
 
 
 class MailNotificationInlineAdmin(admin.StackedInline):
@@ -19,7 +21,7 @@ class WebPushNotificationInlineAdmin(admin.StackedInline):
     model = notification_models.WebPushNotification
     extra = 0
     show_change_link = True
-    readonly_fields = ["user", "title", "message", "icon_url", "open_notification_url"]
+    readonly_fields = ["user", "title", "message", "icon_url", "show_notification_url"]
 
 
 class NotificationInlineAdmin(StackedPolymorphicInline):
@@ -66,26 +68,45 @@ class NotificationAdmin(
         "celery_status",
         "celery_result",
         "public_key",
+        "show_notification_url",
         "open_notification_url",
+        "about_link",
+        "redirect_to_link",
         *LogInfoAdminMixin.readonly_fields,
     ]
     search_fields = ["public_key"]
-    list_display = ["__str__", "about_content_type"]
+    list_display = ["__str__", "about_content_type", "redirect_url"]
+
+    @admin.display(
+        description=_("notification about"),
+    )
+    def about_link(self, obj):
+        return generic_fk_admin_link(
+            obj.about_content_object,
+            obj.about_content_type,
+            obj.about_object_id,
+        )
+
+    @admin.display(
+        description=_("redirect to"),
+    )
+    def redirect_to_link(self, obj):
+        return generic_fk_admin_link(
+            obj.redirect_to_content_object,
+            obj.redirect_to_content_type,
+            obj.redirect_to_object_id,
+        )
 
 
 @admin.register(notification_models.UserNotification)
-class UserNotificationAdmin(PolymorphicChildModelAdmin, LogInfoAdminMixin):
+class UserNotificationAdmin(
+    NotificationAdmin,
+    PolymorphicChildModelAdmin,
+    LogInfoAdminMixin,
+):
     base_model = notification_models.UserNotification  # Explicitly set here!
     # define custom features here
     inlines = [WebPushNotificationInlineAdmin, MailNotificationInlineAdmin]
-    readonly_fields = [
-        "delay_options",
-        "celery_status",
-        "celery_result",
-        "public_key",
-        "open_notification_url",
-        *LogInfoAdminMixin.readonly_fields,
-    ]
 
 
 @admin.register(notification_models.OrganizationNotification)

@@ -1,0 +1,10 @@
+{% load i18n %}
+
+{{ calendar.current_week_number }}
+{% include 'timetables/calendar/day_planning.html' with dayplanning=calendar.monday_planning %}
+{% include 'timetables/calendar/day_planning.html' with dayplanning=calendar.tuesday_planning %}
+{% include 'timetables/calendar/day_planning.html' with dayplanning=calendar.wednesday_planning %}
+{% include 'timetables/calendar/day_planning.html' with dayplanning=calendar.thursday_planning %}
+{% include 'timetables/calendar/day_planning.html' with dayplanning=calendar.friday_planning %}
+{% include 'timetables/calendar/day_planning.html' with dayplanning=calendar.saturday_planning %}
+{% include 'timetables/calendar/day_planning.html' with dayplanning=calendar.sunday_planning %}

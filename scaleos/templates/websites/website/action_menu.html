@@ -1,0 +1,21 @@
+{# generated via manage create_html_scripts #}
+{% load i18n %}
+
+{% for menu_item in website.main_menu %}
+  {% if request.session.segment == "BOTH" %}
+    <li>
+      <a class="text-gray-500 transition hover:text-gray-500/75"
+         href="{% url 'websites:page' website.domain_name menu_item.slug %}">{{ menu_item.menu_item_name }}</a>
+    </li>
+  {% else %}
+    {% if request.session.segment == menu_item.segment or menu_item.segment == "BOTH" %}
+      <li>
+        <a class="text-gray-500 transition hover:text-gray-500/75"
+           href="{% url 'websites:page' website.domain_name menu_item.slug %}">{{ menu_item.menu_item_name }}</a>
+      </li>
+    {% endif %}
+  {% endif %}
+{% endfor %}
+<button hx-post="{% url 'websites_htmx:clear_segment' website.domain_name %}"
+        hx-target="body">{{ request.session.segment }}</button>
+{% include 'staff.html' with obj=page %}

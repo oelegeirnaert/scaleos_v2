@@ -1,11 +1,41 @@
+import logging
+
 from django.db import models
 from django.urls import NoReverseMatch
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
+logger = logging.getLogger(__name__)
+
 
 class CardModel(models.Model):
+    class ImageTransition(models.TextChoices):
+        FADE = "fade", _("Fade")
+        SLIDE = "slide", _("Slide")
+        ZOOM = "zoom", _("Zoom")
+        FLIP = "flip", _("Flip")
+
+    transition = models.CharField(
+        verbose_name=_(
+            "every interval",
+        ),
+        max_length=50,
+        choices=ImageTransition.choices,
+        default=ImageTransition.FADE,
+    )
+
+    transition_interval = models.IntegerField(
+        verbose_name=_("transition interval"),
+        default=5000,
+        help_text=_("in milliseconds"),
+    )
+    transition_duration = models.IntegerField(
+        verbose_name=_("transition duration"),
+        default=1500,
+        help_text=_("in milliseconds"),
+    )
+
     def model_directory_path(self, filename):
         # file will be uploaded to MEDIA_ROOT / images / ...
         return f"images/{self.model_name}/{filename}"
@@ -35,7 +65,7 @@ class CardModel(models.Model):
                 )
                 return f"href={the_url}"  # noqa: TRY300
             except NoReverseMatch:
-                pass
+                logger.info("no reverse match for %s", self.model_name)
 
         return ""
 
@@ -50,3 +80,22 @@ class CardModel(models.Model):
             return self.CARD_IMAGE
 
         return None
+
+    @property
+    def actions(self):
+        return [
+            ("Open", self.page_url, "eye"),
+        ]
+
+
+class APIKeyModel(models.Model):
+    api_key = models.CharField(
+        verbose_name=_("api key"),
+        max_length=255,
+        unique=True,
+        default="",
+        blank=False,
+    )
+
+    def __str__(self):
+        return super().__str__()

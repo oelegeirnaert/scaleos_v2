@@ -1,0 +1,18 @@
+{% extends 'websites/website/page.html' %}
+
+{% block banner %}
+  {% include 'websites/page/banner.html' %}
+{% endblock banner %}
+{% block main %}
+  {% if ask_segment %}
+    <span hx-get="{% url 'websites_htmx:ask_segment' website.domain_name %}?popup"
+          hx-target=".modal.content"
+          hx-trigger="load">Ask Segment</span>
+  {% endif %}
+  {% for pageblock in page.published_blocks %}
+    {% if pageblock.block %}
+      {% include pageblock.block.block_template with block=pageblock.block %}
+      {% include 'staff.html' with obj=pageblock.block %}
+    {% endif %}
+  {% endfor %}
+{% endblock main %}

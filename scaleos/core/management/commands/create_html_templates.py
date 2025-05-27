@@ -71,6 +71,7 @@ class Command(BaseCommand):
             "page_template",
             "detail_template",
             "title_template",
+            "block_template",
         ]
         for app_label in settings.LOCAL_APPS:
             full_app_label = app_label.replace("scaleos.", "")

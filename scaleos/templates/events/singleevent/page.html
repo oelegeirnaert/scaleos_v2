@@ -1,4 +1,37 @@
 {# generated via manage create_html_scripts #}
 {% extends 'page.html' %}
 
-{% load i18n %}
+{% load i18n slider_tags static %}
+
+{% block banner %}
+  <div class="z-10 relative w-full">
+    <!-- Banner Image -->
+    {% if concept.images.count > 0 %}
+      <!-- Parent must have a defined height -->
+      <div class="w-full h-screen">{% image_slider concept %}</div>
+    {% else %}
+      <img alt=""
+           {% if concept.card_image_url %} src="{{ concept.card_image_url }}" {% else %} src="{% static 'images/cards/events/concept/brunch.jpg' %}" {% endif %}
+           class="w-full max-h-screen object-cover" />
+    {% endif %}
+    <!-- Gradient Overlay -->
+    <div class="z-50 absolute inset-0 bg-gradient-to-b from-black/10 to-black/40"></div>
+    <!-- Centered Banner Text -->
+    <div class="z-100 absolute drop-shadow-lg inset-0 flex flex-col items-center justify-center text-center text-white px-4 animate-in fade-in duration-1000">
+      <h1 class="text-4xl md:text-6xl font-bold animate__animated animate__fadeInDown">{{ singleevent|safe }}</h1>
+      <p class="mt-4 text-lg md:text-2xl drop-shadow-lg animate__animated animate__fadeInUp animate__delay-1s">
+        {{ singleevent.slogan|safe }}
+      </p>
+      <div class="p-4 flex gap-2">{% include 'staff.html' with obj=singleevent %}</div>
+    </div>
+  </div>
+{% endblock banner %}
+{% block content %}
+  <!-- Description card: overlaps banner slightly, but adapts on small screens -->
+  <div class="relative z-50 mx-auto max-w-5xl rounded-xl bg-white px-4 py-8 text-center shadow-lg md:px-12">
+    {{ singleevent.card_description|safe|linebreaksbr }}
+    {% if singleevent.catering %}
+      <div>{% include singleevent.catering.detail_template with catering=singleevent.catering %}</div>
+    {% endif %}
+  </div>
+{% endblock content %}

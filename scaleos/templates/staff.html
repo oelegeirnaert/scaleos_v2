@@ -1,4 +1,7 @@
-{% if user.is_staff %}
-  {{ obj.admin_edit_button }}
-  {{ obj.detail_template }}
+{% if request.session.debug %}
+  <ul>
+    <li>{{ obj.admin_edit_button }}</li>
+    {% if card %}<li>{{ obj.card_template }}</li>{% endif %}
+    <li>{{ obj.detail_template }}</li>
+  </ul>
 {% endif %}

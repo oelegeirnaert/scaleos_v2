@@ -2,13 +2,319 @@ import datetime
 
 import pytest
 from dateutil.relativedelta import relativedelta
+from django.forms import ValidationError
 from django.utils import timezone
 from django.utils.translation import activate
+from django.utils.translation import gettext_lazy as _
 
 from scaleos.events import models as event_models
 from scaleos.events.tests import model_factories as event_factories
+from scaleos.organizations.tests import model_factories as organization_factories
+from scaleos.payments.tests import model_factories as payment_factories
+from scaleos.reservations.models import EventReservationSettings
 from scaleos.reservations.tests import model_factories as reservation_factories
 from scaleos.shared.mixins import ITS_NOW
+
+
+# Add the new test class for CustomerConcept
+@pytest.mark.django_db
+class TestCustomerConcept:
+    def test_clean_valid_customer_organizer_relationship(self):
+        """
+        Test that clean() passes when the customer belongs to the organizer.
+        """
+        organizer = organization_factories.OrganizationFactory.create()
+        customer = organization_factories.OrganizationCustomerFactory.create(
+            organization=organizer,
+        )
+        # Instantiate the CustomerConcept without saving,
+        # as clean() is often called before save
+        customer_concept = event_models.CustomerConcept(
+            organizer=organizer,
+            customer=customer,
+            name="Valid Concept",
+        )
+
+        # clean() should not raise a ValidationError
+        try:
+            customer_concept.clean()
+        except ValidationError as e:
+            pytest.fail(f"clean() raised ValidationError unexpectedly: {e}")
+
+    def test_clean_invalid_customer_organizer_relationship_raises_error(self):
+        """
+        Test that clean() raises a ValidationError when the customer
+          does not belong to the organizer.
+        """
+        organizer1 = organization_factories.OrganizationFactory.create()
+        organizer2 = organization_factories.OrganizationFactory.create()
+        customer_of_org2 = organization_factories.OrganizationCustomerFactory.create(
+            organization=organizer2,
+        )
+
+        # Instantiate the CustomerConcept with organizer1 but customer from organizer2
+        customer_concept = event_models.CustomerConcept(
+            organizer=organizer1,
+            customer=customer_of_org2,
+            name="Invalid Concept",
+        )
+
+        # Expect a ValidationError
+        with pytest.raises(ValidationError) as excinfo:
+            customer_concept.clean()
+
+        # Check that the error is for the 'customer' field and has the correct message
+        assert "customer" in excinfo.value.message_dict
+        assert excinfo.value.message_dict["customer"] == [
+            _("This is not one of your customers"),
+        ]
+
+    def test_save_sets_segment_b2b(self):
+        """Test that saving sets segment to B2B if customer is B2B."""
+        b2b_organization = organization_factories.OrganizationFactory.create()
+
+        organizer = organization_factories.OrganizationFactory.create()
+        customer = organization_factories.B2BCustomerFactory.create(
+            organization=organizer,
+            b2b_id=b2b_organization.pk,
+        )
+        customer_concept = event_models.CustomerConcept(
+            organizer=organizer,
+            customer=customer,
+            name="B2B Concept",
+            # segment defaults to BOTH initially
+        )
+        customer_concept.save()
+        assert customer_concept.segment == event_models.Concept.SegmentType.B2B
+
+    def test_save_sets_segment_b2c(self):
+        """Test that saving sets segment to B2C if customer is B2C."""
+
+        organizer = organization_factories.OrganizationFactory.create()
+        customer = organization_factories.OrganizationCustomerFactory.create(
+            organization=organizer,
+        )
+        customer_concept = event_models.CustomerConcept(
+            organizer=organizer,
+            customer=customer,
+            name="B2C Concept",
+            # segment defaults to BOTH initially
+        )
+        customer_concept.save()
+        assert customer_concept.segment == event_models.Concept.SegmentType.B2C
+
+    def test_str_method(self):
+        """Test the __str__ representation."""
+        organizer = organization_factories.OrganizationFactory.create()
+        customer = organization_factories.OrganizationCustomerFactory.create(
+            organization=organizer,
+        )
+
+        # Case 1: With name and customer
+        concept1 = event_models.CustomerConcept(
+            organizer=organizer,
+            customer=customer,
+            name="Special Deal",
+        )
+        assert str(concept1) == f"Special Deal - {customer}"
+
+        # Case 2: With customer but no name
+        concept2 = event_models.CustomerConcept(
+            organizer=organizer,
+            customer=customer,
+            name="",  # Explicitly empty name
+        )
+        assert str(concept2) == f"{customer}"
+
+        concept3 = event_models.CustomerConcept(
+            organizer=organizer,
+            customer=customer,
+            # Name is None by default if not provided
+        )
+        assert str(concept3) == f"{customer}"
+
+        # Case 3: No customer (should fall back to super().__str__ or default)
+        # Note: This might not be a typical valid state due to clean()
+        concept4 = event_models.CustomerConcept(
+            organizer=organizer,
+            customer=None,
+            name="Generic Concept",
+        )
+        # Assuming super().__str__() returns something like the
+        # class name and pk if saved
+        # or a default representation if not saved. Let's test the name part.
+        assert "Generic Concept" in str(concept4)
+
+
+@pytest.mark.django_db
+class TestEvent:
+    def test_event_is_full(self):
+        event = event_factories.EventFactory.create(maximum_number_of_guests=None)
+        assert event.is_full is False
+
+        event = event_factories.EventFactory.create(maximum_number_of_guests=10)
+        assert event.is_full is False
+        event.reserved_spots = 10
+        event.save()
+        assert event.is_full is True
+
+    def test_event_has_free_spots(self):
+        event = event_factories.EventFactory.create(maximum_number_of_guests=10)
+        assert event.free_spots == 10
+        event.reserved_spots = 5
+        event.save()
+        assert event.free_spots == 5
+
+    def test_get_reserved_spots(self):
+        event = event_factories.EventFactory.create(maximum_number_of_guests=10)
+        assert event.get_reserved_spots() == 0
+        event_reservation = reservation_factories.EventReservationFactory.create(
+            event_id=event.pk,
+        )
+        event_reservation_line = reservation_factories.ReservationLineFactory.create(
+            reservation_id=event_reservation.pk,
+            amount=5,
+        )
+        event_reservation.lines.set([event_reservation_line])
+        assert event_reservation.organization_confirm()
+        assert event_reservation.requester_confirm()
+        assert event_reservation.is_confirmed
+        assert event_reservation.total_amount == 5
+        assert event.get_reserved_spots() == 5
+
+    def test_applicable_reservation_settings(self, faker):
+        concept = event_factories.ConceptFactory.create()
+        assert concept.reservation_settings is None
+        event = event_factories.EventFactory.create(concept_id=concept.pk)
+        assert event.applicable_reservation_settings is None
+
+        settings_from_concept = (
+            reservation_factories.EventReservationSettingsFactory.create()
+        )
+        concept.reservation_settings_id = settings_from_concept.pk
+        concept.save()
+
+        event.refresh_from_db()
+        assert concept.reservation_settings is not None
+        assert event.applicable_reservation_settings == settings_from_concept
+
+        settings_from_event = (
+            reservation_factories.EventReservationSettingsFactory.create()
+        )
+        event.reservation_settings_id = settings_from_event.pk
+        event.save()
+
+        assert event.applicable_reservation_settings == settings_from_event
+
+    def test_applicable_event_reservation_payment_settings(self):
+        concept = event_factories.ConceptFactory.create()
+        assert concept.event_reservation_payment_settings is None
+        event = event_factories.EventFactory.create(concept_id=concept.pk)
+        assert event.event_reservation_payment_settings is None
+
+        payment_settings_from_concept = (
+            payment_factories.EventReservationPaymentSettingsFactory.create()
+        )
+        concept.event_reservation_payment_settings_id = payment_settings_from_concept.pk
+        concept.save()
+
+        event.refresh_from_db()
+        assert concept.event_reservation_payment_settings is not None
+        assert (
+            event.applicable_event_reservation_payment_settings
+            == payment_settings_from_concept
+        )
+
+        payment_settings_from_event = (
+            payment_factories.EventReservationPaymentSettingsFactory.create()
+        )
+        event.event_reservation_payment_settings_id = payment_settings_from_event.pk
+        event.save()
+
+        assert (
+            event.applicable_event_reservation_payment_settings
+            == payment_settings_from_event
+        )
+
+    def test_show_progress_bar(self):
+        event = event_factories.EventFactory.create(maximum_number_of_guests=100)
+        assert event.show_progress_bar is False
+
+        settings = reservation_factories.EventReservationSettingsFactory(
+            always_show_progress_bar=False,
+        )
+        event.reservation_settings_id = settings.pk
+        event.save()
+        assert event.show_progress_bar is False
+
+        settings = reservation_factories.EventReservationSettingsFactory(
+            always_show_progress_bar=True,
+        )
+        event.reservation_settings_id = settings.pk
+        event.save()
+        assert event.show_progress_bar is True
+
+        settings = reservation_factories.EventReservationSettingsFactory(
+            show_progress_bar_when_x_percentage_reached=None,
+        )
+        event.reservation_settings_id = settings.pk
+        assert event.show_progress_bar is False
+
+        settings = reservation_factories.EventReservationSettingsFactory(
+            show_progress_bar_when_x_percentage_reached=50,
+        )
+        event.reservation_settings_id = settings.pk
+        event_reservation = reservation_factories.EventReservationFactory()
+        reservation_factories.ReservationLineFactory(
+            amount=50,
+            reservation_id=event_reservation.pk,
+        )
+        event_reservation.save()
+        event_reservation.organization_confirm()
+        event_reservation.requester_confirm()
+        event.refresh_from_db()
+
+        assert event.show_progress_bar is True
+
+
+@pytest.mark.django_db
+class TestSingleEvent:
+    def test_reservations_are_closed(self):
+        birthday_event = event_factories.BirthdayEventFactory.create(
+            allow_reservations=False,
+        )
+        assert birthday_event.reservations_are_closed is True
+
+        birthday_event = event_factories.BirthdayEventFactory.create(
+            allow_reservations=True,
+        )
+        assert birthday_event.reservations_are_closed is False
+
+        settings = reservation_factories.EventReservationSettingsFactory.create(
+            close_reservation_interval=EventReservationSettings.CloseReservationInterval.AT_START,
+        )
+        birthday_event = event_factories.BirthdayEventFactory.create(
+            reservation_settings_id=settings.pk,
+            starting_at=ITS_NOW,
+        )
+        assert birthday_event.reservations_are_closed is True
+
+
+@pytest.mark.django_db
+class TestBirthdayEvent:
+    def test_warnings(self):
+        birthday_event = event_factories.BirthdayEventFactory.create(
+            allow_reservations=False,
+        )
+        assert len(birthday_event.warnings) >= 1
+
+        birthday_person = event_factories.EventAttendeeFactory()
+        event_factories.AttendeeRoleFactory.create(
+            role=event_models.AttendeeRole.RoleType.BIRTHDAY_PERSON,
+            event_attendee_id=birthday_person.pk,
+        )
+        birthday_event.attendees.add(birthday_person)
+        assert len(birthday_event.warnings) == 0
 
 
 @pytest.mark.django_db

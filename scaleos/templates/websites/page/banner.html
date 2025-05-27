@@ -1,0 +1,20 @@
+{% if page.banner_image %}
+  <div class="relative w-full">
+    <!-- Banner Image -->
+    <img src="{{ page.banner_image.image.url }}"
+         alt="{{ page.banner_image.image.alt }}"
+         class="w-full h-auto object-cover"
+         style="min-height: {{ page.banner_height }}" />
+    <!-- Gradient Overlay -->
+    <div class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/40"></div>
+    <!-- Centered Content -->
+    <div class="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-4 animate-in fade-in duration-1000">
+      <h1 class="text-5xl md:text-6xl drop-shadow-lg  animate__animated animate__fadeInDown">
+        {{ page.banner_title|safe }}
+      </h1>
+      <p class="mt-4 text-xl md:text-2xl drop-shadow-md animate__animated animate__fadeInUp animate__delay-1s">
+        {{ page.banner_slogan|safe }}
+      </p>
+    </div>
+  </div>
+{% endif %}

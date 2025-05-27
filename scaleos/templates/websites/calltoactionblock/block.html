@@ -1,0 +1,4 @@
+{% for calltoactionblockitem in block.items.all %}
+  {{ calltoactionblockitem.call_to_action.detail_template }}
+  {% include calltoactionblockitem.call_to_action.detail_template with calltoaction=calltoactionblockitem.call_to_action %}
+{% endfor %}

@@ -1,7 +1,5 @@
-<ul x-data
-    x-masonry
-    class="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-8">
+<ul class="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
   {% for card in cards %}
-    <li class="rounded-lg">{% include card.card_template %}</li>
+    <li class="break-inside-avoid rounded-lg">{% include card.card_template %}</li>
   {% endfor %}
 </ul>

@@ -1,0 +1,8 @@
+<label for="{{ search_field }}"
+       class="block text-sm font-semibold text-gray-700 mb-1">{{ search_field|capfirst }}</label>
+<select id="{{ search_field }}"
+        name="{{ search_field }}"
+        multiple
+        placeholder="Select {{ search_field }}...">
+  {% for key, value in select_options %}<option value="{{ key }}">{{ value }}</option>{% endfor %}
+</select>

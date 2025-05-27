@@ -386,6 +386,9 @@ class PriceMatrixItem(PolymorphicModel, AdminLinkMixin, PublicKeyField, NameFiel
         if self.price.first() is None:
             return True
 
+        if self.price.first().vat_included is None:
+            return True
+
         return self.price.first().vat_included.amount == 0
 
     @property
@@ -619,28 +622,6 @@ class PaymentRequest(AdminLinkMixin, LogInfoFields, OriginFields, PublicKeyField
     @property
     def payment_methods(self):
         return self.to_organization.payment_methods.all()
-
-    def save(self, *args, **kwargs):
-        if not self.structured_reference_be:
-            # Use the invoice number as base number
-            self.structured_reference_be = (
-                ReferenceGenerator.generate_structured_reference(
-                    base_number=self.pk,
-                    decorated=True,
-                )
-            )
-        else:
-            # Optional: validate manually if needed
-            ReferenceGenerator.validate_structured_reference(
-                self.structured_reference_be,
-            )
-
-        if not self.structured_reference_sepa:
-            self.structured_reference_sepa = (
-                ReferenceGenerator.generate_iso11649_reference(base_number=self.pk)
-            )
-
-        super().save(*args, **kwargs)
 
     def structured_reference_plain(self):
         """Returns plain numeric version (without slashes and +++)."""
@@ -1091,7 +1072,7 @@ class EventReservationPaymentCondition(PaymentCondition):
                     self.percentage_of_total_price,
                 )
             case self.PrepaymentType.REMAINING_PRICE:
-                return self.get_remaining_price()
+                return self.get_remaining_price(event_reservation)
 
         return None
 
@@ -1162,6 +1143,16 @@ class VoucherPaymentMethod(
     class Meta:
         verbose_name = _("voucher")
         verbose_name_plural = _("vouchers")
+
+
+class MolliePaymentMethod(
+    PaymentMethod,
+):
+    api_key = models.CharField(max_length=255, default="", blank=False)
+
+    class Meta:
+        verbose_name = _("Mollie")
+        verbose_name_plural = _("Mollie")
 
 
 class EPCMoneyTransferPaymentMethod(PaymentMethod):

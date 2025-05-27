@@ -1,0 +1,12 @@
+{# generated via manage create_html_scripts #}
+{% load i18n %}
+
+{% block button %}
+  <a href="{{ calltoaction.cta_link }}"
+     style="color: {{ calltoaction.button_text_color }};
+            background-color: {{ calltoaction.button_color }};
+            padding: 15px 25px;
+            border-radius: 2px;
+            text-decoration: none"
+     class="animate__animated animate__bounce animate__infinite">{{ calltoaction.button_text|safe }}</a>
+{% endblock button %}

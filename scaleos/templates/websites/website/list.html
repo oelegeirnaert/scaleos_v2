@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  {% for website in website_list %}
+    <a href="{% url 'websites:website' website.domain_name %}">{{ website }}</a>
+  {% endfor %}
+{% endblock content %}

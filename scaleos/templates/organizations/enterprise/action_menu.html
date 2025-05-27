@@ -1,6 +1,16 @@
 {# generated via manage create_html_scripts #}
 {% load i18n %}
 
+{% if card %}
+  {% if card.website %}
+    <a class="text-gray-500 transition hover:text-gray-500/75"
+       href="{% url 'websites:website' card.website.domain_name %}">{% trans 'website'|capfirst %}</a>
+  {% endif %}
+  <a class="text-gray-500 transition hover:text-gray-500/75"
+     href="{% url 'organizations:concepts' card.slug %}">{% trans 'concepts'|capfirst %}</a>
+  <a class="text-gray-500 transition hover:text-gray-500/75"
+     href="{% url 'organizations:events' card.slug %}">{% trans 'events'|capfirst %}</a>
+{% endif %}
 {% if active_organization.slug %}
   <li>
     <a class="text-gray-500 transition hover:text-gray-500/75"

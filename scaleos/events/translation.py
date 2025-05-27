@@ -25,6 +25,13 @@ class EventTranslationOptions(TranslationOptions):
 translator.register(event_models.Event, EventTranslationOptions)
 
 
+class SingleEventTranslationOptions(TranslationOptions):
+    pass
+
+
+translator.register(event_models.SingleEvent, SingleEventTranslationOptions)
+
+
 class WeddingEventTranslationOptions(TranslationOptions):
     pass
 
@@ -37,6 +44,13 @@ class BrunchEventTranslationOptions(TranslationOptions):
 
 
 translator.register(event_models.BrunchEvent, BrunchEventTranslationOptions)
+
+
+class EventMixTranslationOptions(TranslationOptions):
+    pass
+
+
+translator.register(event_models.EventMix, EventMixTranslationOptions)
 
 
 class DanceEventTranslationOptions(TranslationOptions):

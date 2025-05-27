@@ -5,6 +5,11 @@ from scaleos.events import views as event_views
 app_name = "events"
 urlpatterns = [
     path(
+        "",
+        view=event_views.event,
+        name="event",
+    ),
+    path(
         "<str:event_public_key>/",
         view=event_views.event,
         name="event",

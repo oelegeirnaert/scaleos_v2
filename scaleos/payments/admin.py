@@ -1,7 +1,4 @@
 from django.contrib import admin
-from django.contrib.contenttypes.models import ContentType
-from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from polymorphic.admin import PolymorphicChildModelAdmin
 from polymorphic.admin import PolymorphicChildModelFilter
@@ -13,32 +10,9 @@ from scaleos.payments import models as payment_models
 from scaleos.shared.admin import LogInfoAdminMixin
 from scaleos.shared.admin import LogInfoInlineAdminMixin
 from scaleos.shared.admin import LogInfoStackedInlineAdminMixin
-from scaleos.shared.admin import OriginStackedAdminMixin
-from scaleos.shared.admin import generic_relation_reverse_link
+from scaleos.shared.admin import build_generic_relation_link
 
 # Register your models here.
-
-
-def price_link(self, obj):
-    """Displays a link to edit the Price or an ADD button if missing."""
-    if obj.id is None:
-        return _("add your price after saving...")
-
-    price = obj.price.first()  # Using GenericRelation
-
-    if price:
-        url = reverse(
-            "admin:payments_price_change",
-            args=[price.id],
-        )  # Adjust "app_price" based on your app name
-        return mark_safe(f'<a href="{url}">Edit {price}</a>')  # noqa: S308
-    unique_content_type_id = ContentType.objects.get_for_model(obj).id
-    add_url = reverse(
-        "admin:payments_price_add",
-    )  # Adjust "app_price" based on your app name
-    return mark_safe(  # noqa: S308
-        f'<a href="{add_url}?unique_origin_content_type={unique_content_type_id}&unique_origin_object_id={obj.id}" class="button">➕ Add Price</a>',  # noqa: E501, RUF001
-    )
 
 
 class VATPriceLineInlineAdmin(admin.TabularInline):
@@ -48,56 +22,17 @@ class VATPriceLineInlineAdmin(admin.TabularInline):
     readonly_fields = ["vat_included", "vat_excluded", "vat"]
 
 
-class PriceLinkTabularStackedAdminMixin(admin.StackedInline):
-    @admin.display(
-        description="Price",
-    )
-    def price_link(self, obj):
-        return price_link(self, obj)
-
-    readonly_fields = ["price_link"]
-
-
-class PriceLinkTabularInlineAdminMixin(admin.TabularInline):
-    @admin.display(
-        description="Price",
-    )
-    def price_link(self, obj):
-        return price_link(self, obj)
-
-    readonly_fields = ["price_link"]
-
-
-class PriceLinkAdminMixin(admin.ModelAdmin):
-    @admin.display(
-        description="Price",
-    )
-    def price_link(self, obj):
-        return price_link(self, obj)
-
-    readonly_fields = ["price_link"]
-
-
 class PaymentProposalInlineAdmin(
     LogInfoStackedInlineAdminMixin,
-    PriceLinkTabularStackedAdminMixin,
 ):
     model = payment_models.PaymentProposal
     extra = 0
     show_change_link = True
-    readonly_fields = ["origin_link", *LogInfoStackedInlineAdminMixin.readonly_fields]
-
-    @admin.display(
-        description=_("origin link"),
-    )
-    def origin_link(self, obj):
-        return generic_relation_reverse_link(self, obj, "origin")
 
 
 class PaymentInlineAdmin(
     StackedPolymorphicInline,
     LogInfoInlineAdminMixin,
-    OriginStackedAdminMixin,
 ):
     """
     An inline for a polymorphic model.
@@ -108,7 +43,6 @@ class PaymentInlineAdmin(
     class PaymentInlineAdmin(
         StackedPolymorphicInline.Child,
         LogInfoInlineAdminMixin,
-        OriginStackedAdminMixin,
     ):
         model = payment_models.Payment
         show_change_link = True
@@ -116,7 +50,6 @@ class PaymentInlineAdmin(
     class EPCMoneyTransferPaymentInlineAdmin(
         StackedPolymorphicInline.Child,
         LogInfoInlineAdminMixin,
-        OriginStackedAdminMixin,
     ):
         model = payment_models.EPCMoneyTransferPayment
         show_change_link = True
@@ -159,7 +92,6 @@ class BulkPriceMatrixItemInlineAdmin(admin.TabularInline):
 @admin.register(payment_models.Price)
 class PriceAdmin(LogInfoAdminMixin):
     readonly_fields = [
-        "unique_origin_link",
         "previous_price",
         "vat_included",
         "vat_excluded",
@@ -167,15 +99,9 @@ class PriceAdmin(LogInfoAdminMixin):
         "public_key",
         *LogInfoAdminMixin.readonly_fields,
     ]
-    list_display = ["id", "__str__", "unique_origin_link"]
+    list_display = ["id", "__str__"]
     inlines = [VATPriceLineInlineAdmin, PriceHistoryInlineAdmin]
     list_filter = ["organization"]
-
-    @admin.display(
-        description=_("unique origin link"),
-    )
-    def unique_origin_link(self, obj):
-        return generic_relation_reverse_link(self, obj, "unique_origin")
 
 
 @admin.register(payment_models.AgePriceMatrix)
@@ -206,7 +132,7 @@ class PriceMatrixAdmin(PolymorphicParentModelAdmin):
 
 
 @admin.register(payment_models.AgePriceMatrixItem)
-class AgePriceMatrixItemAdmin(PriceLinkAdminMixin):
+class AgePriceMatrixItemAdmin(admin.ModelAdmin):
     pass
 
 
@@ -238,7 +164,6 @@ class EPCMoneyTransferPaymentAdmin(
 class PaymentRequestAdmin(
     PolymorphicInlineSupportMixin,
     LogInfoAdminMixin,
-    PriceLinkAdminMixin,
 ):
     inlines = [PaymentProposalInlineAdmin, PaymentInlineAdmin]
     readonly_fields = [
@@ -247,11 +172,9 @@ class PaymentRequestAdmin(
         "still_to_pay",
         "fully_paid",
         "payment_methods",
-        "origin_link",
         "structured_reference_be",
         "structured_reference_sepa",
         *LogInfoAdminMixin.readonly_fields,
-        *PriceLinkAdminMixin.readonly_fields,
     ]
     list_display = [
         "id",
@@ -264,22 +187,19 @@ class PaymentRequestAdmin(
     ]
     list_filter = ["to_organization", "to_person"]
 
-    @admin.display(
-        description=_("origin link"),
-    )
-    def origin_link(self, obj):
-        return generic_relation_reverse_link(self, obj, "origin")
-
 
 @admin.register(payment_models.PriceMatrixItem)
 class PriceMatrixItemAdmin(admin.ModelAdmin):
-    readonly_fields = ["current_price", "price_link"]
+    readonly_fields = ["price"]
 
-    @admin.display(
-        description=_("price link"),
-    )
-    def price_link(self, obj):
-        return generic_relation_reverse_link(self, obj, "price")
+    @admin.display(description=_("price"))
+    def price(self, obj):
+        # Use the helper function with the correct attribute name ('notification')
+        return build_generic_relation_link(
+            obj,
+            field_name="price",
+            related_model=payment_models.Price,
+        )
 
 
 @admin.register(payment_models.PaymentSettings)
@@ -335,7 +255,7 @@ class VoucherPaymentMethodAdmin(PolymorphicChildModelAdmin, LogInfoAdminMixin):
 
 
 @admin.register(payment_models.PaymentProposal)
-class PaymentProposalAdmin(PriceLinkAdminMixin):
+class PaymentProposalAdmin(admin.ModelAdmin):
     pass
 
 

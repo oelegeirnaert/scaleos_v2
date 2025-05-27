@@ -16,6 +16,7 @@ from scaleos.events.models import CustomerConcept
 from scaleos.organizations import models as organization_models
 from scaleos.organizations import tasks as organization_tasks
 from scaleos.organizations.forms import ResengoExcelUploadForm
+from scaleos.shared.views import page_or_list_page
 
 logger = logging.getLogger(__name__)
 
@@ -65,11 +66,10 @@ def organization(request, organization_slug=None):
         organizations = organization_models.Organization.objects.filter(
             published_on__isnull=False,
         )
-        context["organizations"] = organizations
-        return render(
+        return page_or_list_page(
             request,
-            organization_models.Organization.list_template(),
-            context,
+            organization_models.Organization,
+            alternative_resultset=organizations,
         )
 
     organization = get_object_or_404(

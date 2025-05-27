@@ -1,0 +1,25 @@
+{# generated via manage create_html_scripts #}
+{% load i18n %}
+
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">{% trans 'catering'|capfirst %}</h1>
+  {% if catering.public_dishes %}
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold tracking-wide uppercase mb-4">{% trans "dishes" %}</h2>
+      {% include 'card_list.html' with cards=catering.public_dishes %}
+    </section>
+  {% endif %}
+  {% if catering.public_menus %}
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold tracking-wide uppercase mb-4">{% trans "menus" %}</h2>
+      {% include 'card_list.html' with cards=catering.public_menus %}
+    </section>
+  {% endif %}
+  {% if catering.public_products %}
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold tracking-wide uppercase mb-4">{% trans "products" %}</h2>
+      {% include 'card_list.html' with cards=catering.public_products %}
+    </section>
+  {% endif %}
+</div>
+{% include 'staff.html' with obj=catering %}

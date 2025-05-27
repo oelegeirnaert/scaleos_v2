@@ -1,0 +1,98 @@
+{% load i18n %}
+
+{% if request.session.debug %}
+  <ul>
+    <li>Segment: {{ request.session.segment }}</li>
+    <li>Preloaded {{ preloaded }}</li>
+  </ul>
+{% endif %}
+<div class="flex items-center justify-center min-h-screen/20">
+  <h1 class="text-gray-300 italic text-4xl md:text-5xl lg:text-6xl font-semibold font-serif animate-pulse text-center px-4">
+    {% trans 'looking for a specific event'|capfirst %}?
+  </h1>
+</div>
+<form id="search-form"
+      hx-post="{% url 'events_htmx:event_filter' %}"
+      hx-trigger="load, change delay:500ms"
+      hx-target="#event_results"
+      class="space-y-6 p-6 bg-white rounded-xl shadow-lg max-w-3xl mx-auto">
+  <!-- Organizer -->
+  {% if not request.session.active_organization_id %}
+    <div hx-get="{% url 'events_htmx:organizer_options' %}"
+         hx-trigger="load"
+         hx-target="this"
+         hx-swap="innerHTML">loading organizers</div>
+  {% endif %}
+  {% if not request.session.segment %}
+    <div hx-get="{% url 'events_htmx:segment_options' %}"
+         hx-trigger="load"
+         hx-target="this"
+         hx-swap="innerHTML">loading segments</div>
+  {% endif %}
+  <div hx-get="{% url 'events_htmx:type_options' %}"
+       hx-trigger="load"
+       hx-target="this"
+       hx-swap="innerHTML">loading event types</div>
+  <div hx-get="{% url 'events_htmx:year_options' %}"
+       hx-trigger="load"
+       hx-target="this"
+       hx-swap="innerHTML">loading years</div>
+  <div hx-get="{% url 'events_htmx:month_options' %}"
+       hx-trigger="load"
+       hx-target="this"
+       hx-swap="innerHTML">loading months</div>
+  <div hx-get="{% url 'events_htmx:day_options' %}"
+       hx-trigger="load"
+       hx-target="this"
+       hx-swap="innerHTML">loading days</div>
+  <!-- Buttons -->
+  <div class="flex justify-end gap-4">
+    <button type="reset"
+            class="border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-100 transition">
+      Reset
+    </button>
+    <button type="submit"
+            class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition">
+      Apply Filters
+    </button>
+  </div>
+</form>
+<div id="event_results" class="mt-6">
+  {% if preloaded %}
+    {% include 'card_list.html' with cards=preloaded %}
+  {% endif %}
+</div>
+<script>
+  function initTomSelects(context = document) {
+    const selects = context.querySelectorAll('select[multiple]');
+
+    selects.forEach(select => {
+      if (!select.tomselect) {
+        new TomSelect(select);
+      }
+    });
+  }
+
+  // Initialize on full page load
+  document.addEventListener('DOMContentLoaded', () => {
+    initTomSelects();
+
+    // Attach reset handler
+    const form = document.getElementById('search-form');
+    form.addEventListener('reset', function() {
+      setTimeout(() => {
+        const selects = form.querySelectorAll('select[multiple]');
+        selects.forEach(select => {
+          if (select.tomselect) {
+            select.tomselect.clear(); // Reset selection
+          }
+        });
+      }, 0); // Delay to let native reset run first
+    });
+  });
+
+  // Re-initialize after HTMX swaps
+  document.body.addEventListener('htmx:afterSettle', (e) => {
+    initTomSelects(e.target);
+  });
+</script>

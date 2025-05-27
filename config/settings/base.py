@@ -118,6 +118,8 @@ THIRD_PARTY_APPS = [
     "dbbackup",
     "colorfield",
     "django_celery_results",
+    "admin_ordering",
+    "taggit",
     # "templated_email",
 ]
 
@@ -135,6 +137,11 @@ LOCAL_APPS = [
     "scaleos.buildings",
     "scaleos.hardware",
     "scaleos.software",
+    "scaleos.websites",
+    "scaleos.stores",
+    "scaleos.files",
+    "scaleos.catering",
+    "scaleos.timetables",
     # Your stuff: custom apps go here
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -451,3 +458,5 @@ SOFTWARE_OWNING_COMPANY_REGISTERED_COUNTRY = env(
     "SOFTWARE_OWNING_COMPANY_REGISTERED_COUNTRY",
     default="BE",
 )
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000  # or a number that suits your use case

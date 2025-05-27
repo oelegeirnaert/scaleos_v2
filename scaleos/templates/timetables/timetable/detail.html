@@ -1,0 +1,50 @@
+{# generated via manage create_html_scripts #}
+{% load i18n %}
+
+<div class="p-10">
+  <div class="max-w-xl mx-auto p-6 bg-white rounded-md shadow space-y-6">
+    <!-- Header -->
+    <div class="text-center">
+      <h1 class="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+        <i data-lucide="clock" class="w-5 h-5"></i>
+        {{ timetable.content_object }}
+      </h1>
+    </div>
+    <!-- Status Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Open Today -->
+      <div class="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
+        <span class="flex items-center gap-2 text-gray-700 font-medium">
+          <i data-lucide="calendar-days" class="w-5 h-5"></i>
+          Open Today?
+        </span>
+        <span class="text-sm font-semibold">{{ timetable.is_open_today.0|yesno:"Yes,No" }}</span>
+      </div>
+      <!-- Open Now -->
+      <div class="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
+        <span class="flex items-center gap-2 text-gray-700 font-medium">
+          <i data-lucide="activity" class="w-5 h-5"></i>
+          Open Now?
+        </span>
+        <span class="text-sm font-semibold">{{ timetable.is_open_now.0|yesno:"Yes,No" }}</span>
+      </div>
+      <!-- Next Opening Block -->
+      <div class="flex items-center justify-between p-4 bg-gray-100 rounded-lg col-span-1 sm:col-span-2">
+        <span class="flex items-center gap-2 text-gray-700 font-medium">
+          <i data-lucide="calendar-clock" class="w-5 h-5"></i>
+          {{ timetable.next_open_block_text|default:"N/A"|capfirst }}
+        </span>
+      </div>
+    </div>
+    <!-- Current Date & Time -->
+    <div class="text-sm text-gray-600 text-center">
+      <div class="flex justify-center gap-2 items-center">
+        <i data-lucide="clock" class="w-4 h-4 text-gray-500"></i>
+        {{ current_time }}
+      </div>
+    </div>
+    {% for dayplanning in weekplanning %}
+      {% include 'timetables/calendar/day_planning.html' with dayplanning=dayplanning %}
+    {% endfor %}
+  </div>
+</div>

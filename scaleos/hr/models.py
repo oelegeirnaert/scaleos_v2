@@ -52,7 +52,7 @@ class Person(
         blank=True,
     )
 
-    birthday = models.DateField(null=True, blank=True)
+    birthday = models.DateField(verbose_name=_("birthday"), null=True, blank=True)
 
     def __str__(self):
         if self.first_name and self.family_name:

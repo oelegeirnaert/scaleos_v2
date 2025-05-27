@@ -1,68 +1,8 @@
 {# generated via manage create_html_scripts #}
+{% extends 'events/event/detail.html' %}
+
 {% load i18n %}
 
-<div class="mt-5 mb-10 flow-root rounded-sm border border-gray-400 py-3 shadow-xs">
-  <dl class="-my-3 divide-y divide-gray-200 text-sm">
-    <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-      <dt class="text-gray-700 text-left md:text-right">{% trans "what"|capfirst %}</dt>
-      <dd class="font-medium text-gray-900 sm:col-span-2">
-        {{ event }}
-      </dd>
-    </div>
-    <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-      <dt class="text-gray-700 text-left md:text-right">{% trans "when"|capfirst %}</dt>
-      <dd class="font-medium text-gray-900 sm:col-span-2">
-        {{ event.starting_at }} - {{ event.ending_on }}
-      </dd>
-    </div>
-    <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-      <dt class="text-gray-700 text-left md:text-right">{% trans "spots"|capfirst %}</dt>
-      <dd class="font-medium text-gray-900 sm:col-span-2">
-        {{ event.reserved_spots }}/{{ event.free_spots }}
-      </dd>
-    </div>
-    <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-      <dt class="text-gray-700 text-left md:text-right">{% trans "pricing"|capfirst %}</dt>
-      <dd class="font-medium text-gray-900 sm:col-span-2">
-        {% if event.current_price_matrix %}
-          {{ event.current_price_matrix }}
-          {% include event.current_price_matrix.detail_template with pricematrix=event.current_price_matrix event=event %}
-        {% else %}
-          {% trans "no pricing set"|capfirst %}
-        {% endif %}
-        {% include 'staff.html' with obj=event.current_price_matrix %}
-      </dd>
-    </div>
-    {% if is_organization_employee %}
-      <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-        <dt class="text-gray-700 text-left md:text-right">{% trans "reservations are closed"|capfirst %}</dt>
-        <dd class="font-medium text-gray-900 sm:col-span-2">
-          {{ event.reservations_are_closed }}
-        </dd>
-      </div>
-      <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-        <dt class="text-gray-700 text-left md:text-right">{% trans "reservations closed on"|capfirst %}</dt>
-        <dd class="font-medium text-gray-900 sm:col-span-2">
-          {{ event.reservations_closed_on }}
-        </dd>
-      </div>
-      <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-        <dt class="text-gray-700 text-left md:text-right">{% trans "reservation settings"|capfirst %}</dt>
-        <dd class="font-medium text-gray-900 sm:col-span-2">
-          {{ event.applicable_reservation_settings }}
-          {% include 'staff.html' with obj=event.applicable_reservation_settings %}
-        </dd>
-      </div>
-      <div class="grid grid-cols-1 gap-1 p-3 even:bg-gray-50 sm:grid-cols-3 sm:gap-4">
-        <dt class="text-gray-700 text-left md:text-right"># {% trans "reservations"|capfirst %}</dt>
-        <dd class="font-medium text-gray-900 sm:col-span-2">
-          {{ event.reservations.count }}
-        </dd>
-      </div>
-      {% for eventreservation in event.reservations.all %}{{ eventreservation }}{% endfor %}
-    {% endif %}
-  </dl>
-</div>
 {{ event.action_menu }}
 {% include event.action_menu %}
 {% include 'staff.html' with obj=event %}

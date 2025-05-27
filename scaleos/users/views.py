@@ -97,32 +97,6 @@ def account(request):
 
 
 @login_required
-def reservation(request, reservation_public_key=None):
-    from scaleos.reservations.models import Reservation
-
-    user = request.user
-    reservations = Reservation.objects.filter(user_id=user.pk)
-    return render(
-        request,
-        user.page_template,
-        {"user": user, "reservations": reservations},
-    )
-
-
-@login_required
-def notification(request, notification_public_key=None):
-    from scaleos.notifications.models import UserNotification
-
-    user = request.user
-    notifications = UserNotification.objects.filter(to_user_id=user.pk)
-    return render(
-        request,
-        user.page_template,
-        {"user": user, "notifications": notifications},
-    )
-
-
-@login_required
 def organization(request, organization_public_key=None):
     from scaleos.organizations.models import Organization
 

@@ -114,14 +114,6 @@ class User(AbstractUser, AdminLinkMixin):
 
         return "en"
 
-    @property
-    def has_notifications(self):
-        return self.notifications.count() > 0
-
-    @cached_property
-    def has_reservations(self):
-        return self.reservations.count() > 0
-
     def set_first_and_family_name(
         self,
         first_name,
@@ -135,3 +127,27 @@ class User(AbstractUser, AdminLinkMixin):
                 family_name,
                 overwrite_existing=overwrite_existing,
             )
+
+    @property
+    def has_guest_invites(self):
+        return self.guest_invites.count() > 0
+
+    @property
+    def guestinvite_list(self):
+        return self.guest_invites.all()
+
+    @cached_property
+    def has_reservations(self):
+        return self.reservations.count() > 0
+
+    @property
+    def reservation_list(self):
+        return self.reservations.all()
+
+    @property
+    def has_notifications(self):
+        return self.notifications.count() > 0
+
+    @property
+    def notification_list(self):
+        return self.notifications.all()

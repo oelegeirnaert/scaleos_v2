@@ -3,6 +3,20 @@
 
 {% load i18n %}
 
+{% block card_details %}
+  <ul class="grid grid-cols-1 sm:grid-cols-1 gap-x-4 gap-y-1 text-gray-600 text-sm">
+    {% if card.headquarter %}
+      <li class="mt-5 flex items-center gap-2">
+        <i data-lucide="building-2" class="w-4 h-4"></i>
+        <span>{{ card.headquarter }}</span>
+      </li>
+    {% endif %}
+    <li class="mt-5 flex items-center gap-2">
+      <i data-lucide="shield-check" class="w-4 h-4"></i>
+      <span>{% trans 'vat number'|title %}: {{ card.vat_number }}</span>
+    </li>
+  </ul>
+{% endblock card_details %}
 {% block card_actions %}
   {% include card.action_menu %}
 {% endblock card_actions %}

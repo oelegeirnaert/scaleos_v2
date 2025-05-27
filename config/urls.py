@@ -45,7 +45,7 @@ urlpatterns = [
         include("qr_code.urls", namespace="qr_code"),
     ),
     path(
-        "notification",
+        "notification/",
         include("scaleos.notifications.urls", namespace="notifications"),
     ),
     path(
@@ -65,6 +65,14 @@ urlpatterns = [
         include("scaleos.organizations.urls", namespace="organizations"),
     ),
     path(
+        "website/",
+        include("scaleos.websites.urls", namespace="websites"),
+    ),
+    path(
+        "htmx/website/",
+        include("scaleos.websites.urls_htmx", namespace="websites_htmx"),
+    ),
+    path(
         "htmx/event/",
         include("scaleos.events.urls_htmx", namespace="events_htmx"),
     ),
@@ -79,6 +87,14 @@ urlpatterns = [
     path(
         "htmx/reservation/",
         include("scaleos.reservations.urls_htmx", namespace="reservations_htmx"),
+    ),
+    path(
+        "htmx/catering/",
+        include("scaleos.catering.urls_htmx", namespace="catering_htmx"),
+    ),
+    path(
+        "htmx/timetables/",
+        include("scaleos.timetables.urls_htmx", namespace="timetables_htmx"),
     ),
     path("hijack/", include("hijack.urls")),
     # Media files

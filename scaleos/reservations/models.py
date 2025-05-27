@@ -585,6 +585,7 @@ class ReservationUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
     is_confirmed = False
     notification_button_text_translation = _("open reservation")
     notification_button_text = notification_button_text_translation.upper()
+
     reservation = models.ForeignKey(
         Reservation,
         related_name="updates",
@@ -603,6 +604,13 @@ class ReservationUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
         blank=True,
     ) """
 
+    notification = GenericRelation(
+        "notifications.Notification",
+        related_query_name="reservation_updates",
+        content_type_field="about_content_type",
+        object_id_field="about_object_id",
+    )
+
     class Meta:
         verbose_name = _("reservation update")
         verbose_name_plural = _("reservation updates")
@@ -612,6 +620,11 @@ class ReservationUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
 
     @property
     def notification_button_link(self):
+        if self.reservation is None:
+            return None
+        if self.reservation.page_url is None:
+            return None
+
         return self.reservation.page_url
 
     def __str__(self):
@@ -656,6 +669,7 @@ class ReservationUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
                 sending_organization=self.reservation.organization,
                 to_user=self.reservation.user,
                 about_content_object=self,
+                redirect_to_content_object=self.reservation,
             )
             return True
 
@@ -686,8 +700,9 @@ class OrganizationConfirm(ReservationUpdate):
     notification_button_text_translation = _("open reservation")
     notification_button_text = notification_button_text_translation.upper()
 
-    def send_notification_logic(self):
-        return super().send_notification_logic(User)
+    @property
+    def notification_button_link(self):
+        return super().notification_button_link
 
 
 class OrganizationCancel(ReservationUpdate):
@@ -696,8 +711,9 @@ class OrganizationCancel(ReservationUpdate):
     notification_title_translation = _("your reservation has been canceled")
     notification_title = f"{notification_title_translation}. ✘".capitalize()
 
-    def send_notification_logic(self):
-        return super().send_notification_logic(User)
+    @property
+    def notification_button_link(self):
+        return super().notification_button_link
 
 
 class OrganizationTemporarilyRejected(ReservationUpdate):
@@ -723,8 +739,9 @@ class OrganizationTemporarilyRejected(ReservationUpdate):
         default=RejectReason.UNKNOWN,
     )
 
-    def send_notification_logic(self):
-        return super().send_notification_logic(User)
+    @property
+    def notification_button_link(self):
+        return super().notification_button_link
 
 
 class OrganizationRefuse(ReservationUpdate):
@@ -754,8 +771,9 @@ class OrganizationRefuse(ReservationUpdate):
         blank=True,
     )
 
-    def send_notification_logic(self):
-        return super().send_notification_logic(User)
+    @property
+    def notification_button_link(self):
+        return super().notification_button_link
 
 
 class RequesterConfirm(ReservationUpdate):
@@ -781,7 +799,7 @@ class RequesterCancel(ReservationUpdate):
         return super().send_notification_logic(Organization)
 
 
-class GuestInvite(ReservationUpdate):
+class GuestInvite(ReservationUpdate, PublicKeyField):
     passed_action = _("guest invited")
     notification_title_translation = _("you are invited")
     notification_title = f"{notification_title_translation}. 👤".capitalize()
@@ -797,6 +815,7 @@ class GuestInvite(ReservationUpdate):
 
     to_user = models.ForeignKey(
         get_user_model(),
+        related_name="guest_invites",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -856,7 +875,7 @@ class WaitingUserEmailConfirmation(ReservationUpdate):
             sending_organization=self.reservation.organization,
             to_user=self.reservation.user,
             about_content_object=self,
-            button_link=self.email_confirmation_link,
+            redirect_url=self.email_confirmation_link,
         )
 
 
@@ -884,6 +903,10 @@ class InvalidReservation(ReservationUpdate):
         default="",
         blank=True,
     )
+
+    @property
+    def notification_button_link(self):
+        return super().notification_button_link
 
     def send_notification_logic(self):
         return super().send_notification_logic(Organization)

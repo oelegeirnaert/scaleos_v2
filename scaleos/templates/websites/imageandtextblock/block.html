@@ -1,0 +1,22 @@
+<section class="w-full py-16 px-4 sm:px-6 lg:px-8"
+         style="margin-top: {{ block.margin_top }}">
+  <div class="shadow-lg max-w-screen-xl mx-auto flex flex-col-reverse sm:flex-row {% if block.image_alignment == 'LEFT' %}flex-row{% elif block.image_alignment == 'RIGHT' %}flex-row-reverse{% endif %} items-center"
+       style="background-color: {{ block.background_color }};
+              transform: rotate({{ block.rotate }}deg);
+              border-radius: 5px">
+    <!-- Image -->
+    <div class="w-full sm:w-1/2 mb-6 sm:mb-0">
+      <img src="{{ block.image.image.url }}"
+           alt="Section Image"
+           class="p-20 w-full h-auto object-cover rounded-lg" />
+    </div>
+    <!-- Text Block -->
+    <div class="w-full sm:w-1/2 px-4 py-16 sm:px-8">
+      <h2 class="text-3xl font-extrabold text-white mb-4">{{ block.name|safe }}</h2>
+      <p class="text-lg text-white">{{ block.text|safe|linebreaksbr }}</p>
+      {% for cta_block in block.call_to_actions.all %}
+        {% include cta_block.call_to_action.detail_template with cta=cta_block.call_to_action %}
+      {% endfor %}
+    </div>
+  </div>
+</section>

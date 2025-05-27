@@ -47,6 +47,9 @@ indent = 2
 max_line_length = 119
 profile = "django"
 
+[tool.djlint.per-file-ignores]
+"scaleos/templates/base.html" = "H025"
+
 [tool.djlint.css]
 indent_size = 2
 
@@ -146,6 +149,7 @@ extend-unsafe-fixes = [
     "PLR2004",   # no like in tests
     "DTZ001",    # i use nake aware in tests
 ]
+
 # END OELE
 
 [tool.ruff.lint.isort]

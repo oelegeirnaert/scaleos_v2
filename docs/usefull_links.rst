@@ -7,6 +7,7 @@ Front End
 - https://www.hyperui.dev/
 - https://js.hyperui.dev/
 - https://heroicons.com/outline
+- https://lucide.dev/icons/categories#finance
 
 Readings
 ======================================================================

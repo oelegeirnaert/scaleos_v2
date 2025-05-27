@@ -6,9 +6,10 @@ from polymorphic.admin import PolymorphicInlineSupportMixin
 from polymorphic.admin import PolymorphicParentModelAdmin
 from polymorphic.admin import StackedPolymorphicInline
 
+from scaleos.notifications.models import Notification
 from scaleos.reservations import models as reservation_models
 from scaleos.shared.admin import LogInfoAdminMixin
-from scaleos.shared.admin import generic_relation_reverse_link
+from scaleos.shared.admin import build_generic_relation_link
 
 
 class ReservationLineInlineAdmin(admin.TabularInline):
@@ -103,7 +104,6 @@ class EventReservationAdmin(
         "public_key",
         "total_amount",
         "total_payment_requests",
-        "applicable_payment_settings_link",
         "latest_organization_update",
         "organization_status",
         "latest_requester_update",
@@ -113,12 +113,6 @@ class EventReservationAdmin(
     ]
     inlines = [ReservationUpdateInlineAdmin, ReservationLineInlineAdmin]
     autocomplete_fields = ["user", *LogInfoAdminMixin.autocomplete_fields]
-
-    @admin.display(
-        description=_("applicable payment settings link"),
-    )
-    def applicable_payment_settings_link(self, obj):
-        return generic_relation_reverse_link(self, obj, "applicable_payment_settings")
 
 
 @admin.register(reservation_models.Reservation)
@@ -161,13 +155,29 @@ class ReservationUpdateAdmin(
         reservation_models.OrganizationRefuse,
         reservation_models.RequesterConfirm,
         reservation_models.RequesterCancel,
+        reservation_models.GuestInvite,
     ]
     list_filter = [PolymorphicChildModelFilter]
     autocomplete_fields = [*LogInfoAdminMixin.autocomplete_fields]
+    readonly_fields = ["notification"]
+
+    # Define the custom method to display the link
+    @admin.display(description=_("notification"))
+    def notification(self, obj):
+        # Use the helper function with the correct attribute name ('notification')
+        return build_generic_relation_link(
+            obj,
+            field_name="notification",
+            related_model=Notification,
+        )
 
 
 @admin.register(reservation_models.OrganizationConfirm)
-class OrganizationConfirmAdmin(PolymorphicChildModelAdmin, LogInfoAdminMixin):
+class OrganizationConfirmAdmin(
+    ReservationUpdateAdmin,
+    PolymorphicChildModelAdmin,
+    LogInfoAdminMixin,
+):
     base_model = reservation_models.ReservationUpdate  # Explicitly set here!
     # define custom features here
 

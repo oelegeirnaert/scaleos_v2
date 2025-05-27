@@ -63,7 +63,7 @@ class GPSFields(models.Model):
         return False  # pragma: no cover
 
 
-class Address(GPSFields, LogInfoFields, AdminLinkMixin):
+class Address(GPSFields, LogInfoFields, AdminLinkMixin, PublicKeyField):
     street = models.CharField(default="", blank=True)
     house_number = models.CharField(default="", blank=True)
     bus = models.CharField(default="", blank=True)

@@ -5,12 +5,20 @@ from django.shortcuts import render
 from django.views.decorators.cache import cache_page
 
 from scaleos.events import models as event_models
+from scaleos.shared.views import page_or_list_page
 
 logger = logging.getLogger(__name__)
 
 
 @cache_page(60 * 15)
-def event(request, event_public_key):
+def event(request, event_public_key=None):
+    alternative_resultset = event_models.Event.objects.all()
+    return page_or_list_page(
+        request,
+        event_models.Event,
+        event_public_key,
+        alternative_resultset=alternative_resultset,
+    )
     context = {}
     event = get_object_or_404(
         event_models.Event,
@@ -27,11 +35,4 @@ def event(request, event_public_key):
 
 
 def concept(request, concept_public_key):
-    context = {}
-    if concept_public_key:
-        concept = get_object_or_404(
-            event_models.Concept,
-            public_key=concept_public_key,
-        )
-        context["concept"] = concept
-    return render(request, concept.page_template, context)
+    return page_or_list_page(request, event_models.Concept, concept_public_key)

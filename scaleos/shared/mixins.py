@@ -67,6 +67,10 @@ class AdminLinkMixin(models.Model):
         return f"{self.app_label}/{self.model_name}/page.html"
 
     @cached_property
+    def block_template(self):
+        return f"{self.app_label}/{self.model_name}/block.html"
+
+    @cached_property
     def page_url(self):
         try:
             url = reverse(

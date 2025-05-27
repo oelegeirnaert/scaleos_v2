@@ -1,0 +1,10 @@
+{# generated via manage create_html_scripts #}
+{% load i18n %}
+
+{% if request.path != cta.cta_link %}
+  <a href="{{ cta.cta_link }}"
+     class="mt-5 font-bold group flex items-center justify-center overflow-hidden rounded-md bg-{{ TAILWIND_THEME_COLORS.primary }} px-4 py-3 text-white transition-all duration-300 ease-in-out focus:outline-none focus:ring-3 focus:ring-yellow-400 cursor-pointer sm:w-auto"
+     style="color: {{ cta.button_text_color }};
+            background-color: {{ cta.button_color }}">{{ cta.button_text }}</a>
+{% endif %}
+{% include 'staff.html' with obj=cta %}

@@ -101,7 +101,7 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
 
     about_content_type = models.ForeignKey(
         ContentType,
-        related_name="notifications",
+        related_name="about_notifications",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -109,6 +109,19 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
     about_object_id = models.PositiveIntegerField(null=True, blank=True)
     about_content_object = GenericForeignKey("about_content_type", "about_object_id")
 
+    redirect_to_content_type = models.ForeignKey(
+        ContentType,
+        related_name="redirect_to_notifications",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    redirect_to_object_id = models.PositiveIntegerField(null=True, blank=True)
+    redirect_to_content_object = GenericForeignKey(
+        "redirect_to_content_type",
+        "redirect_to_object_id",
+    )
+    redirect_url = models.URLField(default="", blank=True, max_length=300)
     result = models.CharField(
         max_length=50,
         choices=NotificationResult.choices,
@@ -123,31 +136,61 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
         verbose_name = _("notification")
         verbose_name_plural = _("notifications")
 
-    @property
-    def redirect_url(self):
+    def set_redirect_url(self):
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Set redirect url")
+        the_url = self.redirect_url
+        if not is_blank(the_url):
+            logger.debug("we already have a redirect url: %s", the_url)
+            self.redirect_url = self.make_outgoing_link(self.redirect_url)
+            return
+
+        if self.redirect_to_content_object:
+            redirect_url = self.get_redirect_url(self.redirect_to_content_object)
+            if not is_blank(redirect_url):
+                self.redirect_url = self.make_outgoing_link(redirect_url)
+                return
+
         if self.about_content_object:
+            redirect_url = self.get_redirect_url(self.about_content_object)
+            if not is_blank(redirect_url):
+                self.redirect_url = self.make_outgoing_link(redirect_url)
+                return
+
+    def get_redirect_url(self, a_field):
+        logger.setLevel(logging.DEBUG)
+        if a_field:
             try:
-                app_label = self.about_content_object.app_label
-                model_name = self.about_content_object.model_name
+                app_label = a_field.app_label
+                model_name = a_field.model_name
                 the_kwarg = f"{model_name}_public_key"
-                if not hasattr(self.about_content_object, the_kwarg):
-                    msg = f"The model name {model_name} from app {app_label} has no attribute {the_kwarg}"  # noqa: E501
+                pk_field = "public_key"
+                if not hasattr(a_field, pk_field):
+                    msg = f"The model name {model_name} from app {app_label} has no attribute {pk_field}"  # noqa: E501
                     logger.warning(msg)
                     return None
                 logger.debug(
-                    "Trying find the redirect: %s:%s with kwarg %s",
+                    "Trying to find the redirect: %s:%s with kwarg %s",
                     app_label,
                     model_name,
                     the_kwarg,
                 )
-                return reverse(
+                the_url = reverse(
                     f"{app_label}:{model_name}",
-                    kwargs={the_kwarg: self.about_content_object.public_key},
+                    kwargs={the_kwarg: a_field.public_key},
                 )
+                logger.debug("Reverse match found: %s", the_url)
+
             except NoReverseMatch:
-                pass
+                logger.debug("no reverse match")
+                return None
             except AttributeError:
-                pass
+                logger.debug("attribute error")
+                return None
+            else:
+                return the_url
+        logger.debug("no redirect url for %s", model_name)
+
         return None
 
     @property
@@ -186,6 +229,10 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
 
         return {}  # should return an empty dict for apply_async
 
+    @cached_property
+    def first_allowed_host(self):
+        return settings.ALLOWED_HOSTS[0]
+
     @property
     def base_url(self):
         logger.debug("Getting base url")
@@ -201,14 +248,22 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
                 logger.debug(base_url)
                 return get_base_url_from_string(base_url)
         except KeyError:
-            return "https://scaleos.com"
+            return f"https://{self.first_allowed_host}"
         else:
-            return "https://scaleos.com"
+            return f"https://{self.first_allowed_host}"
+
+    @cached_property
+    def show_notification_url(self):
+        relative_url = reverse(
+            "notifications:notification",
+            kwargs={"notification_public_key": self.public_key},
+        )
+        return f"{self.base_url}{relative_url}"
 
     @cached_property
     def open_notification_url(self):
         relative_url = reverse(
-            "notifications:notification",
+            "notifications:open_notification",
             kwargs={"notification_public_key": self.public_key},
         )
         return f"{self.base_url}{relative_url}"
@@ -219,6 +274,7 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
         if hasattr(self, "language") and self.language:
             translation.activate(self.language)
 
+        self.set_redirect_url()
         self.set_sending_organization()
         self.set_title()
         self.set_message()
@@ -359,24 +415,11 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
 
     def set_button_link(self):
         if not is_blank(self.button_link):
-            self.button_link = self.make_outgoing_link(self.button_link)
             return
 
-        if hasattr(self, "notification"):
-            if hasattr(self.notification, "button_link"):
-                a_link = self.notification.button_link
-                if not a_link:
-                    self.button_link = self.make_outgoing_link(a_link)
-                    return
-
-        if hasattr(self, "about_content_object") and hasattr(
-            self.about_content_object,
-            "notification_button_link",
-        ):
-            a_link = self.about_content_object.notification_button_link
-            if not a_link:
-                self.button_link = self.make_outgoing_link(a_link)
-                return
+        if hasattr(self, "open_notification_url"):
+            self.button_link = self.open_notification_url
+            return
 
         self.button_link = self.base_url
 
@@ -396,7 +439,9 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
         self.sending_organization = None
 
     def make_outgoing_link(self, link):
-        if "http" not in link:
+        if link is None:
+            return None
+        if not link.startswith("http://") or not link.startswith("https://"):
             return f"{self.base_url}{link}"
         return link
 
@@ -536,7 +581,7 @@ class WebPushNotification(LogInfoFields):
     title = models.CharField(max_length=255, default="", blank=True)
     message = models.TextField(blank=True, default="")
     icon_url = models.URLField(blank=True, default="")
-    open_notification_url = models.URLField(blank=True, default="")
+    show_notification_url = models.URLField(blank=True, default="")
 
     def send(self):
         logger.debug("Trying to send a push notification to %s", self.user)
@@ -552,15 +597,17 @@ class WebPushNotification(LogInfoFields):
             self.save(update_fields=["message"])
 
         notification_redirect_url = self.notification.redirect_url
-        if is_blank(self.open_notification_url):
+        if is_blank(self.show_notification_url):
             if notification_redirect_url is not None:
-                self.open_notification_url = notification_redirect_url
+                self.show_notification_url = notification_redirect_url
             if self.notification and hasattr(
                 self.notification,
-                "open_notification_url",
+                "show_notification_url",
             ):
-                self.open_notification_url = self.notification.open_notification_url
-            self.save(update_fields=["open_notification_url"])
+                self.show_open_notification_url = (
+                    self.notification.show_notification_url
+                )
+            self.save(update_fields=["show_notification_url"])
 
         if (
             is_blank(self.icon_url)
@@ -592,7 +639,7 @@ class WebPushNotification(LogInfoFields):
             "head": str(self.title),
             "body": str(self.message),
             "icon": str(self.icon_url),
-            "url": str(self.open_notification_url),
+            "url": str(self.show_notification_url),
         }
         logger.debug("Payload: %s", payload)
         ttl = 10227000

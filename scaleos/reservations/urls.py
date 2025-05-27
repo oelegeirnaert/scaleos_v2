@@ -19,4 +19,14 @@ urlpatterns = [
         view=reservation_views.eventreservation,
         name="eventreservation",
     ),
+    path(
+        "event/guest/invite/",
+        view=reservation_views.guestinvite,
+        name="guestinvite",
+    ),
+    path(
+        "event/guest/invite/<str:guestinvite_public_key>/",
+        view=reservation_views.guestinvite,
+        name="guestinvite",
+    ),
 ]

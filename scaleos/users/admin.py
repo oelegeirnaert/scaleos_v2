@@ -24,7 +24,15 @@ class UserAdmin(HijackUserAdminMixin, auth_admin.UserAdmin):
         (None, {"fields": ("email", "password")}),
         (
             _("Personal info"),
-            {"fields": ("name", "avatar", "website_language", "has_webpush")},
+            {
+                "fields": (
+                    "name",
+                    "timezone",
+                    "avatar",
+                    "website_language",
+                    "has_webpush",
+                ),
+            },
         ),
         (
             _("Permissions"),

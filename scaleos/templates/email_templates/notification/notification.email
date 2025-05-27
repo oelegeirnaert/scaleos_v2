@@ -104,11 +104,13 @@
         <!-- Call-to-Action Button -->
         <p><a href="{{ notification.button_link }}" class="button">{{notification.button_text}}</a></p>
 
+        <div style="color: #777;">
+            <p style="margin-top: 15px;">{% trans 'if the button doesn’t work for you'|capfirst %},</br>
+            {% trans 'copy and paste the following link into your favorite browser'|lower %}:</p>
+            <p><a href="{{ notification.button_link }}">{{ notification.button_link }}</a></p>
+        </div>
 
-        <p style="margin-top: 15px;">{% trans 'if the button doesn’t work for you'|capfirst %}, {% trans 'copy and paste the following link into your favorite browser'|lower %}:</p>
-        <p><a href="{{ notification.button_link }}">{{ notification.button_link }}</a></p>
-
-        <p style="margin-top: 30px; color: #777;">{% trans 'if you did not request this, you can safely ignore this email'|capfirst %}.</p>
+        <p style="margin-top: 30px;">{% trans 'if you did not request this, you can safely ignore this email'|capfirst %}.</p>
 
         <div class="footer">
             <p>{% trans 'best regards'|capfirst %},</p>

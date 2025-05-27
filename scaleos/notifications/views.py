@@ -1,7 +1,9 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 
 # views/language.py
@@ -33,9 +35,6 @@ def notification(request, notification_public_key=None):
         notification.seen_on = ITS_NOW
         notification.save(update_fields=["seen_on"])
 
-    if notification.redirect_url:
-        return HttpResponseRedirect(notification.redirect_url)
-
     context["notification"] = notification
 
     email = get_templated_mail(
@@ -54,6 +53,22 @@ def notification(request, notification_public_key=None):
     context["plain_body"] = plain_body
     context["html_body"] = html_body
     context["email_subject"] = email_subject
+    return render(request, notification.page_template, context)
+
+
+@login_required
+def open_notification(request, notification_public_key=None):
+    context = {}
+    notification = get_object_or_404(
+        notification_models.Notification,
+        public_key=notification_public_key,
+    )
+    if notification.redirect_url:
+        return HttpResponseRedirect(notification.redirect_url)
+    if notification.button_link:
+        return HttpResponseRedirect(notification.button_link)
+    msg = _("we cannot open this notification")
+    messages.error(request, msg)
     return render(request, notification.page_template, context)
 
 
