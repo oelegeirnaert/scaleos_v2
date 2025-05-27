@@ -60,6 +60,16 @@ class DanceEventFactory(DjangoModelFactory[event_models.DanceEvent]):
         model = event_models.DanceEvent
 
 
+class EventMixFactory(DjangoModelFactory[event_models.EventMix]):
+    class Meta:
+        model = event_models.EventMix
+
+
+class StayOverFactory(DjangoModelFactory[event_models.StayOver]):
+    class Meta:
+        model = event_models.StayOver
+
+
 class EventDuplicatorFactory(DjangoModelFactory[event_models.EventDuplicator]):
     event = SubFactory(SingleEventFactory)
     to_date = LazyAttribute(

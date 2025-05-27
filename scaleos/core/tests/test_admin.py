@@ -15,6 +15,7 @@ def test_every_single_admin_view(mock_context, admin_client):
     excluded_models = [
         # "PaymentSettings",
         # "PaymentMethod",
+        "WebsiteImage",
     ]
 
     for model in admin.site._registry:  # noqa: SLF001

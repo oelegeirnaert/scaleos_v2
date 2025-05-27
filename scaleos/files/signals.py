@@ -7,6 +7,7 @@ from django.core.files.base import ContentFile
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from PIL import Image
+from PIL import UnidentifiedImageError
 
 from scaleos.files import models as file_models
 from scaleos.files.tasks import convert_svg_to_png
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=file_models.ImageFile)
-def process_image_file(sender, instance, **kwargs):  # noqa: C901
+def process_image_file(sender, instance, **kwargs):  # noqa: C901, PLR0912, PLR0915
     logger.setLevel(logging.DEBUG)
     logger.debug("Processing image file %s", instance.pk)
 
@@ -52,9 +53,14 @@ def process_image_file(sender, instance, **kwargs):  # noqa: C901
                 instance.file = None  # Clear field
                 changed_fields["image"] = instance.image
                 changed_fields["file"] = None
-
+        except UnidentifiedImageError:
+            logger.warning("File %s is not a valid image.", instance.file.name)
+            return
         except Exception:
             logger.exception("Failed to process raster image")
+            return
+        finally:
+            instance.file.close()
 
     if instance.is_vector != is_vector:
         changed_fields["is_vector"] = is_vector

@@ -39,6 +39,13 @@ class WeddingEventTranslationOptions(TranslationOptions):
 translator.register(event_models.WeddingEvent, WeddingEventTranslationOptions)
 
 
+class StayOverTranslationOptions(TranslationOptions):
+    pass
+
+
+translator.register(event_models.StayOver, StayOverTranslationOptions)
+
+
 class BrunchEventTranslationOptions(TranslationOptions):
     pass
 

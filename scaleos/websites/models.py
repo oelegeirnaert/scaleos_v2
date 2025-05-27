@@ -68,16 +68,24 @@ class CallToAction(
         return super().__str__()
 
     def save(self, *args, **kwargs):
-        if self.button_text_color is None:
-            if self.website.organization.styling.primary_button_text_color:
-                self.button_text_color = (
-                    self.website.organization.styling.primary_button_text_color
-                )
-        if self.button_color is None:
-            if self.website.organization.styling.primary_button_text_color:
-                self.button_color = (
-                    self.website.organization.styling.primary_button_color
-                )
+        try:
+            if self.button_text_color is None:
+                if self.website.organization.styling.primary_button_text_color:
+                    self.button_text_color = (
+                        self.website.organization.styling.primary_button_text_color
+                    )
+        except AttributeError:
+            pass
+
+        try:
+            if self.button_color is None:
+                if self.website.organization.styling.primary_button_text_color:
+                    self.button_color = (
+                        self.website.organization.styling.primary_button_color
+                    )
+        except AttributeError:
+            pass
+
         super().save(*args, **kwargs)
 
     @property
@@ -185,7 +193,7 @@ class Website(
     def __str__(self):
         if self.domain_name:
             return self.domain_name
-        return self.name
+        return super().__str__()
 
 
 class WebsiteImage(
