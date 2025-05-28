@@ -151,9 +151,9 @@ class BreakfastMenuAdmin(MenuChildAdmin):
 
 
 @admin.register(Menu)
-class MenuParentAdmin(PolymorphicParentModelAdmin):
+class MenuAdmin(PolymorphicParentModelAdmin):
     base_model = Menu
-    child_models = (BrunchMenu, DinnerMenu, BreakfastMenu, LunchMenu)
+    child_models = (Menu, BrunchMenu, DinnerMenu, BreakfastMenu, LunchMenu)
     list_display = ("name", "caterer")
     list_filter = (PolymorphicChildModelFilter,)
     search_fields = ("name",)

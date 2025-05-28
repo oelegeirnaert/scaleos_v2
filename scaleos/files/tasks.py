@@ -113,6 +113,8 @@ def download_file_from_url(self, file_url, *, organization_id=None, related_ids=
     dish_id = related_ids.get("dish_id")
     product_id = related_ids.get("product_id")
 
+    temp_file_path = None
+
     try:
         response = requests.get(file_url, stream=True, timeout=30)
         response.raise_for_status()
@@ -125,48 +127,52 @@ def download_file_from_url(self, file_url, *, organization_id=None, related_ids=
         extension = mimetypes.guess_extension(content_type.split(";")[0]) or ""
         filename = Path(urlparse(file_url).path).name or f"downloaded{extension}"
 
-        # Save content to temporary file
+        # Save content to a temporary file
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             for chunk in response.iter_content(1024 * 1024):
                 temp_file.write(chunk)
             temp_file.flush()
+            temp_file_path = temp_file.name  # Save the path for later use
 
-        # Wrap the file in Django File
-        django_file = File(temp_file, name=filename)
+        # Reopen the temp file and wrap it in Django File
+        temp_file_path = Path(temp_file_path)
+        with temp_file_path.open("rb") as reopened_file:
+            django_file = File(reopened_file, name=filename)
 
-        # Fetch organization if given
-        org = None
-        if organization_id:
-            from organizations.models import Organization
+            # Fetch organization if given
+            org = None
+            if organization_id:
+                from scaleos.organizations.models import Organization
 
-            org = Organization.objects.filter(id=organization_id).first()
+                org = Organization.objects.filter(id=organization_id).first()
 
-        # Create appropriate file type
-        if "image" in content_type:
-            return handle_image_file(
-                filename,
-                django_file,
-                temp_file.name,
-                org,
-                related_ids={"dish_id": dish_id, "product_id": product_id},
-            )
+            # Handle based on content type
+            if "image" in content_type:
+                return handle_image_file(
+                    filename,
+                    django_file,
+                    temp_file_path,
+                    org,
+                    related_ids={"dish_id": dish_id, "product_id": product_id},
+                )
 
-        if "audio" in content_type:
-            return handle_audio_file(filename, django_file, org)
+            if "audio" in content_type:
+                return handle_audio_file(filename, django_file, org)
 
-        unsupported_content_type(content_type=content_type)
+            unsupported_content_type(content_type=content_type)
 
     except Exception as e:
         raise self.retry(exc=e, countdown=10) from e
 
     finally:
-        try:
-            Path(temp_file.name).unlink()
-        except (FileNotFoundError, PermissionError) as e:
-            logger.debug("Failed to delete temp file %s: %s", temp_file.name, e)
+        if temp_file_path:
+            try:
+                Path(temp_file_path).unlink()
+            except (FileNotFoundError, PermissionError) as e:
+                logger.debug("Failed to delete temp file %s: %s", temp_file_path, e)
 
 
-def upload_files(self, organization, organization_file_dir):
+def upload_files(organization, organization_file_dir):
     logger.setLevel(logging.DEBUG)
     logger.info("Uploading images for organization %s", organization)
 
@@ -178,14 +184,12 @@ def upload_files(self, organization, organization_file_dir):
     )  # Full path to the image folder
 
     if not os.path.exists(file_folder):  # noqa: PTH110
-        self.stdout.write(self.style.ERROR(f"Directory not found: {file_folder}"))
+        logger.warning("Directory not found: %s", file_folder)
         return
 
     files = list(os.listdir(file_folder))
     if len(files) == 0:
-        self.stdout.write(
-            self.style.ERROR(f"No files found in the folder: {file_folder}"),
-        )
+        logger.warning("No files found in the folder: %s", file_folder)
         return
 
     uploaded = []
@@ -235,4 +239,4 @@ def upload_files(self, organization, organization_file_dir):
 
     if errors:
         for error in errors:
-            self.stdout.write(self.style.ERROR(f"Error uploading file: {error}"))
+            logger.warning("Error uploading file: %s", error)

@@ -91,14 +91,14 @@ def process_audio_file(sender, instance, **kwargs):
 
         audio = MutagenFile(instance.file)
         duration = None
-        artist = None
-        album = None
+        artist = ""
+        album = ""
 
         if audio and hasattr(audio, "info") and hasattr(audio.info, "length"):
             duration = audio.info.length
         if hasattr(audio, "tags") and audio.tags:
-            artist = audio.tags.get("TPE1", [None])[0]
-            album = audio.tags.get("TALB", [None])[0]
+            artist = audio.tags.get("TPE1", "")[0]
+            album = audio.tags.get("TALB", "")[0]
 
         changes = {}
         if instance.duration != duration:
@@ -127,7 +127,7 @@ def process_document_file(sender, instance, **kwargs):
         "ppt": "ppt",
         "pptx": "ppt",
     }
-    new_doc_type = ext_map.get(ext)
+    new_doc_type = ext_map.get(ext, "")
 
     if new_doc_type != instance.doc_type:
         file_models.DocumentFile.objects.filter(pk=instance.pk).update(
@@ -163,7 +163,7 @@ def detect_video_source(url: str) -> str:
 
 @receiver(post_save, sender=file_models.VideoFile)
 def process_video_file(sender, instance, **kwargs):
-    source = None
+    source = ""
     duration = None
 
     if instance.video:

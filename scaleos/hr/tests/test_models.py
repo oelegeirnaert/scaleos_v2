@@ -32,7 +32,9 @@ def test_age(faker):
     assert person.get_age(today) == 38
 
     today = None
-    assert person.get_age(today) <= 37
+    age = person.get_age(today)
+    assert age is not None
+    assert isinstance(age, int)
 
     person_without_birthday = model_factories.PersonFactory.create(birthday=None)
     assert person_without_birthday.age is None

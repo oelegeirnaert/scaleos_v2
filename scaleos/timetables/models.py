@@ -15,7 +15,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 
-from scaleos.organizations.models import OrganizationField
 from scaleos.shared.fields import LogInfoFields
 from scaleos.shared.fields import NameField
 from scaleos.shared.fields import PublicKeyField
@@ -97,7 +96,7 @@ class DAY(models.TextChoices):
     EVERY_PUBLIC_HOLIDAY = "EVERY_PUBLIC_HOLIDAY", _("every public holiday")
 
 
-class TimeTable(AdminLinkMixin, OrganizationField, PublicKeyField):
+class TimeTable(AdminLinkMixin, PublicKeyField):
     class CurrentStatus(models.TextChoices):
         """We prefix the database field 'day' with 'LETTER_' for ordering purposes."""
 
@@ -106,6 +105,13 @@ class TimeTable(AdminLinkMixin, OrganizationField, PublicKeyField):
         EXCEPTIONALLY_CLOSED = "EXCEPTIONALLY_CLOSED", _("exceptionally closed")
         TIMETABLE_BASED = "TIMETABLE_BASED", _("timetable based")
 
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        related_name="timetables",
+        null=True,
+        blank=False,
+    )
     current_status = models.CharField(
         max_length=50,
         choices=CurrentStatus.choices,
@@ -122,6 +128,10 @@ class TimeTable(AdminLinkMixin, OrganizationField, PublicKeyField):
     )
     object_id = models.PositiveIntegerField(null=True, blank=True)
     content_object = GenericForeignKey("content_type", "object_id")
+
+    class Meta:
+        verbose_name = _("timetable")
+        verbose_name_plural = _("timetables")
 
     @property
     def is_open_now(self):
@@ -419,43 +429,43 @@ class TimeTable(AdminLinkMixin, OrganizationField, PublicKeyField):
 
     def generate_holidays(self):
         logger.debug('Generating public holidays for timetable "%s"', self.pk)
-        for country in self.countries:
-            logger.debug('Generating public holidays for country "%s"', country)
-            current_year = timezone.now().year
-            public_holidays_current_year = PublicHoliday.objects.filter(
-                country=country,
+        country = self.country
+        logger.debug('Generating public holidays for country "%s"', country)
+        current_year = timezone.now().year
+        public_holidays_current_year = PublicHoliday.objects.filter(
+            country=country,
+            year=current_year,
+        )
+        if not public_holidays_current_year.exists():
+            PublicHoliday.generate_holidays(
+                country=str(country),
                 year=current_year,
             )
-            if not public_holidays_current_year.exists():
-                PublicHoliday.generate_holidays(
-                    country=str(country),
-                    year=current_year,
-                )
 
-            next_year = current_year + 1
-            public_holidays_next_year = PublicHoliday.objects.filter(
-                country=country,
+        next_year = current_year + 1
+        public_holidays_next_year = PublicHoliday.objects.filter(
+            country=country,
+            year=next_year,
+        )
+        if not public_holidays_next_year.exists():
+            PublicHoliday.generate_holidays(
+                country=str(country),
                 year=next_year,
             )
-            if not public_holidays_next_year.exists():
-                PublicHoliday.generate_holidays(
-                    country=str(country),
-                    year=next_year,
-                )
 
-            public_holidays = PublicHoliday.objects.filter(
-                Q(year=current_year) | Q(year=next_year),
-                country=country,
+        public_holidays = PublicHoliday.objects.filter(
+            Q(year=current_year) | Q(year=next_year),
+            country=country,
+        )
+        for public_holiday in public_holidays:
+            logger.debug(
+                "Creating public holiday %s in timetable %s",
+                public_holiday,
+                self.pk,
             )
-            for public_holiday in public_holidays:
-                logger.debug(
-                    "Creating public holiday %s in timetable %s",
-                    public_holiday,
-                    self.pk,
-                )
-                hd, hd_created = self.public_holidays.get_or_create(
-                    public_holiday=public_holiday,
-                )
+            hd, hd_created = self.public_holidays.get_or_create(
+                public_holiday=public_holiday,
+            )
 
 
 class TimeTableBooking(AdminLinkMixin, LogInfoFields):
@@ -484,7 +494,7 @@ class TimeTableBooking(AdminLinkMixin, LogInfoFields):
 
 
 class TimeBlock(TimeBlockFields):
-    from_time_table = models.ForeignKey(
+    time_table = models.ForeignKey(
         TimeTable,
         related_name="time_blocks",
         on_delete=models.CASCADE,
@@ -585,7 +595,7 @@ class PublicHoliday(NameField):
                 public_holiday.save()
 
 
-class TimetablePublicHoliday(AdminLinkMixin):
+class TimeTablePublicHoliday(AdminLinkMixin):
     class HolidayStatus(models.TextChoices):
         """We prefix the database field 'day' with 'LETTER_' for ordering purposes."""
 
@@ -634,9 +644,9 @@ class TimetablePublicHoliday(AdminLinkMixin):
             raise ValidationError({"holiday_status": msg})
 
 
-class TimetablePublicHolidayTimeBlock(TimeBlockFields):
+class TimeTablePublicHolidayTimeBlock(TimeBlockFields):
     public_holiday = models.ForeignKey(
-        TimetablePublicHoliday,
+        TimeTablePublicHoliday,
         related_name="timetable_public_holiday_time_blocks",
         on_delete=models.CASCADE,
         null=True,

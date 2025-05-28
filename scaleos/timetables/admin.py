@@ -16,14 +16,14 @@ class TimeBlockInlineAdmin(admin.TabularInline):
     fields = ["day", "from_time", "to_time"]
 
 
-class TimetablePublicHolidayInlineAdmin(admin.TabularInline):
-    model = timetable_models.TimetablePublicHoliday
+class TimeTablePublicHolidayInlineAdmin(admin.TabularInline):
+    model = timetable_models.TimeTablePublicHoliday
     extra = 0
     show_change_link = True
 
 
-class TimetablePublicHolidayTimeBlockInlineAdmin(admin.TabularInline):
-    model = timetable_models.TimetablePublicHolidayTimeBlock
+class TimeTablePublicHolidayTimeBlockInlineAdmin(admin.TabularInline):
+    model = timetable_models.TimeTablePublicHolidayTimeBlock
     extra = 0
     show_change_link = True
 
@@ -35,7 +35,7 @@ class TimeTableAdmin(admin.ModelAdmin):
     inlines = [
         TimeBlockInlineAdmin,
         TimeTableBookingInlineAdmin,
-        TimetablePublicHolidayInlineAdmin,
+        TimeTablePublicHolidayInlineAdmin,
     ]
     readonly_fields = [
         "today_weekday",
@@ -62,12 +62,12 @@ class PublicHolidayAdmin(admin.ModelAdmin):
     list_display = ["happening_on", "country", "year", "name"]
 
 
-@admin.register(timetable_models.TimetablePublicHoliday)
-class TimetablePublicHolidayAdmin(admin.ModelAdmin):
-    inlines = [TimetablePublicHolidayTimeBlockInlineAdmin]
+@admin.register(timetable_models.TimeTablePublicHoliday)
+class TimeTablePublicHolidayAdmin(admin.ModelAdmin):
+    inlines = [TimeTablePublicHolidayTimeBlockInlineAdmin]
 
 
-@admin.register(timetable_models.TimetablePublicHolidayTimeBlock)
+@admin.register(timetable_models.TimeTablePublicHolidayTimeBlock)
 class PublicHolidayTimeBlockAdmin(admin.ModelAdmin):
     pass
 

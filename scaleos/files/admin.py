@@ -36,6 +36,7 @@ class VideoFileAdmin(BaseFileChildAdmin):
 class BaseFileAdmin(PolymorphicParentModelAdmin):
     base_model = file_models.BaseFile
     child_models = (
+        file_models.BaseFile,
         file_models.ImageFile,
         file_models.AudioFile,
         file_models.DocumentFile,

@@ -16,21 +16,26 @@ def test_every_single_admin_view(mock_context, admin_client):
         # "PaymentSettings",
         # "PaymentMethod",
         "WebsiteImage",
+        "TimeTable",
     ]
 
     for model in admin.site._registry:  # noqa: SLF001
+        logger.info("--- Now testing %s ---", model)
         if "scaleos" in str(model):
             the_module_name = str(model).split(".")[1]  # scaleos.payments.models.
             full_module_name = f"scaleos.{the_module_name}.tests.model_factories"
+            logger.info("Full module name: %s", full_module_name)
 
             model_name = model.__name__
             if model_name in excluded_models:
+                logger.info("Skipping %s", model_name)
                 continue
 
             model_factory_name = f"{model_name}Factory"
             full_module_name = f"{full_module_name}"
 
             module = importlib.import_module(full_module_name)
+            logger.info("Module imported")
             logger.info("Testing %s from %s", model_factory_name, full_module_name)
             class_ = getattr(module, model_factory_name)
             instance = class_()

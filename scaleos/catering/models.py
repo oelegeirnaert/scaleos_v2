@@ -223,7 +223,7 @@ class Ingredient(models.Model):
 
 
 class Dish(CardModel, AdminLinkMixin):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     caterer = models.ForeignKey(
         Caterer,
@@ -236,6 +236,7 @@ class Dish(CardModel, AdminLinkMixin):
     class Meta:
         verbose_name = _("dish")
         verbose_name_plural = _("dishes")
+        unique_together = ("name", "caterer")
 
     def __str__(self):
         return self.name
