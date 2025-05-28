@@ -14,6 +14,7 @@ from scaleos.users.views import custom_set_password
 from django.conf.urls.i18n import i18n_patterns
 from scaleos.users.views import custom_set_language
 from django.utils.translation import gettext_lazy as _
+from scaleos.core.views import home as home_view
 
 
 urlpatterns = [
@@ -21,7 +22,7 @@ urlpatterns = [
     path(
         "i18n/", include("django.conf.urls.i18n")
     ),  # This enables the language switcher
-    path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
+    path("", home_view, name="home"),
     path(
         "about/",
         TemplateView.as_view(template_name="pages/about.html"),

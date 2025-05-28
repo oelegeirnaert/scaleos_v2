@@ -116,6 +116,7 @@ class PageAdmin(
     inlines = [PageBlockInlineAdmin]
     list_editable = ["ordering"]
     list_display = ["__str__", "ordering"]
+    readonly_fields = ["public_key"]
 
 
 # Register your models here.

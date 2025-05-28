@@ -1156,11 +1156,12 @@ Maak van jouw viering een herinnering om te koesteren."""  # noqa: E501, RUF001
 
         concepts_page, concepts_page_created = (
             website_models.Page.objects.get_or_create(
-                website_id=wb_website.pk,
-                name="Concepts",
-                slug="concepts",
+                public_key="61277f46-71ce-4671-80af-93d4360e9ed2",
             )
         )
+
+        concepts_page.name = "Jouw Evenement"
+        concepts_page.website_id = wb_website.pk
 
         if concepts_page_created:
             concepts_page.publish_from = ITS_NOW
@@ -1231,10 +1232,11 @@ Met onze jarenlange ervaring en persoonlijke aanpak maken we van elk moment een 
         )
 
         events_page, events_page_created = website_models.Page.objects.get_or_create(
-            website_id=wb_website.pk,
-            name="Events",
-            slug="events",
+            public_key="70e65163-22d0-4386-a988-18f20898f91a",
         )
+
+        events_page.website_id = wb_website.pk
+        events_page.name = "Onze Evenementen"
 
         if events_page_created:
             events_page.ordering = 3

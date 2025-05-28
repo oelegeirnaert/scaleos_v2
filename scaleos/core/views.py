@@ -3,9 +3,23 @@
 import logging
 
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
+from django.shortcuts import render
+from django.urls import reverse
+
+from scaleos.websites.models import Website
 
 logger = logging.getLogger(__name__)
+
+
+def home(request):
+    active_organization_id = request.session.get("active_organization_id", None)
+    if active_organization_id:
+        website = get_object_or_404(Website, organization_id=active_organization_id)
+        return redirect(reverse("websites:website", args=[website.domain_name]))
+
+    return render(request, "pages/home.html")
 
 
 @login_required

@@ -224,6 +224,7 @@ class Page(
     OrderableModel,
     PublishOnWebsiteFields,
     SegmentField,
+    PublicKeyField,
 ):
     website = models.ForeignKey(
         Website,
