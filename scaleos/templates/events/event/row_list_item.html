@@ -1,0 +1,127 @@
+{# generated via manage create_html_scripts #}
+{% load i18n %}
+
+<!-- Row 1: Event Info -->
+<tr class="border-b-0 {{ bg }}">
+  <td class="px-6 py-4">
+    <div class="flex flex-col lg:flex-row justify-between gap-6 text-left">
+      <!-- Left: Info -->
+      <div class="space-y-1">
+        <div class="text-sm text-gray-500">{{ row_list_item.verbose_name|capfirst }}</div>
+        <div class="text-lg font-semibold text-gray-900">{{ row_list_item.name }}</div>
+        <div class="text-sm text-gray-600">{{ row_list_item.starting_at }} - {{ row_list_item.ending_on }}</div>
+      </div>
+      <!-- Right: Meta -->
+      <div class="flex flex-col items-start gap-2 text-sm min-w-[200px]">
+        <div>
+          <span class="font-medium text-gray-700">Capacity:</span>
+          {{ row_list_item.maximum_number_of_guests }}
+        </div>
+        <div>
+          <span class="font-medium text-gray-700"># Updates:</span>
+          {{ row_list_item.updates.count }}
+        </div>
+        <div>
+          <span class="font-medium text-gray-700">Reservations:</span>
+          {% if row_list_item.is_open_for_reservations %}
+            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Open</span>
+          {% else %}
+            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Closed</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </td>
+</tr>
+{% if row_list_item.children.exists %}
+  <tr class="border-b-0 {{ bg }}">
+    <td class="px-6 py-4">
+      <div class="flex flex-col lg:flex-row justify-between gap-6 text-left">
+        <!-- Children: Info -->
+        <div class="space-y-1">
+          <ul>
+            {% for child in row_list_item.children.all %}
+              <a href="{% url 'events:event' child.public_key %}">
+                <li class="text-sm text-gray-500 px-5">
+                  {{ child.verbose_name|title }}: <b>{{ child.name }}</b> {{ child.starting_at }} - {{ child.ending_on }}
+                </li>
+              </a>
+              {% include 'staff.html' with obj=child %}
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </td>
+  </tr>
+{% endif %}
+<!-- Row 2: Action Menu -->
+<tr class="border-t-0 {{ bg }}">
+  <td class="px-6 pb-5">
+    <div class="flex flex-wrap items-center gap-2">
+      {% include row_list_item.action_menu with action_menu=row_list_item %}
+      {% include 'staff.html' with obj=row_list_item %}
+    </div>
+  </td>
+</tr>
+<!-- Row 1: Event Info -->
+<tr class="border-b-0 {{ bg }}">
+  <td class="px-6 py-4">
+    <div class="flex flex-col lg:flex-row justify-between gap-6 text-left">
+      <!-- Left: Info -->
+      <div class="space-y-1">
+        <div class="text-sm text-gray-500">{{ row_list_item.verbose_name|capfirst }}</div>
+        <div class="text-lg font-semibold text-gray-900">{{ row_list_item.name }}</div>
+        <div class="text-sm text-gray-600">{{ row_list_item.starting_at }} - {{ row_list_item.ending_on }}</div>
+      </div>
+      <!-- Right: Meta -->
+      <div class="flex flex-col items-start gap-2 text-sm min-w-[200px]">
+        <div>
+          <span class="font-medium text-gray-700">Capacity:</span>
+          {{ row_list_item.maximum_number_of_guests }}
+        </div>
+        <div>
+          <span class="font-medium text-gray-700"># Updates:</span>
+          {{ row_list_item.updates.count }}
+        </div>
+        <div>
+          <span class="font-medium text-gray-700">Reservations:</span>
+          {% if row_list_item.is_open_for_reservations %}
+            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Open</span>
+          {% else %}
+            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Closed</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </td>
+</tr>
+{% if row_list_item.children.exists %}
+  <tr class="border-b-0 {{ bg }}">
+    <td class="px-6 py-4">
+      <div class="flex flex-col lg:flex-row justify-between gap-6 text-left">
+        <!-- Children: Info -->
+        <div class="space-y-1">
+          <ul>
+            {% for child in row_list_item.children.all %}
+              <a href="{% url 'events:event' child.public_key %}">
+                <li class="text-sm text-gray-500 px-5">
+                  {{ child.verbose_name|title }}: <b>{{ child.name }}</b> {{ child.starting_at }} - {{ child.ending_on }}
+                </li>
+              </a>
+              {% include 'staff.html' with obj=child %}
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </td>
+  </tr>
+{% endif %}
+<!-- Row 2: Action Menu -->
+<tr class="border-t-0 {{ bg }}">
+  <td class="px-6 pb-5">
+    <div class="flex flex-wrap items-center gap-2">
+      {% include row_list_item.action_menu with action_menu=row_list_item %}
+      {% include 'staff.html' with obj=row_list_item %}
+    </div>
+  </td>
+</tr>

@@ -32,7 +32,7 @@
     <p class="mb-5 mt-5 text-xl font-bold">{{ concept }}</p>
     {{ concept.card_description|safe|linebreaksbr }}
     {% if concept.upcoming_events.count > 0 %}
-      {% include 'events/event/row_list.html' with row_list_items=concept.upcoming_events %}
+      {% include 'row_list.html' with rows=concept.upcoming_events row_list_title=_("upcoming events") %}
     {% endif %}
   </div>
 {% endblock content %}

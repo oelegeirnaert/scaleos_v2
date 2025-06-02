@@ -26,6 +26,8 @@ def home(request):
 def activate_debug(request):
     if request.user.is_staff:
         current_status = request.session.get("debug", False)
+        logger.info("Current debug status: %s", current_status)
+        logger.info("Setting debug status to: %s", not current_status)
         if current_status:
             request.session["debug"] = False
         else:

@@ -1242,7 +1242,7 @@ Met onze jarenlange ervaring en persoonlijke aanpak maken we van elk moment een 
             events_page.ordering = 3
             events_page.publish_from = ITS_NOW
 
-        events_page.banner_title = "Evenementen"
+        events_page.banner_title = "Onze Evenementen"
         events_page.banner_slogan = (
             "<i>Waer</i> je ongetwijfeld met een goed gevoel op terugblikt..."
         )

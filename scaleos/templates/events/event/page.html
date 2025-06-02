@@ -1,22 +1,49 @@
-{# generated via manage create_html_scripts #}
 {% extends 'page.html' %}
 
-{% load i18n %}
+{% load i18n slider_tags static %}
 
+{% block banner %}
+  <div class="z-10 relative w-full">
+    <!-- Banner Image -->
+    {% if event.images.count > 0 %}
+      <!-- Parent must have a defined height -->
+      <div class="w-full h-screen">{% image_slider concept %}</div>
+    {% else %}
+      <img alt=""
+           {% if concept.card_image_url %} src="{{ event.card_image_url }}" {% else %} src="{% static 'images/cards/events/concept/brunch.jpg' %}" {% endif %}
+           class="w-full max-h-screen object-cover" />
+    {% endif %}
+    <!-- Gradient Overlay -->
+    <div class="z-50 absolute inset-0 bg-gradient-to-b from-black/10 to-black/40"></div>
+    <!-- Centered Banner Text -->
+    <div class="z-100 absolute drop-shadow-lg inset-0 flex flex-col items-center justify-center text-center text-white px-4 animate-in fade-in duration-1000">
+      <h1 class="text-4xl md:text-6xl font-bold animate__animated animate__fadeInDown">{{ event|safe }}</h1>
+      <p class="mt-4 text-lg md:text-2xl drop-shadow-lg animate__animated animate__fadeInUp animate__delay-1s">
+        {{ event.concept.slogan|safe }}
+      </p>
+      <div class="p-4 flex gap-2">{% include event.action_menu with action_menu=event %}</div>
+    </div>
+  </div>
+{% endblock banner %}
 {% block content %}
-  {{ event }}
-  <button class="w-full inline-flex items-center gap-2 rounded-sm border border-{{ TAILWIND_THEME_COLORS.primary }} bg-{{ TAILWIND_THEME_COLORS.primary }} px-8 py-3 text-white hover:bg-transparent hover:text-gray-600 focus:ring-3 focus:outline-hidden"
-          hx-get="{% url 'reservations_htmx:event_reservation' event.public_key %}"
-          hx-target="#{{ event.html_public_key }}"
-          hx-swap="innerHTML">
-    <span class="text-sm font-bold">{% trans 'subscribe'|capfirst %}</span>
-    <svg class="size-5 rtl:rotate-180"
-         xmlns="http://www.w3.org/2000/svg"
-         fill="none"
-         viewBox="0 0 24 24"
-         stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-    </svg>
-  </button>
-  <div id="{{ event.html_public_key }}">{% include event.detail_template %}</div>
+  <!-- Description card: overlaps banner slightly, but adapts on small screens -->
+  <div class="relative z-50 mx-auto -mt-[20vh] max-w-5xl rounded-xl bg-white px-4 py-8 text-center shadow-lg sm:-mt-[15vh] md:-mt-[40vh] md:px-12">
+    {% if event.reservations %}
+      <div>{% include 'row_list.html' with rows=event.reservations.all row_list_title=_("reservations") %}</div>
+    {% endif %}
+    <button class="w-full inline-flex items-center gap-2 rounded-sm border border-{{ TAILWIND_THEME_COLORS.primary }} bg-{{ TAILWIND_THEME_COLORS.primary }} px-8 py-3 text-white hover:bg-transparent hover:text-gray-600 focus:ring-3 focus:outline-hidden"
+            hx-get="{% url 'reservations_htmx:event_reservation' event.public_key %}"
+            hx-target="#{{ event.html_public_key }}"
+            hx-swap="innerHTML">
+      <span class="text-sm font-bold">{% trans 'subscribe'|capfirst %}</span>
+      <svg class="size-5 rtl:rotate-180"
+           xmlns="http://www.w3.org/2000/svg"
+           fill="none"
+           viewBox="0 0 24 24"
+           stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+      </svg>
+    </button>
+    <div id="{{ event.html_public_key }}">{% include event.detail_template %}</div>
+  </div>
 {% endblock content %}

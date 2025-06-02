@@ -1,0 +1,11 @@
+<tr class="border-b-0 {{ bg }}">
+  <td class="px-6 py-4">
+    <div class="row list">
+      <div class="text-sm font-medium text-gray-900">
+        {{ row_list_item.name }}
+        <p class="red-text">{{ row_list_item.row_list_item_template }}</p>
+        {% include 'staff.html' with obj=row_list_item %}
+      </div>
+    </div>
+  </td>
+</tr>

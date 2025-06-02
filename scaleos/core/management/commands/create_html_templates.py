@@ -32,7 +32,7 @@ class Command(BaseCommand):
             output_file.write_text(template_content)
             self.stdout.write(self.style.SUCCESS(f"\tCreated {template_location}"))
 
-        def get_content(the_template):  # pragma: no cover
+        def get_content(the_template):  # pragma: no cover  # noqa: PLR0911
             if the_template.lower() == "card_template":
                 return """{# generated via manage create_html_scripts #}
 {% extends 'card.html' %}
@@ -62,6 +62,13 @@ class Command(BaseCommand):
 {% extends 'title.html' %}
 {% load i18n %}
 """
+
+            if the_template.lower() == "row_list_item_template":
+                return """{# generated via manage create_html_scripts #}
+{% extends 'row_list_item.html' %}
+{% load i18n %}
+"""
+
             return ""
 
         basepath = settings.TEMPLATES[0]["DIRS"][0]
@@ -72,6 +79,7 @@ class Command(BaseCommand):
             "detail_template",
             "title_template",
             "block_template",
+            "row_list_item_template",
         ]
         for app_label in settings.LOCAL_APPS:
             full_app_label = app_label.replace("scaleos.", "")

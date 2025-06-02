@@ -63,6 +63,10 @@ class AdminLinkMixin(models.Model):
         return f"{self.app_label}/{self.model_name}/action_menu.html"
 
     @cached_property
+    def row_list_item_template(self):
+        return f"{self.app_label}/{self.model_name}/row_list_item.html"
+
+    @cached_property
     def page_template(self):
         return f"{self.app_label}/{self.model_name}/page.html"
 
