@@ -35,4 +35,6 @@ urlpatterns = [
         vw_htmx.requester_confirm_reservation,
         name="requester_confirm_reservation",
     ),
+    path("<uuid:reservation_public_key>/updates/", vw_htmx.reservation_updates,
+         name="reservation_updates"),
 ]

@@ -1,4 +1,31 @@
 {# generated via manage create_html_scripts #}
-{% extends 'row_list_item.html' %}
-
 {% load i18n %}
+
+
+
+<!-- Row 1: Event Info -->
+<tr class="border-b-0 {{ bg }}">
+  <td class="px-6 py-4 min-w-[33vw]">
+    <div class="flex flex-col lg:flex-row justify-between gap-6 text-left">
+      <!-- Left: Info -->
+      <div class="space-y-1">
+        <div class="text-sm font-semibold text-gray-900">{{ row_list_item.verbose_name|title }}</div>
+        <div class="text-sm text-gray-500">{{ row_list_item.created_on }}</div>
+        <div class="text-sm text-gray-600">{{ row_list_item.send_notification }}</div>
+      </div>
+      <!-- Right: Meta -->
+     
+    </div>
+  </td>
+</tr>
+
+<!-- Row 2: Action Menu -->
+<tr class="border-t-0 {{ bg }}">
+  <td class="px-6 pb-5">
+    <div class="flex flex-wrap items-center gap-2">
+      {% include row_list_item.action_menu with action_menu=row_list_item %}
+      {% include 'staff.html' with obj=row_list_item %}
+    </div>
+  </td>
+</tr>
+

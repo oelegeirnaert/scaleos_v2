@@ -72,7 +72,11 @@ class Organization(
             return False
 
         person_id = user.person.id
-        return self.owners.filter(person_id=person_id).exists()
+        return OrganizationOwner.objects.filter(
+            organization_id=self.pk,
+            person_id=person_id,
+        ).exists()
+
 
     def is_employee(self, user):
         if user.is_staff:
@@ -85,7 +89,12 @@ class Organization(
             return False
 
         person_id = user.person.id
-        return self.employees.filter(person_id=person_id).exists()
+        return OrganizationEmployee.objects.filter(
+            organization_id=self.pk,
+            person_id=person_id,
+        ).exists()
+
+
 
     def events_open_for_reservation(self):
         return self.events.filter(allow_reservations=True)
@@ -203,7 +212,7 @@ class Organization(
         if person_created:
             logger.info("New person (%s) created for user %s", person.pk, user.pk)
 
-        customer, created = OrganizationCustomer.objects.get_or_create(
+        customer, created = B2CCustomer.objects.get_or_create(
             organization=self,
             person_id=person.id,
         )
@@ -250,11 +259,6 @@ class OrganizationMember(PolymorphicModel, AdminLinkMixin, LogInfoFields):
             return f"{self.person}"
         return super().__str__()
 
-    def clean(self):
-        if not isinstance(self, B2BCustomer):
-            msg = _("please choose your member")
-            raise ValidationError({"person": msg})
-
 
 class OrganizationOwner(OrganizationMember):
     class Meta:
@@ -293,11 +297,32 @@ class OrganizationEmployee(OrganizationMember):
             raise ValidationError(msg)
         return super().clean()
 
+class Customer(PolymorphicModel):
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="customers",
+    )
 
-class OrganizationCustomer(OrganizationMember):
+    class Meta:
+        verbose_name = _("customer")
+        verbose_name_plural = _("customers")
+
+
+
+
+class B2CCustomer(Customer):
+    person = models.ForeignKey(
+        "hr.Person",
+        related_name="b2c_customers",
+        verbose_name=_("person"),
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     def clean(self):
         if (
-            OrganizationCustomer.objects.filter(
+            B2CCustomer.objects.filter(
                 person=self.person,
                 organization=self.organization,
             )
@@ -308,42 +333,18 @@ class OrganizationCustomer(OrganizationMember):
             raise ValidationError(msg)
         return super().clean()
 
-    class Meta:
-        verbose_name = _("organization customer")
-        verbose_name_plural = _("organization customers")
-
-
-class B2BCustomer(OrganizationCustomer):
+class B2BCustomer(Customer):
     b2b = models.ForeignKey(
         Organization,
-        related_name="suppliers",
+        related_name="b2b_customers",
         on_delete=models.CASCADE,
         null=True,
-        blank=False,
     )
 
     def clean(self):
         if self.organization == self.b2b:
-            msg = _("you cannot add yourself as a customer")
-            raise ValidationError({"b2b": msg})
-
-        if (
-            B2BCustomer.objects.filter(
-                customer=self.customer,
-                organization=self.organization,
-            )
-            .exclude(pk=self.pk)
-            .exists()
-        ):
-            msg = _("this customer is already in the organization")
-            raise ValidationError(msg)
-
+            raise ValidationError(_("you cannot add yourself as a customer"))
         return super().clean()
-
-    class Meta:
-        verbose_name = _("b2b customer")
-        verbose_name_plural = _("b2b customers")
-
 
 class Enterprise(Organization):
     registered_country = CountryField(null=True, default="BE")
@@ -405,28 +406,4 @@ class OrganizationStyling(AdminLinkMixin):
     primary_button_text_color = ColorField(default="#000000")
 
 
-class OrganizationPaymentMethod(AdminLinkMixin, LogInfoFields):
-    organization = models.ForeignKey(
-        Organization,
-        verbose_name=_(
-            "organization",
-        ),
-        related_name="payment_methods",
-        on_delete=models.SET_NULL,
-        null=True,
-    )
-    payment_method = models.OneToOneField(
-        "payments.PaymentMethod",
-        verbose_name=_(
-            "payment method",
-        ),
-        on_delete=models.SET_NULL,
-        null=True,
-    )
 
-    def __str__(self):
-        if self.organization and self.payment_method:
-            str_pay = _("pay")
-            str_with = _("with")
-            return f"{str_pay} {self.organization} {str_with} {self.payment_method.verbose_name}"  # noqa: E501
-        return super().__str__()

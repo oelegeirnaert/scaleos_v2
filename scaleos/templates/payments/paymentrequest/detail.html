@@ -1,4 +1,11 @@
 {# generated via manage create_html_scripts #}
-{% extends 'detail.html' %}
 
 {% load i18n %}
+
+<div class="p-5">
+{{detail.public_reference}}
+
+{% include 'row_list.html' with rows=detail.payment_proposals.all row_list_title=_("payment proposals") %}
+</div>
+
+{% include 'staff.html' with obj=detail %}

@@ -1,4 +1,6 @@
+import datetime
 import logging
+from datetime import timedelta
 
 from allauth.account.models import EmailAddress
 from allauth.account.models import EmailConfirmation
@@ -28,6 +30,7 @@ from scaleos.users.models import User
 
 # Create your models here.
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class Reservation(
@@ -97,6 +100,14 @@ class Reservation(
         null=True,
         blank=True,
         help_text=_("the moment the reservation has been made"),
+    )
+    allow_requester_updates_until = models.DateTimeField(
+        verbose_name=_(
+            "allow requester updates until",
+        ),
+        null=True,
+        blank=True,
+        help_text=_("the moment until the requester can update the reservation"),
     )
     expired_on = models.DateTimeField(
         null=True,
@@ -244,16 +255,19 @@ class Reservation(
         self.save(update_fields=["user_id"])
 
     def update_confirmation_moment(self):
+        logger.debug("Trying to update the confirmation moment for the reservation")
         confrimation_state = self.get_confirmation_state()
         if confrimation_state:
             logger.debug("Updating the reservation confirmation moment")
-            self.confirmed_on = ITS_NOW
+            confirmed_on = ITS_NOW
             if isinstance(self, EventReservation):
                 self.event.add_reserved_spots(self.total_amount)
+            self.update_payment_request()
         else:
             logger.debug("Removing the confirmation moment")
-            self.confirmed_on = None
-        self.save(update_fields=["confirmed_on"])
+            confirmed_on = None
+
+        Reservation.objects.filter(id=self.pk).update(confirmed_on=confirmed_on)
 
     def organization_auto_confirm(self):
         logger.debug("Trying to auto confirm the reserveration for the organization")
@@ -330,8 +344,7 @@ class Reservation(
             "The reservation %s has now been confirmed by the requester",
             self.pk,
         )
-        self.update_payment_request()
-        self.update_confirmation_moment()
+
         return True
 
     @property
@@ -394,7 +407,6 @@ class Reservation(
             "The reservation %s has now been confirmed by the requester",
             self.pk,
         )
-        self.update_confirmation_moment()
         return True
 
     @property
@@ -417,9 +429,28 @@ class Reservation(
 
     @property
     def applicable_reservation_settings(self):
+        logger.debug("Getting the applicable reservation settings")
         if isinstance(self, EventReservation):
+            logger.debug("This is an event reservation")
+            if self.event is None:
+                logger.info(
+                    "The reservation has not yet an event, so we cannot get the settings from the event",  # noqa: E501
+                )
+                return None
+
+            logger.debug(
+                "Trying to get the applicable reservation settings from the event with id %s",  # noqa: E501
+                self.event.pk,
+            )
+            logger.debug("setig : %s", self.event.applicable_reservation_settings)
             if self.event.applicable_reservation_settings:
+                logger.info("event with id: %s", self.event)
+                logger.info(
+                    "The reservation has an applicable reservation settings from the event",  # noqa: E501
+                )
                 return self.event.applicable_reservation_settings
+
+        logger.info("The reservation has no applicable reservation settings")
         return None
 
     def update_payment_request(self):
@@ -509,6 +540,12 @@ class Reservation(
         req_status = self.latest_requester_update
 
         if org_status and req_status:
+            logger.debug("org confirmed? %s", org_status.is_confirmed)
+            logger.debug("req confirmed? %s", req_status.is_confirmed)
+            logger.debug(
+                "both confirmed? %s",
+                org_status.is_confirmed and req_status.is_confirmed,
+            )
             if org_status.is_confirmed and req_status.is_confirmed:
                 logger.debug("The reservation is confirmed from both parties")
                 return True
@@ -518,6 +555,10 @@ class Reservation(
     @property
     def is_confirmed(self):
         return self.confirmed_on is not None
+
+    @property
+    def requester_can_update(self):
+        return self.requester_can_update_on(ITS_NOW)
 
     def can_be_checked_in_by(self, user):
         logger.debug("Checking if reservation can be checked in by user.")
@@ -553,6 +594,51 @@ class Reservation(
 
         logger.debug("no because there is no check for it")
         return False, None
+
+    def set_allow_requester_updates_until_datetime(self):
+        logger.debug("Setting the allow requester updates until datetime")
+        reservation_settings = self.applicable_reservation_settings
+        if reservation_settings is None:
+            logger.info(
+                "we cannot update the date untill wich the \
+requester is allowed to do updates if \
+we do not have the settings",
+            )
+            return
+
+        if self.start is None:
+            logger.info("without start date, we cannot calculate the right moment")
+            return
+
+        time_amount = reservation_settings.allow_requester_updates_until_time_amount
+        time_interval = reservation_settings.allow_requester_updates_until_interval
+        if time_amount is None or time_interval is None:
+            logger.info(
+                "we cannot calculate the right moment \
+because we have no interval or amount",
+            )
+
+        calculated_time = self.start - timedelta(
+            **{time_interval: time_amount},
+        )
+        logger.debug("Calculated time: %s", calculated_time)
+        self.allow_requester_updates_until = calculated_time
+        Reservation.objects.filter(id=self.pk).update(
+            allow_requester_updates_until=calculated_time,
+        )
+
+    def requester_can_update_on(self, a_moment: datetime.datetime):
+        logger.debug("Checking if the requester can update on %s", a_moment)
+        block_from = self.allow_requester_updates_until
+        if block_from is None:
+            msg = 'We cannot check without the "allow requester updates until" date'
+            logger.info(msg)
+            return False
+
+        logger.debug("block from: %s", block_from)
+        result = block_from >= a_moment
+        logger.debug("requester can update: %s", result)
+        return result
 
 
 class EventReservation(Reservation):
@@ -639,11 +725,7 @@ class ReservationUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
             send_reservation_update_notification.apply_async((self.id,), countdown=5)
 
     def send_notification_logic(self, klass=None):
-        logger.info(
-            "[NOTIFY] %s notification created with id #%s",
-            self.model_name,
-            self.id,
-        )
+        logger.debug("Trying to execute the notification logic")
 
         if klass is None:
             logger.warning("We do not know to whom to send the notification")
@@ -663,32 +745,40 @@ class ReservationUpdate(PolymorphicModel, LogInfoFields, AdminLinkMixin):
             )
             return False
 
+        notif = None
         if klass == User:
             logger.debug("Creating the user notification object")
-            notification_models.UserNotification.objects.create(
+            notif = notification_models.UserNotification.objects.create(
                 sending_organization=self.reservation.organization,
                 to_user=self.reservation.user,
                 about_content_object=self,
                 redirect_to_content_object=self.reservation,
             )
-            return True
 
         if klass == Organization:
             logger.debug("Creating the organization notification object")
-            notification_models.OrganizationNotification.objects.create(
+            notif = notification_models.OrganizationNotification.objects.create(
                 sending_organization=self.reservation.organization,
                 to=notification_models.OrganizationNotification.NotificationTo.ORGANIZATION_EMPLOYEES,
                 about_content_object=self,
             )
-            return True
 
         if klass == GuestInvite:
             logger.debug("Creating the guest notification object")
-            notification_models.UserNotification.objects.create(
+            notif = notification_models.UserNotification.objects.create(
                 sending_organization=self.reservation.organization,
                 to_user=self.to_user,
                 about_content_object=self,
             )
+
+        if notif:
+            logger.info(
+                "[NOTIFY] %s notification created with id #%s",
+                self.model_name,
+                self.id,
+            )
+            return True
+
         return False
 
 
@@ -703,6 +793,12 @@ class OrganizationConfirm(ReservationUpdate):
     @property
     def notification_button_link(self):
         return super().notification_button_link
+
+    def send_notification_logic(self):
+        logger.debug(
+            "executing the logic of the requester confirmation notification logic",
+        )
+        return super().send_notification_logic(User)
 
 
 class OrganizationCancel(ReservationUpdate):
@@ -913,6 +1009,17 @@ class InvalidReservation(ReservationUpdate):
 
 
 class ReservationSettings(PolymorphicModel, AdminLinkMixin):
+    class AllowRequesterUpdatesUntillInterval(models.TextChoices):
+        SECONDS = "seconds", _("seconds")
+        MINUTES = "minutes", _("minutes")
+        HOURS = "hours", _("hour")
+        DAYS = "days", _("days")
+        WEEKS = "weeks", _("weeks")
+        MONTHS = "months", _("months")
+        YEARS = "years", _("years")
+        AT_START = "at_start", _("at start")
+        WHEN_ENDED = "on_end", _("when ended")
+
     organization = models.ForeignKey(
         "organizations.Organization",
         on_delete=models.CASCADE,
@@ -922,6 +1029,19 @@ class ReservationSettings(PolymorphicModel, AdminLinkMixin):
     telephone_number_required = models.BooleanField(
         verbose_name=_("telephone number required"),
         default=True,
+    )
+    allow_requester_updates_until_time_amount = models.IntegerField(
+        verbose_name=_("requester updates allowed until time amount"),
+        null=True,
+        blank=True,
+        default=2,
+    )
+    allow_requester_updates_until_interval = models.CharField(
+        verbose_name=_("requester updates allowed until interval"),
+        max_length=50,
+        choices=AllowRequesterUpdatesUntillInterval.choices,
+        default=AllowRequesterUpdatesUntillInterval.DAYS,
+        blank=True,
     )
 
     class Meta:

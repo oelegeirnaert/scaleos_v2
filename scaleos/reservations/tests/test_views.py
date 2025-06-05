@@ -31,7 +31,7 @@ def test_reservation_has_a_page(client):
 
 
 @pytest.mark.django_db
-def test_event_reservation_has_a_page(client):
+def test_event_reservation_has_a_page(client, user):
     # inspired by: https://djangostars.com/blog/django-pytest-testing/
 
     event_reservation_public_key = "7534ecdb-3183-4b39-8f84-990261322c51"
@@ -43,6 +43,7 @@ def test_event_reservation_has_a_page(client):
         "reservations:eventreservation",
         kwargs={"eventreservation_public_key": event_reservation_public_key},
     )
+    client.force_login(user)
     response = client.get(url)
     assert response.status_code == 200
 

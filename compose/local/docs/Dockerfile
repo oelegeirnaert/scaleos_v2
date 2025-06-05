@@ -41,6 +41,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   gettext \
   # Oele
   gdal-bin \
+  libcairo2 \
+  libcairo2-dev \
   # EOele
   # Uncomment below lines to enable Sphinx output to latex and pdf
   # texlive-latex-recommended \

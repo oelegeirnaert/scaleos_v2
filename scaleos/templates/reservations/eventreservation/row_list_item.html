@@ -1,6 +1,74 @@
 {# generated via manage create_html_scripts #}
 {% load i18n %}
 
-hi
-<b>{{ row_list_item }}</b>
-{% include 'staff.html' with obj=row_list_item %}
+<!-- Row 1: Event Info -->
+<tr class="border-b-0 {{ bg }}">
+  <td class="px-6 py-4">
+    <div class="flex flex-col lg:flex-row justify-between gap-6 text-left">
+      <!-- Left: Info -->
+      <div class="space-y-1">
+        <div class="text-lg font-semibold text-gray-900">{{ row_list_item.user.person }} @ {{ row_list_item.event }}</div>
+        <div class="text-sm text-gray-600 pl-5 pb-5 italic">- {{row_list_item.public_reference}}</div>
+        <div class="text-sm text-gray-600">{% trans 'reservation made on'|capfirst %}: {{ row_list_item.created_on }}</div>
+        <div class="text-sm text-gray-600">{% trans 'reservation finished on'|capfirst %}: {{ row_list_item.finished_on|default_if_none:"" }}</div>
+        <div class="text-sm text-gray-600">{% trans 'reservation confirmed on'|capfirst %}: {{ row_list_item.confirmed_on|default_if_none:"" }}</div>
+        <div class="text-sm text-gray-600">{% trans 'allow updates from requester until'|capfirst %}: {{ row_list_item.allow_requester_updates_until|default_if_none:"" }}</div>
+      </div>
+      <!-- Right: Meta -->
+      <div class="flex flex-col items-start gap-2 text-sm min-w-[200px]">
+        <div>
+          <span class="font-medium text-gray-700">{% trans 'organization'|capfirst %}? </span>{{ row_list_item.organization_status }}
+        </div>
+        <div>
+          <span class="font-medium text-gray-700">{% trans 'requester'|capfirst %}? </span>{{ row_list_item.requester_status }}
+        </div>
+        <div>
+          <span class="font-medium text-gray-700">{% trans 'requester can update'|capfirst %}? </span>{{ row_list_item.requester_can_update }}
+        </div>
+        <div>
+          <span class="font-medium text-gray-700"># Updates:</span>
+          {{ row_list_item.updates.count }}
+        </div>
+        <div>
+          <span class="font-medium text-gray-700">Reservations:</span>
+          {% if row_list_item.is_open_for_reservations %}
+            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Open</span>
+          {% else %}
+            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Closed</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </td>
+</tr>
+
+
+{% if row_list_item.lines.exists %}
+  <tr class="border-b-0 {{ bg }}">
+    <td class="px-6 py-4">
+      <div class="flex flex-col lg:flex-row justify-between gap-6 text-left">
+        <!-- Children: Info -->
+        <div class="space-y-1">
+          <ul>
+            {% for reservationline in row_list_item.lines.all %}
+              {% include reservationline.detail_template %}
+            
+              {% include 'staff.html' with obj=child %}
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </td>
+  </tr>
+{% endif %}
+
+
+<!-- Row 2: Action Menu -->
+<tr class="border-t-0 {{ bg }}">
+  <td class="px-6 pb-5">
+    <div class="flex flex-wrap items-center gap-2">
+      {% include row_list_item.action_menu with action_menu=row_list_item %}
+      {% include 'staff.html' with obj=row_list_item %}
+    </div>
+  </td>
+</tr>

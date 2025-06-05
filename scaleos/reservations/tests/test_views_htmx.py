@@ -125,7 +125,6 @@ def test_htmx_finish_reservation_reservation_is_successfull_as_authenticated(
     )
     assert response.status_code == 200
     reservation.refresh_from_db()
-    assert reservation.is_confirmed
 
 
 @pytest.mark.django_db

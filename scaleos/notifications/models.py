@@ -1,4 +1,5 @@
 import logging
+import uuid
 from enum import Enum
 
 from allauth.account.models import EmailConfirmation
@@ -262,6 +263,8 @@ class Notification(PolymorphicModel, LogInfoFields, AdminLinkMixin, PublicKeyFie
 
     @cached_property
     def open_notification_url(self):
+        if self.public_key is None:
+            self.public_key = uuid.uuid4()
         relative_url = reverse(
             "notifications:open_notification",
             kwargs={"notification_public_key": self.public_key},

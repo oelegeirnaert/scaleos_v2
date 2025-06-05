@@ -1,12 +1,15 @@
 import uuid
 
 from autoslug import AutoSlugField
+from cryptography.fernet import InvalidToken
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+
+from scaleos.shared.encryption import KeyManager
 
 
 class NameField(models.Model):
@@ -66,6 +69,15 @@ class PublicKeyField(models.Model):
         """Prefixed because a html id may not start with a number"""
         return f"htmlPK{str(self.public_key).replace('-', '')}"
 
+    @cached_property
+    def public_reference(self):
+        if self.public_key is None:
+            return None
+        trans_reference = _("reference")
+        return f"{trans_reference.capitalize()}: {self.verbose_name.title()} #{
+            str(self.public_key).split('-')[0].upper()
+        }"
+
 
 class OriginFields(models.Model):
     origin_content_type = models.ForeignKey(
@@ -108,3 +120,31 @@ class SegmentField(models.Model):
         if self.segment == self.SegmentType.BOTH:
             return _("everyone")
         return self.get_segment_display()
+
+
+class EncryptedTextField(models.TextField):
+    """
+    Custom Django field that encrypts text using Fernet before saving,
+    and decrypts it when loading.
+    """
+
+    def get_prep_value(self, value):
+        if value is None:
+            return value
+        f = KeyManager.get_fernet()
+        return f.encrypt(value.encode()).decode()
+
+    def from_db_value(self, value, expression, connection):
+        if value is None:
+            return value
+        f = KeyManager.get_fernet()
+        return f.decrypt(value.encode()).decode()
+
+    def to_python(self, value):
+        if value is None or isinstance(value, str):
+            try:
+                f = KeyManager.get_fernet()
+                return f.decrypt(value.encode()).decode()
+            except InvalidToken:
+                return value  # Raw value in forms/admin
+        return value

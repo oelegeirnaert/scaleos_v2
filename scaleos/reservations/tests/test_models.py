@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 import pytest
@@ -11,6 +12,7 @@ from scaleos.notifications.models import UserNotification
 from scaleos.organizations import models as organization_models
 from scaleos.organizations.tests import model_factories as organization_factories
 from scaleos.payments.tests import model_factories as payment_factories
+from scaleos.reservations import models as reservation_models
 from scaleos.reservations.tests import model_factories as reservation_factories
 from scaleos.users.models import User
 from scaleos.users.tests import model_factories as user_factories
@@ -18,6 +20,88 @@ from scaleos.users.tests import model_factories as user_factories
 logger = logging.getLogger(__name__)
 
 pytestmark = pytest.mark.django_db
+
+
+class TestReservation:
+    def test_if_a_reservation_is_confirmed(self):
+        reservation = reservation_factories.ReservationFactory()
+        assert reservation.organization_confirm() is True
+        assert reservation.requester_confirm() is True
+        reservation.refresh_from_db()
+        assert reservation.is_confirmed is True
+
+    def test_update_confirmation_moment(self):
+        reservation = reservation_factories.ReservationFactory()
+        reservation.update_confirmation_moment()
+        assert reservation.is_confirmed is False, (
+            "should be false, because the organizer and request still needs to confirm"
+        )
+
+        reservation_factories.OrganizationConfirmFactory(
+            reservation_id=reservation.pk,
+        )
+
+        assert reservation.updates.count() == 1, (
+            "one update, because the organizer confirmed"
+        )
+        assert reservation.latest_organization_update is not None, (
+            "because it is just confirmed by the organizer"
+        )
+        assert reservation.is_confirmed is False, (
+            "the organization confirmed, but we are still waiting for the requester to confirm"  # noqa: E501
+        )
+
+        reservation_factories.RequesterConfirmFactory(
+            reservation_id=reservation.pk,
+        )
+        assert reservation.updates.count() == 2, (
+            "two updates, because the requester and organizer confirmed"
+        )
+        assert reservation.latest_requester_update is not None, (
+            "because it is just confirmed by the requester"
+        )
+        reservation.refresh_from_db()
+        assert reservation.confirmed_on is not None, (
+            "should be set, because it is just confirmed by the requester and organization"  # noqa: E501
+        )
+        assert reservation.is_confirmed is True, (
+            "should be true, because the requester and organizer confirmed"
+        )
+
+        reservation_factories.OrganizationCancelFactory(
+            reservation_id=reservation.pk,
+        )
+        assert reservation.updates.count() == 3, (
+            "three updates, because the organization canceled"
+        )
+        reservation.refresh_from_db()
+        assert reservation.is_confirmed is False, (
+            "should be false, because the organization canceled"
+        )
+
+    def test_requester_updates_till(self):
+        starting_event = datetime.datetime(2025, 6, 4, 15, 30, tzinfo=datetime.UTC)
+        event_reservation_settings = reservation_factories.EventReservationSettingsFactory(  # noqa: E501
+            allow_requester_updates_until_time_amount=1,
+            allow_requester_updates_until_interval=reservation_models.ReservationSettings.AllowRequesterUpdatesUntillInterval.DAYS,
+        )
+        event = event_factories.SingleEventFactory(
+            starting_at=starting_event,
+            reservation_settings_id=event_reservation_settings.pk,
+        )
+        reservation = reservation_factories.EventReservationFactory(event_id=event.pk)
+        assert reservation.allow_requester_updates_until is not None
+        blocked_datetime = starting_event - datetime.timedelta(days=1)
+        assert reservation.allow_requester_updates_until == blocked_datetime, (
+            "because it is blocked by the settings"
+        )
+        assert reservation.requester_can_update_on(starting_event) is False, (
+            "because it is on the starting datetime"
+        )
+        allowed_datetime = starting_event - datetime.timedelta(days=2)
+        assert reservation.requester_can_update_on(allowed_datetime) is True, (
+            "because the expiry datetime is still in the future"
+        )
 
 
 class TestEventReservation:
@@ -45,7 +129,7 @@ class TestGuestInvite:
         guest_invite.send_notification_logic()
 
         assert UserNotification.objects.count() == 1
-        assert organization_models.OrganizationCustomer.objects.count() == 1
+        assert organization_models.Customer.objects.count() == 1
 
 
 @pytest.mark.django_db
@@ -331,14 +415,6 @@ def test_reservation_that_is_already_confirmed_by_organization_cannot_be_confirm
 
 
 @pytest.mark.django_db
-def test_if_a_reservation_is_confirmed(faker):
-    reservation = reservation_factories.ReservationFactory()
-    assert reservation.organization_confirm() is True
-    assert reservation.requester_confirm() is True
-    assert reservation.is_confirmed is True
-
-
-@pytest.mark.django_db
 def test_reservation_payment_request(faker):
     hundred_euro = Money(100, EUR)
 
@@ -372,7 +448,12 @@ def test_reservation_payment_request(faker):
     assert reservation.get_total_price().vat_included
     assert reservation.get_total_price().vat_included.amount == Decimal(100.00)
     reservation.organization_confirm()
-    assert reservation.payment_request
+    reservation.requester_confirm()
+    reservation.refresh_from_db()
+    assert reservation.is_confirmed is True, "both parties confirmed the reservation"
+    assert reservation.payment_request, (
+        "when both parties confirmed the reservation, there should be a payment request"
+    )
 
 
 @pytest.mark.django_db

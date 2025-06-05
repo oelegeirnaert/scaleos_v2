@@ -12,7 +12,7 @@ from polymorphic.models import PolymorphicModel
 
 from scaleos.catering.models import CateringField
 from scaleos.organizations.models import B2BCustomer
-from scaleos.organizations.models import OrganizationCustomer
+from scaleos.organizations.models import Customer
 from scaleos.reservations.models import EventReservationSettings
 from scaleos.reservations.models import Reservation
 from scaleos.shared.fields import LogInfoFields
@@ -25,6 +25,8 @@ from scaleos.shared.models import CardModel
 from scaleos.timetables.models import TimeTable
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 # Create your models here.
 
@@ -137,6 +139,10 @@ class Concept(
         )
 
     @property
+    def upcoming_events_open_for_reservation(self):
+        return [e for e in self.upcoming_events if e.is_open_for_reservations]
+
+    @property
     def starting_at(self):
         return self.events.order_by("-singleevent__starting_at").first().starting_at
 
@@ -168,7 +174,7 @@ class ConceptImage(LogInfoFields):
 
 class CustomerConcept(Concept, LogInfoFields):
     customer = models.ForeignKey(
-        "organizations.OrganizationCustomer",
+        "organizations.Customer",
         verbose_name=_(
             "customer",
         ),
@@ -201,7 +207,7 @@ class CustomerConcept(Concept, LogInfoFields):
         verbose_name_plural = _("customer concepts")
 
     def clean(self):
-        if not OrganizationCustomer.objects.filter(
+        if not Customer.objects.filter(
             organization_id__in=[self.organizer_id],
         ).exists():
             msg = _("This is not one of your customers")
@@ -426,12 +432,15 @@ class Event(PolymorphicModel, NameField, AdminLinkMixin, PublicKeyField, CardMod
 
     @property
     def applicable_reservation_settings(self):
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Checking for applicable reservation settings")
         if self.reservation_settings:
             return self.reservation_settings
 
         if self.concept and self.concept.reservation_settings:
             return self.concept.reservation_settings
 
+        logger.info("No applicable reservation settings found")
         return None
 
     @property
@@ -934,8 +943,13 @@ class EventDuplicator(models.Model):  # noqa: DJ008
             "from date",
         ),
         null=True,
+        blank=True,
+        help_text=_(
+            "as starting date, we automatically take the starting datetime of the event",  # noqa: E501
+        ),
+        editable=False,
     )
-    to_date = models.DateField(
+    target_date = models.DateField(
         verbose_name=_(
             "to date",
         ),
@@ -956,26 +970,31 @@ class EventDuplicator(models.Model):  # noqa: DJ008
         choices=DuplicateInterval.choices,
         default=DuplicateInterval.EVERY_WEEK,
     )
+    events_created = models.PositiveIntegerField(
+        verbose_name=_(
+            "events created",
+        ),
+        default=0,
+        editable=False,
+    )
 
     def duplicate(self):  # noqa: C901, PLR0912, PLR0915
         logger.info("Duplicating single event from duplicator: %s", self.pk)
         if self.event is None:
-            msg = _("we cannot duplicate an event if none is defined")
+            msg = _("please choose your event to duplicate")
             raise ValueError(msg)
 
-        if self.to_date is None:
-            msg = _("we cannot duplicate an event without a to date")
+        if self.target_date is None:
+            msg = _("please set your target date")
             raise ValueError(msg)
 
-        if self.from_date is None:
-            if self.event.starting_at:
-                self.from_date = self.event.starting_at
-            else:
-                msg = _("we cannot duplicate an event without a from date")
-                raise ValueError(msg)
+        self.from_date = self.event.starting_at.date()
 
-        if self.to_date <= self.from_date:
-            msg = _("the from date must be lower than the to date")
+        if self.target_date <= self.from_date:
+            msg = _(
+                "target date must be higher than the starting date of the event: %s",
+                self.from_date,
+            )
             raise ValueError
 
         event = self.event
@@ -1000,31 +1019,32 @@ class EventDuplicator(models.Model):  # noqa: DJ008
             case self.DuplicateInterval.EVERY_YEAR:
                 self.interval = "years"
 
-        new_from_date = self.from_date
-        new_to_date = self.to_date
+        time_interval = relativedelta(**{self.interval: self.amount})
+        new_starting_datetime = datetime.datetime.combine(
+            self.from_date + time_interval,
+            event.starting_at.time(),
+        )
+        new_ending_datetime = datetime.datetime.combine(
+            event.ending_on.date() + time_interval,
+            event.ending_on.time(),
+        )
 
-        events_created = 0
-        while new_from_date <= self.to_date:
-            events_created += 1
-            logger.info("Creating event on %s", str(new_from_date))
-            new_starting_datetime = datetime.datetime.combine(
-                new_from_date,
-                event.starting_at.time(),
-            )
-            new_ending_datetime = datetime.datetime.combine(
-                new_to_date,
-                event.ending_on.time(),
-            )
-
-            new_from_date += relativedelta(**{self.interval: self.amount})
-            new_to_date += relativedelta(**{self.interval: self.amount})
-
+        self.events_created = 0
+        while new_starting_datetime.date() <= self.target_date:
             if SingleEvent.objects.filter(
                 concept_id=event.concept_id,
                 starting_at=new_starting_datetime,
                 ending_on=new_ending_datetime,
             ).exists():
                 logger.info("Event already exists")
+                new_starting_datetime = datetime.datetime.combine(
+                    new_starting_datetime.date() + time_interval,
+                    event.starting_at.time(),
+                )
+                new_ending_datetime = datetime.datetime.combine(
+                    new_ending_datetime + time_interval,
+                    event.ending_on.time(),
+                )
                 continue
 
             new_event = type(event)()
@@ -1049,9 +1069,9 @@ class EventDuplicator(models.Model):  # noqa: DJ008
                 if isinstance(event, SingleEvent) and field.name in skip_fields:
                     logger.info("skipping field: %s", field.name)
                     continue
-                logger.info("Copying field: %s", field.name)
+                logger.debug("Copying field: %s", field.name)
                 value = getattr(event, field.name, None)
-                logger.info("%s: %s", field.name, value)
+                logger.debug("%s: %s", field.name, value)
                 try:
                     setattr(new_event, field.name, value)
                 except TypeError:
@@ -1062,7 +1082,7 @@ class EventDuplicator(models.Model):  # noqa: DJ008
                     logger.warning("ValueError")
                 except Exception:  # noqa: BLE001
                     logger.warning("Exception")
-                logger.info("Ready to copy next field")
+                logger.debug("Ready to copy next field")
 
             logger.debug("Removing IDS and PK")
             new_event.pk = None
@@ -1075,8 +1095,19 @@ class EventDuplicator(models.Model):  # noqa: DJ008
             new_event.save()
 
             logger.info("New event id: %s", str(new_event.pk) + " saved")
+            self.events_created += 1
 
-        logger.info("%s events created", str(events_created))
+            new_starting_datetime = datetime.datetime.combine(
+                new_starting_datetime.date() + time_interval,
+                event.starting_at.time(),
+            )
+            new_ending_datetime = datetime.datetime.combine(
+                new_ending_datetime + time_interval,
+                event.ending_on.time(),
+            )
+
+        self.save()
+        logger.info("%s events created", str(self.events_created))
 
 
 class EventAttendee(PolymorphicModel, AdminLinkMixin, PublicKeyField):
@@ -1124,9 +1155,17 @@ class EventFloor(AdminLinkMixin):
         null=True,
     )
     floor = models.ForeignKey(
-        "geography.Floor",
+        "buildings.Floor",
         verbose_name=_(
             "floor",
+        ),
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    floor_layout = models.ForeignKey(
+        "buildings.FloorLayout",
+        verbose_name=_(
+            "floor layout",
         ),
         on_delete=models.CASCADE,
         null=True,

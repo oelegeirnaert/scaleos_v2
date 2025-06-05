@@ -125,7 +125,7 @@ def import_mealdb_dishes(self, search_query="Arrabiata"):
 
                     if ingredient_name and ingredient_name.strip():
                         ingredient_name = ingredient_name.strip()
-                        ingredient, _ = Ingredient.objects.get_or_create(
+                        ingredient = Ingredient.objects.create(
                             name=ingredient_name,
                         )
 

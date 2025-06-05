@@ -174,7 +174,7 @@ def import_resengo_row(row, organization_id=None, force_overwrite=None):  # noqa
             raise ValidationError(msg)
 
     organization_customer, organization_customer_created = (
-        organization_models.OrganizationCustomer.objects.get_or_create(
+        organization_models.B2CCustomer.objects.get_or_create(
             organization_id=organization_id,
             person_id=person.pk,
         )

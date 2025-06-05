@@ -5,6 +5,7 @@ import os
 from django.conf import settings
 from django.core.files import File
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 from moneyed import EUR
 from moneyed import Money
 
@@ -19,6 +20,7 @@ from scaleos.organizations import models as organization_models
 from scaleos.payments import models as payment_models
 from scaleos.reservations import models as reservation_models
 from scaleos.shared.mixins import ITS_NOW
+from scaleos.timetables.functions import get_date_of_next
 from scaleos.users import models as user_models
 from scaleos.websites import models as website_models
 
@@ -205,20 +207,21 @@ Reserveer je tafel en proef de verfijning van de Waerboom."""  # noqa: E501, RUF
             public_key="66d91661-0183-469d-8836-c3e2d47644e9",
         )
         brunch_event.concept_id = brunch_concept.pk
+        next_sunday = get_date_of_next("Sunday")
         brunch_event.starting_at = datetime.datetime(
-            year=2025,
-            month=3,
-            day=30,
+            year=next_sunday.year,
+            month=next_sunday.month,
+            day=next_sunday.day,
             hour=12,
             minute=0,
             second=0,
             tzinfo=datetime.UTC,
         )
         brunch_event.ending_on = datetime.datetime(
-            year=2025,
-            month=3,
-            day=30,
-            hour=16,
+            year=next_sunday.year,
+            month=next_sunday.month,
+            day=next_sunday.day,
+            hour=17,
             minute=0,
             second=0,
             tzinfo=datetime.UTC,
@@ -228,12 +231,11 @@ Reserveer je tafel en proef de verfijning van de Waerboom."""  # noqa: E501, RUF
         brunch_event.maximum_number_of_guests = 300
         brunch_event.save()
 
-        from_date = datetime.datetime(year=2025, month=3, day=30)  # noqa: DTZ001
-        to_date = datetime.datetime(year=2025, month=5, day=30)  # noqa: DTZ001
+
+        target_date = timezone.now().date() + datetime.timedelta(days=60)
         brunch_duplicator, created = event_models.EventDuplicator.objects.get_or_create(
             event_id=brunch_event.pk,
-            from_date=from_date,
-            to_date=to_date,
+            target_date=target_date,
         )
         brunch_duplicator.duplicate()
 
@@ -979,7 +981,6 @@ Maak van jouw viering een herinnering om te koesteren."""  # noqa: E501, RUF001
         logger.info("Creating waerboom building for organization %s", organization)
         waerboom_building, created = building_models.Building.objects.get_or_create(
             public_key="15730be5-ab50-45b7-ac26-a35a1aa8ce8a",
-            organization_id=organization.pk,
         )
         waerboom_building.name = "Waerboom"
         waerboom_building.save()
@@ -988,9 +989,8 @@ Maak van jouw viering een herinnering om te koesteren."""  # noqa: E501, RUF001
 
         room_bosch, created = building_models.Room.objects.get_or_create(
             public_key="b306dd21-7db8-4135-9fd7-408a0822d4b8",
-            in_building_id=waerboom_building.pk,
+            building_id=waerboom_building.pk,
         )
-        room_bosch.organization_id = organization.pk
         room_bosch.name = "Zaal Bosch"
         room_bosch.save()
 
@@ -998,45 +998,42 @@ Maak van jouw viering een herinnering om te koesteren."""  # noqa: E501, RUF001
             public_key="89963220-dd93-4e87-ac16-5f063bf71b09",
         )
 
-        bosch_terrace.organization_id = organization.pk
         bosch_terrace.name = "Terrace Bosch"
         bosch_terrace.save()
 
         room_breugel, created = building_models.Room.objects.get_or_create(
             public_key="d2480db7-eaba-4258-b770-0ec46ef3a727",
-            in_building_id=waerboom_building.pk,
+            building_id=waerboom_building.pk,
         )
-        room_breugel.organization_id = organization.pk
         room_breugel.name = "Zaal Breugel"
         room_breugel.save()
 
         room_memling, created = building_models.Room.objects.get_or_create(
             public_key="4fbc511c-0af9-431c-9c4b-f6d14b8a9c2d",
-            in_building_id=waerboom_building.pk,
+            building_id=waerboom_building.pk,
         )
-        room_memling.organization_id = organization.pk
+
         room_memling.name = "Zaal Memling"
         room_memling.save()
 
         room_permeke, created = building_models.Room.objects.get_or_create(
             public_key="8b8de3d0-ad98-4a7d-bab0-21d7bcb3b8f7",
-            in_building_id=waerboom_building.pk,
+            building_id=waerboom_building.pk,
         )
-        room_permeke.organization_id = organization.pk
+
         room_permeke.name = "Zaal Permeke"
         room_permeke.save()
 
         room_rubens, created = building_models.Room.objects.get_or_create(
             public_key="d8f7b1e4-3bea-451c-b999-3f18f75a663e",
-            in_building_id=waerboom_building.pk,
+            building_id=waerboom_building.pk,
         )
-        room_rubens.organization_id = organization.pk
+
         room_rubens.name = "Zaal Rubens"
         room_rubens.save()
 
         waerboomhof_building, created = building_models.Building.objects.get_or_create(
             public_key="924a3867-9c15-436a-9ea8-064bad22c548",
-            organization_id=organization.pk,
         )
         waerboomhof_building.name = "Waerboomhof"
         waerboomhof_building.save()
@@ -1100,27 +1097,21 @@ Maak van jouw viering een herinnering om te koesteren."""  # noqa: E501, RUF001
         cash_payment_method, created = (
             payment_models.CashPaymentMethod.objects.get_or_create(
                 public_key="072b5b09-b74f-48b7-8922-287794e2955c",
+
             )
         )
-        waerboom_cash_payment_method, created = (
-            organization_models.OrganizationPaymentMethod.objects.get_or_create(
-                organization_id=organization.pk,
-                payment_method_id=cash_payment_method.pk,
-            )
-        )
+        cash_payment_method.organization_id = organization.pk
+        cash_payment_method.save()
+
+
 
         money_transfer_payment_method, created = (
             payment_models.EPCMoneyTransferPaymentMethod.objects.get_or_create(
                 public_key="fc9f61d6-5f2c-49e4-b914-09b3d8da37d1",
             )
         )
-        waerboom_money_transfer_payment_method, created = (
-            organization_models.OrganizationPaymentMethod.objects.get_or_create(
-                organization_id=organization.pk,
-                payment_method_id=money_transfer_payment_method.pk,
-            )
-        )
         money_transfer_payment_method.iban = "BE63426220901108"
+        money_transfer_payment_method.organization_id = organization.pk
         money_transfer_payment_method.save()
 
     def create_waerboom_website(self, organization):  # noqa: PLR0915

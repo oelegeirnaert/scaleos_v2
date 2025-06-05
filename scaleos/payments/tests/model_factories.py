@@ -1,7 +1,9 @@
+from factory import SubFactory
 from factory.django import DjangoModelFactory
 from moneyed import EUR
 from moneyed import Money
 
+from scaleos.organizations.tests.model_factories import OrganizationFactory
 from scaleos.payments import models as payment_models
 
 
@@ -95,6 +97,7 @@ class PaymentSettingsFactory(DjangoModelFactory[payment_models.PaymentSettings])
 
 
 class PaymentMethodFactory(DjangoModelFactory[payment_models.PaymentMethod]):
+    organization = SubFactory(OrganizationFactory)
     class Meta:
         model = payment_models.PaymentMethod
 
@@ -116,6 +119,13 @@ class VoucherPaymentMethodFactory(
 ):
     class Meta:
         model = payment_models.VoucherPaymentMethod
+
+class MolliePaymentMethodFactory(
+    DjangoModelFactory[payment_models.MolliePaymentMethod]):
+    class Meta:
+        model = payment_models.MolliePaymentMethod
+
+
 
 
 class PaymentProposalFactory(DjangoModelFactory[payment_models.PaymentProposal]):

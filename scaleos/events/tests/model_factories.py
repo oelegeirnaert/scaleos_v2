@@ -72,7 +72,7 @@ class StayOverFactory(DjangoModelFactory[event_models.StayOver]):
 
 class EventDuplicatorFactory(DjangoModelFactory[event_models.EventDuplicator]):
     event = SubFactory(SingleEventFactory)
-    to_date = LazyAttribute(
+    target_date = LazyAttribute(
         lambda obj: obj.event.starting_at + datetime.timedelta(days=20),
     )
 

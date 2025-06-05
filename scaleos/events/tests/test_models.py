@@ -24,7 +24,7 @@ class TestCustomerConcept:
         Test that clean() passes when the customer belongs to the organizer.
         """
         organizer = organization_factories.OrganizationFactory.create()
-        customer = organization_factories.OrganizationCustomerFactory.create(
+        customer = organization_factories.B2BCustomerFactory.create(
             organization=organizer,
         )
         # Instantiate the CustomerConcept without saving,
@@ -48,7 +48,7 @@ class TestCustomerConcept:
         """
         organizer1 = organization_factories.OrganizationFactory.create()
         organizer2 = organization_factories.OrganizationFactory.create()
-        customer_of_org2 = organization_factories.OrganizationCustomerFactory.create(
+        customer_of_org2 = organization_factories.B2BCustomerFactory.create(
             organization=organizer2,
         )
 
@@ -91,7 +91,7 @@ class TestCustomerConcept:
         """Test that saving sets segment to B2C if customer is B2C."""
 
         organizer = organization_factories.OrganizationFactory.create()
-        customer = organization_factories.OrganizationCustomerFactory.create(
+        customer = organization_factories.CustomerFactory.create(
             organization=organizer,
         )
         customer_concept = event_models.CustomerConcept(
@@ -106,7 +106,7 @@ class TestCustomerConcept:
     def test_str_method(self):
         """Test the __str__ representation."""
         organizer = organization_factories.OrganizationFactory.create()
-        customer = organization_factories.OrganizationCustomerFactory.create(
+        customer = organization_factories.CustomerFactory.create(
             organization=organizer,
         )
 
@@ -178,6 +178,7 @@ class TestEvent:
         event_reservation.lines.set([event_reservation_line])
         assert event_reservation.organization_confirm()
         assert event_reservation.requester_confirm()
+        event_reservation.refresh_from_db()
         assert event_reservation.is_confirmed
         assert event_reservation.total_amount == 5
         assert event.get_reserved_spots() == 5
@@ -276,6 +277,98 @@ class TestEvent:
 
         assert event.show_progress_bar is True
 
+    def test_event_has_free_capacity(self, faker):  # noqa: PLR0915
+        activate("nl")
+        event = event_factories.EventFactory.create()
+        assert event.free_spots == "∞"
+
+        event.maximum_number_of_guests = 100
+        event.save()
+
+        assert event.free_spots == 100
+        assert event.free_percentage == 100
+        assert event.reserved_percentage == 0
+        assert event.reserved_spots == 0
+
+        event_reservation1_reservation_lines = (
+            reservation_factories.ReservationLineFactory.create_batch(
+                2,
+                amount=15,
+            )
+        )
+
+        event_reservation1 = reservation_factories.EventReservationFactory.create(
+            event_id=event.pk,
+        )
+        event_reservation1.lines.set(event_reservation1_reservation_lines)
+        assert event.reservations.count() == 1
+        assert event.free_spots == 100
+        assert event.free_percentage == 100
+        assert event.reserved_percentage == 0
+        assert event.reserved_spots == 0
+        event_reservation1.requester_confirm()
+        assert event_reservation1.requester_confirmed
+        event_reservation1.organization_confirm()
+        assert event_reservation1.organization_confirmed
+        event_reservation1.refresh_from_db()
+        assert event_reservation1.is_confirmed
+
+        event.refresh_from_db()
+        assert event.free_spots == 70
+        assert event.free_percentage == 70
+        assert event.reserved_percentage == 30
+        assert event.reserved_spots == 30
+        assert event.over_reserved_spots == 0
+
+        event_reservation2_reservation_lines = (
+            reservation_factories.ReservationLineFactory.create_batch(2, amount=5)
+        )
+        event_reservation2 = reservation_factories.EventReservationFactory.create(
+            event_id=event.pk,
+        )
+        event_reservation2.lines.set(event_reservation2_reservation_lines)
+        event_reservation2.requester_confirm()
+        event_reservation2.organization_confirm()
+        event.refresh_from_db()
+
+        assert event.free_spots == 60
+        assert event.free_percentage == 60
+        assert event.reserved_percentage == 40
+        assert event.reserved_spots == 40
+        assert event.over_reserved_spots == 0
+
+        event_reservation3_reservation_lines = (
+            reservation_factories.ReservationLineFactory.create_batch(6, amount=10)
+        )
+        event_reservation3 = reservation_factories.EventReservationFactory.create(
+            event_id=event.pk,
+        )
+        event_reservation3.lines.set(event_reservation3_reservation_lines)
+        event_reservation3.requester_confirm()
+        event_reservation3.organization_confirm()
+        event.refresh_from_db()
+        assert event.free_spots == 0
+        assert event.free_percentage == 0
+        assert event.reserved_percentage == 100
+        assert event.reserved_spots == 100
+        assert event.over_reserved_spots == 0
+
+        event_reservation4_reservation_lines = (
+            reservation_factories.ReservationLineFactory.create_batch(5, amount=2)
+        )
+        event_reservation4 = reservation_factories.EventReservationFactory.create(
+            event_id=event.pk,
+        )
+        event_reservation4.lines.set(event_reservation4_reservation_lines)
+        event_reservation4.requester_confirm()
+        event_reservation4.organization_confirm()
+        event.refresh_from_db()
+        assert event.free_spots == 0
+        assert event.free_percentage == 0
+        assert event.reserved_percentage == 100
+        assert event.reserved_spots == 110
+        assert event.over_reserved_spots == 10
+
 
 @pytest.mark.django_db
 class TestSingleEvent:
@@ -315,99 +408,6 @@ class TestBirthdayEvent:
         )
         birthday_event.attendees.add(birthday_person)
         assert len(birthday_event.warnings) == 0
-
-
-@pytest.mark.django_db
-def test_event_has_free_capacity(faker):  # noqa: PLR0915
-    activate("nl")
-    event = event_factories.EventFactory.create()
-    assert event.free_spots == "∞"
-
-    event.maximum_number_of_guests = 100
-    event.save()
-
-    assert event.free_spots == 100
-    assert event.free_percentage == 100
-    assert event.reserved_percentage == 0
-    assert event.reserved_spots == 0
-
-    event_reservation1_reservation_lines = (
-        reservation_factories.ReservationLineFactory.create_batch(
-            2,
-            amount=15,
-        )
-    )
-
-    event_reservation1 = reservation_factories.EventReservationFactory.create(
-        event_id=event.pk,
-    )
-    event_reservation1.lines.set(event_reservation1_reservation_lines)
-    assert event.reservations.count() == 1
-    assert event.free_spots == 100
-    assert event.free_percentage == 100
-    assert event.reserved_percentage == 0
-    assert event.reserved_spots == 0
-    event_reservation1.requester_confirm()
-    assert event_reservation1.requester_confirmed
-    event_reservation1.organization_confirm()
-    assert event_reservation1.organization_confirmed
-    assert event_reservation1.is_confirmed
-
-    event.refresh_from_db()
-    assert event.free_spots == 70
-    assert event.free_percentage == 70
-    assert event.reserved_percentage == 30
-    assert event.reserved_spots == 30
-    assert event.over_reserved_spots == 0
-
-    event_reservation2_reservation_lines = (
-        reservation_factories.ReservationLineFactory.create_batch(2, amount=5)
-    )
-    event_reservation2 = reservation_factories.EventReservationFactory.create(
-        event_id=event.pk,
-    )
-    event_reservation2.lines.set(event_reservation2_reservation_lines)
-    event_reservation2.requester_confirm()
-    event_reservation2.organization_confirm()
-    event.refresh_from_db()
-
-    assert event.free_spots == 60
-    assert event.free_percentage == 60
-    assert event.reserved_percentage == 40
-    assert event.reserved_spots == 40
-    assert event.over_reserved_spots == 0
-
-    event_reservation3_reservation_lines = (
-        reservation_factories.ReservationLineFactory.create_batch(6, amount=10)
-    )
-    event_reservation3 = reservation_factories.EventReservationFactory.create(
-        event_id=event.pk,
-    )
-    event_reservation3.lines.set(event_reservation3_reservation_lines)
-    event_reservation3.requester_confirm()
-    event_reservation3.organization_confirm()
-    event.refresh_from_db()
-    assert event.free_spots == 0
-    assert event.free_percentage == 0
-    assert event.reserved_percentage == 100
-    assert event.reserved_spots == 100
-    assert event.over_reserved_spots == 0
-
-    event_reservation4_reservation_lines = (
-        reservation_factories.ReservationLineFactory.create_batch(5, amount=2)
-    )
-    event_reservation4 = reservation_factories.EventReservationFactory.create(
-        event_id=event.pk,
-    )
-    event_reservation4.lines.set(event_reservation4_reservation_lines)
-    event_reservation4.requester_confirm()
-    event_reservation4.organization_confirm()
-    event.refresh_from_db()
-    assert event.free_spots == 0
-    assert event.free_percentage == 0
-    assert event.reserved_percentage == 100
-    assert event.reserved_spots == 110
-    assert event.over_reserved_spots == 10
 
 
 @pytest.mark.django_db
@@ -594,13 +594,11 @@ def test_event_duplicator(faker):
         starting_at=starting_at,
         ending_on=starting_at + datetime.timedelta(hours=4),
     )
-    assert brunch_event.pk
-    a_from_date = datetime.date(year=2025, month=3, day=30)
-    a_to_date = datetime.date(year=2025, month=4, day=11)
+
+    target_date = datetime.date(year=2025, month=4, day=13)
     event_duplicator = event_factories.EventDuplicatorFactory.create(
         event_id=brunch_event.pk,
-        from_date=a_from_date,
-        to_date=a_to_date,
+        target_date=target_date,
         amount=1,
         every_interval=event_models.EventDuplicator.DuplicateInterval.EVERY_WEEK,
     )
@@ -612,4 +610,21 @@ def test_event_duplicator(faker):
             duplicator_id=event_duplicator.pk,
         ).count()
         == 2
+    )
+    expected_start = datetime.datetime(year=2025, month=4, day=6, hour=12, minute=00)
+    assert (
+        event_models.SingleEvent.objects.filter(
+            starting_at=expected_start,
+            ending_on=expected_start + datetime.timedelta(hours=4),
+        ).count()
+        == 1
+    )
+
+    expected_start = datetime.datetime(year=2025, month=4, day=13, hour=12, minute=00)
+    assert (
+        event_models.SingleEvent.objects.filter(
+            starting_at=expected_start,
+            ending_on=expected_start + datetime.timedelta(hours=4),
+        ).count()
+        == 1
     )

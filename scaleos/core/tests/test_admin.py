@@ -31,9 +31,12 @@ def test_every_single_admin_view(mock_context, admin_client):
                 logger.info("Skipping %s", model_name)
                 continue
 
+
             model_factory_name = f"{model_name}Factory"
             full_module_name = f"{full_module_name}"
 
+            logger.debug("Trying to import %s", full_module_name)
+            logger.info("Importing module")
             module = importlib.import_module(full_module_name)
             logger.info("Module imported")
             logger.info("Testing %s from %s", model_factory_name, full_module_name)

@@ -60,6 +60,59 @@ class PaymentInlineAdmin(
         EPCMoneyTransferPaymentInlineAdmin,
     )
 
+class PaymentMethodInlineAdmin(
+    StackedPolymorphicInline,
+    LogInfoInlineAdminMixin,
+):
+    """
+    An inline for a polymorphic model.
+    The actual form appearance of each row is determined by
+    the child inline that corresponds with the actual model type.
+    """
+
+    class PaymentMethodInlineAdmin(
+        StackedPolymorphicInline.Child,
+        LogInfoInlineAdminMixin,
+    ):
+        model = payment_models.PaymentMethod
+        show_change_link = True
+
+    class VoucherPaymentMethodInlineAdmin(
+        StackedPolymorphicInline.Child,
+        LogInfoInlineAdminMixin,
+    ):
+        model = payment_models.VoucherPaymentMethod
+        show_change_link = True
+
+    class EPCMoneyTransferPaymentMethodInlineAdmin(    StackedPolymorphicInline.Child,
+        LogInfoInlineAdminMixin,
+    ):
+        model = payment_models.EPCMoneyTransferPaymentMethod
+        show_change_link = True
+
+    class MolliePaymentMethodInlineAdmin(
+        StackedPolymorphicInline.Child,
+        LogInfoInlineAdminMixin,
+    ):
+        model = payment_models.MolliePaymentMethod
+        show_change_link = True
+
+    class CashPaymentMethodInlineAdmin(
+        StackedPolymorphicInline.Child,
+        LogInfoInlineAdminMixin,
+    ):
+        model = payment_models.CashPaymentMethod
+        show_change_link = True
+
+    model = payment_models.PaymentMethod
+    child_inlines = (
+        PaymentMethodInlineAdmin,
+        VoucherPaymentMethodInlineAdmin,
+        MolliePaymentMethodInlineAdmin,
+        EPCMoneyTransferPaymentMethodInlineAdmin,
+        CashPaymentMethodInlineAdmin,
+    )
+
 
 class PriceHistoryInlineAdmin(LogInfoInlineAdminMixin):
     model = payment_models.PriceHistory
@@ -90,7 +143,7 @@ class BulkPriceMatrixItemInlineAdmin(admin.TabularInline):
 
 
 @admin.register(payment_models.Price)
-class PriceAdmin(LogInfoAdminMixin):
+class PriceAdmin(admin.ModelAdmin):
     readonly_fields = [
         "previous_price",
         "vat_included",
@@ -232,6 +285,7 @@ class PaymentMethodAdmin(PolymorphicParentModelAdmin):
         payment_models.CashPaymentMethod,
         payment_models.EPCMoneyTransferPaymentMethod,
         payment_models.VoucherPaymentMethod,
+        payment_models.MolliePaymentMethod,
     ]
     list_filter = [PolymorphicChildModelFilter]
 
@@ -252,6 +306,10 @@ class CashPaymentMethodAdmin(PolymorphicChildModelAdmin, LogInfoAdminMixin):
 class VoucherPaymentMethodAdmin(PolymorphicChildModelAdmin, LogInfoAdminMixin):
     base_model = payment_models.PaymentMethod  # Explicitly set here!
     # define custom features here
+
+@admin.register(payment_models.MolliePaymentMethod)
+class MolliePaymentMethodAdmin(PolymorphicChildModelAdmin, LogInfoAdminMixin):
+    base_model = payment_models.PaymentMethod
 
 
 @admin.register(payment_models.PaymentProposal)

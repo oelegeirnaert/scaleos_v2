@@ -10,10 +10,20 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def reservation(request, reservation_public_key=None):
+    active_organization_id = request.session.get("active_organization_id", None)
+    alternative_resultset = None
+    if active_organization_id and request.user.is_organization_owner(
+        active_organization_id,
+    ):
+        alternative_resultset = reservation_models.Reservation.objects.filter(
+            organization_id=active_organization_id,
+        )
+
     return page_or_list_page(
         request,
         reservation_models.Reservation,
         reservation_public_key,
+        alternative_resultset=alternative_resultset,
     )
 
 

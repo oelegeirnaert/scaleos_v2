@@ -54,6 +54,10 @@ urlpatterns = [
         include("scaleos.notifications.urls_htmx", namespace="notifications_htmx"),
     ),
     path(
+        "htmx/payment/",
+        include("scaleos.payments.urls_htmx", namespace="payments_htmx"),
+    ),
+    path(
         "core/",
         include("scaleos.core.urls", namespace="core"),
     ),

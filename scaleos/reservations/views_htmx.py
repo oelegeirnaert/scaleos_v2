@@ -336,3 +336,23 @@ def requester_confirm_reservation(request):
     )
     reservation.requester_confirm()
     return HttpResponse(_("reservation confirmed"))
+
+def reservation_updates(request, reservation_public_key):
+    shared_htmx.do_htmx_get_checks(request)
+    reservationupdate_list = reservation_models.ReservationUpdate.objects.filter(
+        reservation__public_key=reservation_public_key,
+    ).order_by("-created_on")
+
+
+    template_used = "row_list.html"
+    logger.debug("Template used: %s", template_used)
+    row_list_title = _("reservation updates")
+    html_fragment = get_template(template_used).render(
+        context={
+            "rows": reservationupdate_list,
+            "row_list_title": row_list_title,
+        },
+        request=request,
+    )
+    return htmx_response(request, html_fragment)
+

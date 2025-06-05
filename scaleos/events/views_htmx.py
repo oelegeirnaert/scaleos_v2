@@ -32,7 +32,7 @@ def concept(request, concept_public_key):
         },
         request=request,
     )
-    return shared_htmx.htmx_response(request, return_string)
+    return htmx_response(request, return_string)
 
 
 @vary_on_headers("Accept-Language")

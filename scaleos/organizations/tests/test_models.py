@@ -16,25 +16,7 @@ class TestOrganization:
         user = UserFactory.create()
         organization = organization_factories.OrganizationFactory.create()
         organization.add_b2c(user)
-        assert organization.members.filter(person=user.person).exists()
-
-    def test_person_can_be_a_normal_customer_and_b2b_customer(self, faker):
-        person = hr_factories.PersonFactory()
-        organization = organization_factories.OrganizationFactory()
-
-        organization_customer = organization_factories.OrganizationCustomerFactory(
-            organization=organization,
-            person=person,
-        )
-        assert organization_customer
-
-        b2b_organization = organization_factories.OrganizationFactory()
-        organization_b2bcustomer = organization_factories.B2BCustomerFactory(
-            organization=organization,
-            b2b=b2b_organization,
-            person=person,
-        )
-        assert organization_b2bcustomer
+        assert organization.customers.filter(b2ccustomer__person=user.person).exists()
 
     def test_organization_cannot_add_himself_as_a_b2b(self, faker):
         organization = organization_factories.OrganizationFactory()
@@ -52,14 +34,15 @@ class TestOrganization:
         organization = organization_factories.OrganizationFactory()
         person = hr_factories.PersonFactory()
 
-        organization_customer = organization_factories.OrganizationCustomerFactory(
+
+        organization_customer = organization_factories.B2CCustomerFactory(
             person=person,
             organization=organization,
         )
 
         assert organization_customer
 
-        duplicate_customer = organization_factories.OrganizationCustomerFactory(
+        duplicate_customer = organization_factories.B2CCustomerFactory(
             person=person,
             organization=organization,
         )

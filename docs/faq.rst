@@ -17,5 +17,5 @@ In Django, your settings would look like this:
 TIME_ZONE = 'UTC'
 USE_TZ = True
 ```
-
+t
 If your users are primarily located in one specific region (for example, if your app is just for a single city or country), you might also want to set the `TIME_ZONE` to your local time zone for convenience in development, but it's still recommended to store times in UTC.

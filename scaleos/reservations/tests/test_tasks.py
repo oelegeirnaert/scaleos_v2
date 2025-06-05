@@ -14,7 +14,10 @@ pytestmark = pytest.mark.django_db
 
 def test_send_reservation_update_notification(settings):
     assert len(mail.outbox) == 0
-    reservation_update = reservation_factories.OrganizationConfirmFactory()
+    user = UserFactory.create(email="joske@hotmail.com")
+    reservation = reservation_factories.ReservationFactory(user_id=user.pk)
+    reservation_update = reservation_factories.OrganizationConfirmFactory(
+        reservation_id=reservation.pk)
     task_result = reservation_tasks.send_reservation_update_notification.delay(
         reservation_update_id=reservation_update.pk,
     )

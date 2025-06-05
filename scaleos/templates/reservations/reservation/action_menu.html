@@ -1,4 +1,27 @@
 {# generated via manage create_html_scripts #}
-{% extends 'action_menu.html' %}
-
 {% load i18n %}
+
+{% if action_menu.payment_request %}
+  <button hx-get="{% url 'payments_htmx:paymentrequest' action_menu.payment_request.public_key %}?popup"
+          hx-target=".modal.content"
+          class="group flex items-center justify-center overflow-hidden rounded-md bg-{{ TAILWIND_THEME_COLORS.primary }} px-4 py-3 text-white transition-all duration-300 ease-in-out focus:outline-none focus:ring-3 focus:ring-yellow-400 cursor-pointer sm:w-auto w-12">
+    <i data-lucide="hand-coins"></i>
+    <!-- Expanding label -->
+        <span class="pl-2 whitespace-nowrap text-sm font-semibold">
+      {% trans 'payment request'|upper %}
+    </span>
+  </button>
+{% endif %}
+
+{% if action_menu.updates.count > 0 %}
+  <button hx-get="{% url 'reservations_htmx:reservation_updates' action_menu.public_key %}?popup"
+          hx-target=".modal.content"
+          class="group flex items-center justify-center overflow-hidden rounded-md bg-{{ TAILWIND_THEME_COLORS.primary }} px-4 py-3 text-white transition-all duration-300 ease-in-out focus:outline-none focus:ring-3 focus:ring-yellow-400 cursor-pointer sm:w-auto w-12">
+    <i data-lucide="info" class="size-5 shrink-0"></i>
+    <!-- Expanding label -->
+        <span class="whitespace-nowrap text-sm font-semibold transition-all duration-300 ease-in-out sm:opacity-0 sm:group-hover:opacity-100 sm:max-w-0 sm:group-hover:max-w-[200px] sm:group-hover:ml-2 overflow-hidden">
+      {% trans 'updates'|upper %}
+    </span>
+  </button>
+{% endif %}
+

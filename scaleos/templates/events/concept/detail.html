@@ -11,7 +11,7 @@
     <p class="font-semibold uppercase tracking-widest">{{ concept }}</p>
     <div class="p-5 mt-10">
       <div x-data="{ opened_tab: null }" class="flex flex-col">
-        {% for event in concept.upcoming_events.all %}
+        {% for event in concept.upcoming_events_open_for_reservation %}
           <div class="mt-3 flex flex-col bg-gray-200 rounded shadow-md mb-2">
             <div @click="opened_tab = opened_tab == {{ forloop.counter }} ? null : {{ forloop.counter }} "
                  hx-get="{% url 'reservations_htmx:event_reservation' event.public_key %}"

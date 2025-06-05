@@ -40,10 +40,21 @@ class OrganizationEmployeeFactory(
     class Meta:
         model = organization_models.OrganizationEmployee
 
+class CustomerFactory(
+    DjangoModelFactory[organization_models.Customer],
+):
+    organization = SubFactory(OrganizationFactory)
+
+    class Meta:
+        model = organization_models.Customer
 
 class B2BCustomerFactory(
+    CustomerFactory,
     DjangoModelFactory[organization_models.B2BCustomer],
+
 ):
+    b2b = SubFactory(OrganizationFactory)
+
     class Meta:
         model = organization_models.B2BCustomer
 
@@ -55,11 +66,13 @@ class OrganizationOwnerFactory(
         model = organization_models.OrganizationOwner
 
 
-class OrganizationCustomerFactory(
-    DjangoModelFactory[organization_models.OrganizationCustomer],
+class B2CCustomerFactory(
+        CustomerFactory,
+    DjangoModelFactory[organization_models.B2CCustomer],
+
 ):
     class Meta:
-        model = organization_models.OrganizationCustomer
+        model = organization_models.B2CCustomer
 
 
 class OrganizationStylingFactory(
@@ -68,9 +81,3 @@ class OrganizationStylingFactory(
     class Meta:
         model = organization_models.OrganizationStyling
 
-
-class OrganizationPaymentMethodFactory(
-    DjangoModelFactory[organization_models.OrganizationPaymentMethod],
-):
-    class Meta:
-        model = organization_models.OrganizationPaymentMethod

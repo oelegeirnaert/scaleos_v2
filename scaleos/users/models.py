@@ -151,3 +151,11 @@ class User(AbstractUser, AdminLinkMixin):
     @property
     def notification_list(self):
         return self.notifications.all()
+
+    def is_organization_owner(self, active_organization_id):
+        from scaleos.organizations import models as organization_models
+
+        organization = organization_models.Organization.objects.get(
+            id=active_organization_id,
+        )
+        return organization.is_owner(self)

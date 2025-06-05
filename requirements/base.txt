@@ -70,3 +70,4 @@ holidays==0.73  # https://pypi.org/project/holidays/
 mollie-api-python==3.8.0  #https://pypi.org/project/mollie-api-python/
 geopy==2.4.1  # https://pypi.org/project/geopy/
 timezonefinder==6.5.9  # https://pypi.org/project/timezonefinder/
+cryptography==45.0.3  # https://pypi.org/project/cryptography/

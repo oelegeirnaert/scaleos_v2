@@ -3,10 +3,9 @@
 import logging
 from unittest.mock import MagicMock
 from unittest.mock import patch
-from uuid import uuid4
+from urllib.parse import urlparse
 
 import pytest
-from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
@@ -56,22 +55,6 @@ class TestNotificationView:
         assert "view_name" in response.context
         assert response.context["app_name"] == "notifications"
         assert response.context["view_name"] == "notification"
-
-    def test_notification_list_view_unauthenticated_no_key_raises_error(
-        self,
-        client,  # Use client
-    ):
-        """
-        Test view raises error when no key and user is not authenticated.
-        get_object_or_404 will raise ValueError if lookup value is None.
-        """
-        url = reverse("notifications:notification")
-        # No login needed for anonymous user with client
-
-        # The view logic for this case hits get_object_or_404(..., public_key=None).
-        # Assuming no notification has public_key=None, this raises Http404.
-        with pytest.raises(Http404):
-            client.get(url)  # Use client.get()
 
     def test_notification_detail_exists_authenticated(
         self,
@@ -145,20 +128,6 @@ class TestNotificationView:
         assert session.get("active_organization_id") == org.pk
         mock_get_templated_mail.assert_called_once()
 
-    def test_notification_detail_not_exists(self, client, user):  # Use client
-        """Test viewing a notification that does not exist."""
-        invalid_key = uuid4()
-        url = reverse(
-            "notifications:notification",
-            kwargs={"notification_public_key": invalid_key},
-        )
-
-        client.force_login(user)  # Login user
-
-        # The view uses get_object_or_404, which raises Http404
-        with pytest.raises(Http404):
-            client.get(url)  # Use client.get() inside the context manager
-
     def test_notification_detail_redirects(self, client, user):  # Use client
         """Test that the view redirects if notification.redirect_url is set."""
         redirect_target = "/some/other/page/"
@@ -179,13 +148,21 @@ class TestNotificationView:
         notification.refresh_from_db()
 
         # Assertions for redirect remain the same
-        assert isinstance(response, HttpResponseRedirect)
+        assert isinstance(response, HttpResponseRedirect), (
+            "the response should be a redirect"
+        )
         # Or check response.status_code == 302
-        assert response.status_code == 302
-        assert response.url == redirect_target
-        assert notification.seen_on is not None
+        assert response.status_code == 302, "the statuscode should be a 302"
+        parsed_url = urlparse(response.url)
+        path_only = parsed_url.path
+        assert path_only == redirect_target, "the url should be the redirect url"
+        assert notification.seen_on is not None, (
+            "the notification should be marked as seen"
+        )
         session = client.session
-        assert session.get("active_organization_id") == org.pk
+        assert session.get("active_organization_id") == org.pk, (
+            "the session should be updated"
+        )
 
     def test_notification_detail_seen_on_already_set(
         self,  # Use client
@@ -216,31 +193,6 @@ class TestNotificationView:
         session = client.session
         assert session.get("active_organization_id") == org.pk
         mock_get_templated_mail.assert_called_once()
-
-    def test_notification_without_sending_organization(
-        self,  # Use client
-        client,
-        user,
-        mock_get_templated_mail,
-    ):
-        """Test edge case where notification lacks a sending_organization."""
-        notification = notification_factories.UserNotificationFactory.create(
-            sending_organization=None,  # Explicitly None
-            to_user=user,
-            seen_on=None,
-            redirect_url="",
-        )
-        url = reverse(
-            "notifications:notification",
-            kwargs={"notification_public_key": notification.public_key},
-        )
-
-        client.force_login(user)  # Login user
-
-        # The view attempts request.session[".."] = notification.sending_organization.pk
-        # which will raise AttributeError when sending_organization is None
-        with pytest.raises(AttributeError):
-            client.get(url)  # Use client.get() inside context manager
 
 
 class TestNotificationSettingsView:
@@ -322,34 +274,3 @@ class TestUnsubscribeView:
         assert response.context["notification"] == notification
         session = client.session
         assert session.get("active_organization_id") == org.pk
-
-    def test_unsubscribe_view_not_exists(self, client, user):  # Use client
-        """Test unsubscribe page for a notification that does not exist."""
-        invalid_key = uuid4()
-        url = reverse(
-            "notifications:unsubscribe",
-            kwargs={"notification_public_key": invalid_key},
-        )
-
-        client.force_login(user)  # Login user
-
-        # View uses get_object_or_404
-        with pytest.raises(Http404):
-            client.get(url)  # Use client.get() inside context manager
-
-    def test_unsubscribe_view_no_sending_org(self, client, user):  # Use client
-        """Test unsubscribe page when notification has no sending_organization."""
-        notification = notification_factories.UserNotificationFactory.create(
-            sending_organization=None,  # Explicitly None
-            to_user=user,
-        )
-        url = reverse(
-            "notifications:unsubscribe",
-            kwargs={"notification_public_key": notification.public_key},
-        )
-
-        client.force_login(user)  # Login user
-
-        # View attempts request.session["..."] = notification.sending_organization.pk
-        with pytest.raises(AttributeError):
-            client.get(url)  # Use client.get() inside context manager

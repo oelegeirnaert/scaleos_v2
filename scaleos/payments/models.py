@@ -20,6 +20,7 @@ from moneyed import Money
 from polymorphic.models import PolymorphicModel
 
 from scaleos.payments.functions import ReferenceGenerator
+from scaleos.shared.fields import EncryptedTextField
 from scaleos.shared.fields import LogInfoFields
 from scaleos.shared.fields import NameField
 from scaleos.shared.fields import OriginFields
@@ -64,7 +65,7 @@ class PriceModel(LogInfoFields, AdminLinkMixin, PublicKeyField):
         ordering = ["-created_on"]
 
 
-class Price(PriceModel, LogInfoFields):
+class Price(PriceModel):
     organization = models.ForeignKey(
         "organizations.Organization",
         related_name="prices",
@@ -1132,6 +1133,15 @@ class EventReservationPaymentCondition(PaymentCondition):
 
 
 class PaymentMethod(PolymorphicModel, AdminLinkMixin, LogInfoFields, PublicKeyField):
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+        verbose_name=_("organization"),
+        related_name="payment_methods",
+    )
+
     class Meta:
         verbose_name = _("payment method")
         verbose_name_plural = _("payment methods")
@@ -1148,7 +1158,7 @@ class VoucherPaymentMethod(
 class MolliePaymentMethod(
     PaymentMethod,
 ):
-    api_key = models.CharField(max_length=255, default="", blank=False)
+    api_key = EncryptedTextField()
 
     class Meta:
         verbose_name = _("Mollie")
@@ -1159,8 +1169,8 @@ class EPCMoneyTransferPaymentMethod(PaymentMethod):
     iban = IBANField(include_countries=IBAN_SEPA_COUNTRIES, null=True, blank=False)
 
     class Meta:
-        verbose_name = _("EPC money transfer")
-        verbose_name_plural = _("EPC money transfer")
+        verbose_name = _("EPC Money Transfer")
+        verbose_name_plural = _("EPC Money Transfer")
 
 
 class CashPaymentMethod(PaymentMethod):

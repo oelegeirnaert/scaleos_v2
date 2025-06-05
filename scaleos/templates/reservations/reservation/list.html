@@ -4,8 +4,5 @@
 {% load i18n %}
 
 {% block content %}
-  {% for reservation in reservation_list %}
-    {{ reservation.detail_template }}
-    {% include reservation.detail_template %}
-  {% endfor %}
+  {% include 'row_list.html' with rows=reservation_list row_list_title=_("reservations") %}
 {% endblock content %}

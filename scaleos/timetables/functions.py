@@ -1,4 +1,5 @@
 import calendar
+import datetime
 import logging
 from datetime import date
 from datetime import timedelta
@@ -67,6 +68,34 @@ def get_weeks_in_year(year):
     number_of_weeks = dec_28.isocalendar()[1]
     logger.debug("Found %s weeks in year %s", number_of_weeks, year)
     return number_of_weeks
+
+
+def get_date_of_next(weekday_name: str) -> datetime.date:
+    # Normalize and map weekday name to weekday number
+    weekdays = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
+    weekday_name = weekday_name.capitalize()
+
+    if weekday_name not in weekdays:
+        msg = f"Invalid weekday name: {weekday_name}"
+        raise ValueError(msg)
+
+    target_weekday = weekdays.index(weekday_name)
+    today = timezone.now().today()
+    today_weekday = today.weekday()
+
+    # Calculate days until next target weekday
+    days_ahead = (target_weekday - today_weekday + 7) % 7
+    days_ahead = days_ahead or 7  # If today is the target, return next week's
+
+    return today + datetime.timedelta(days=days_ahead)
 
 
 geolocator = Nominatim(user_agent="scaleos.net")

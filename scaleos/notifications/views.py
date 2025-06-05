@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
@@ -11,6 +13,8 @@ from templated_email import get_templated_mail
 
 from scaleos.notifications import models as notification_models
 from scaleos.shared.mixins import ITS_NOW
+
+logger = logging.getLogger(__name__)
 
 
 # Create your views here.
@@ -29,11 +33,16 @@ def notification(request, notification_public_key=None):
         public_key=notification_public_key,
     )
 
+    if notification.seen_on is None:
+        notification_models.Notification.objects.filter(
+            public_key=notification_public_key,
+        ).update(seen_on=ITS_NOW)
+
     request.session["active_organization_id"] = notification.sending_organization.pk
 
-    if notification.seen_on is None:
-        notification.seen_on = ITS_NOW
-        notification.save(update_fields=["seen_on"])
+    if notification.redirect_url:
+        logger.debug("redirecting to %s", notification.redirect_url)
+        return HttpResponseRedirect(notification.redirect_url)
 
     context["notification"] = notification
 

@@ -16,6 +16,27 @@ from scaleos.reservations.tests import model_factories as reservation_factories
 
 
 @pytest.mark.django_db
+class TestPrice:
+    def test_price_format(self):
+        free = payment_factories.PriceFactory.create(vat_included=None)
+        assert str(free) == "free"
+
+        free_item = Money(0, EUR)
+        free = payment_factories.PriceFactory.create(vat_included=free_item)
+        assert str(free) == "free"
+
+        two_euro = Money(2, EUR)
+        price = payment_factories.PriceFactory.create(vat_included=two_euro)
+        assert str(price) == "€2.00 (vat included)"
+
+        two_euro = Money(2.31, EUR)
+        price = payment_factories.PriceFactory.create(vat_included=two_euro)
+        assert str(price) == "€2.31 (vat included)"
+
+        activate("nl")
+        assert str(price) == "€ 2,31 (btw inbegrepen)"
+
+@pytest.mark.django_db
 def test_price_from_product_remains_the_same_after_multiplying(faker):
     """
     If we need to multiply a product, it should return a new instance of the multiplied price.
@@ -112,25 +133,7 @@ def test_price_with_different_vats_can_be_summed_up_and_have_all_vats_in_new_pri
     assert vat_lines == 4, f"1 at 6%, 2 at 12% and 1 at 21%, we have {vat_lines} "
 
 
-@pytest.mark.django_db
-def test_price_format(faker):
-    free = payment_factories.PriceFactory.create(vat_included=None)
-    assert str(free) == "free"
 
-    free_item = Money(0, EUR)
-    free = payment_factories.PriceFactory.create(vat_included=free_item)
-    assert str(free) == "free"
-
-    two_euro = Money(2, EUR)
-    price = payment_factories.PriceFactory.create(vat_included=two_euro)
-    assert str(price) == "€2.00 (vat included)"
-
-    two_euro = Money(2.31, EUR)
-    price = payment_factories.PriceFactory.create(vat_included=two_euro)
-    assert str(price) == "€2.31 (vat included)"
-
-    activate("nl")
-    assert str(price) == "€ 2,31 (btw inbegrepen)"
 
 
 @pytest.mark.django_db
