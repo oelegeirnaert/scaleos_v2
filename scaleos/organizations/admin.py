@@ -7,6 +7,7 @@ from polymorphic.admin import PolymorphicParentModelAdmin
 from polymorphic.admin import StackedPolymorphicInline
 
 from scaleos.organizations import models as organization_models
+from scaleos.websites import models as website_models
 from scaleos.payments.admin import PaymentMethodInlineAdmin
 
 # Register your models here.
@@ -121,6 +122,21 @@ class OrganizationAdmin(
         PaymentMethodInlineAdmin,
         CustomerInlineAdmin,
     ]
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "primary_domain":
+            obj_id = request.resolver_match.kwargs.get("object_id")
+            if obj_id:
+                try:
+                    org = organization_models.Organization.objects.get(pk=obj_id)
+                    # Get all domains from websites belonging to this org
+                    domain_qs = website_models.WebsiteDomain.objects.filter(website__organization=org)
+                    kwargs["queryset"] = domain_qs
+                except organization_models.Organization.DoesNotExist:
+                    kwargs["queryset"] = website_models.WebsiteDomain.objects.none()
+            else:
+                kwargs["queryset"] = website_models.WebsiteDomain.objects.none()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 @admin.register(organization_models.Enterprise)

@@ -2,9 +2,9 @@
 {% load i18n %}
 
 {% if card %}
-  {% if card.website %}
+  {% if card.primary_domain %}
     <a class="text-gray-500 transition hover:text-gray-500/75"
-       href="{% url 'websites:website' card.website.domain_name %}">{% trans 'website'|capfirst %}</a>
+       href="{{card.primary_domain.url}}">{% trans 'website'|capfirst %}</a>
   {% endif %}
   <a class="text-gray-500 transition hover:text-gray-500/75"
      href="{% url 'organizations:concepts' card.slug %}">{% trans 'concepts'|capfirst %}</a>

@@ -204,6 +204,7 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",
     "hijack.middleware.HijackUserMiddleware",
     "scaleos.users.middleware.UserTimezoneMiddleware",
+    'scaleos.websites.middleware.WebsiteMiddleware',
 ]
 
 # STATIC
@@ -251,6 +252,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "scaleos.users.context_processors.allauth_settings",
                 # Oele
+                "scaleos.websites.context_processors.website_context",
                 "scaleos.utils.context_processors.body_classes",
                 "scaleos.utils.context_processors.hideable_page_parts",
                 "scaleos.utils.context_processors.theme_colors",

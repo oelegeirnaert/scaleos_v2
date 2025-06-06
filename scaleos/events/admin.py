@@ -209,52 +209,6 @@ class CustomerConceptAdmin(
     inlines = [*ConceptAdmin.inlines]
 
 
-@admin.register(event_models.BrunchEvent)
-class BrunchEventAdmin(PolymorphicInlineSupportMixin, PolymorphicChildModelAdmin):
-    from scaleos.reservations.admin import EventReservationAdmin
-
-    base_model = event_models.SingleEvent  # Explicitly set here!
-    # define custom features here
-
-    readonly_fields = [
-        "applicable_reservation_settings",
-        "reservations_closed_on",
-        "related_model_link",
-        "free_spots",
-        "free_percentage",
-        "reserved_spots",
-        "reserved_percentage",
-        "over_reserved_spots",
-        "slug",
-        "current_price_matrix",
-        "public_key",
-    ]
-
-    @admin.display(description=_("applicable reservation settings"))
-    def related_model_link(self, obj):
-        url = reverse(
-            "admin:reservations_eventreservationsettings_change",
-            args=[obj.applicable_reservation_settings.id],
-        )
-        return format_html(
-            '<a href="{}">{}</a>',
-            url,
-            obj.applicable_reservation_settings.id,
-        )
-
-
-@admin.register(event_models.ReceptionEvent)
-class ReceptionEventAdmin(PolymorphicChildModelAdmin):
-    base_model = event_models.SingleEvent  # Explicitly set here!
-    # define custom features here
-
-
-@admin.register(event_models.DanceEvent)
-class DanceEventAdmin(PolymorphicChildModelAdmin):
-    base_model = event_models.SingleEvent  # Explicitly set here!
-    # define custom features here
-
-
 @admin.register(event_models.Event)
 class EventAdmin(PolymorphicParentModelAdmin):
     base_model = event_models.Event
@@ -305,6 +259,56 @@ class SingleEventAdmin(PolymorphicInlineSupportMixin, PolymorphicChildModelAdmin
     ]
     inlines = [EventAttendeeInlineAdmin, EventUpdateInlineAdmin, *EventAdmin.inlines]
     list_filter = ["parent", "concept"]
+
+
+@admin.register(event_models.BrunchEvent)
+class BrunchEventAdmin(
+    SingleEventAdmin,
+    PolymorphicInlineSupportMixin,
+    PolymorphicChildModelAdmin,
+):
+    from scaleos.reservations.admin import EventReservationAdmin
+
+    base_model = event_models.SingleEvent  # Explicitly set here!
+    # define custom features here
+
+    readonly_fields = [
+        "applicable_reservation_settings",
+        "reservations_closed_on",
+        "related_model_link",
+        "free_spots",
+        "free_percentage",
+        "reserved_spots",
+        "reserved_percentage",
+        "over_reserved_spots",
+        "slug",
+        "current_price_matrix",
+        "public_key",
+    ]
+
+    @admin.display(description=_("applicable reservation settings"))
+    def related_model_link(self, obj):
+        url = reverse(
+            "admin:reservations_eventreservationsettings_change",
+            args=[obj.applicable_reservation_settings.id],
+        )
+        return format_html(
+            '<a href="{}">{}</a>',
+            url,
+            obj.applicable_reservation_settings.id,
+        )
+
+
+@admin.register(event_models.ReceptionEvent)
+class ReceptionEventAdmin(PolymorphicChildModelAdmin):
+    base_model = event_models.SingleEvent  # Explicitly set here!
+    # define custom features here
+
+
+@admin.register(event_models.DanceEvent)
+class DanceEventAdmin(PolymorphicChildModelAdmin):
+    base_model = event_models.SingleEvent  # Explicitly set here!
+    # define custom features here
 
 
 @admin.register(event_models.DinnerEvent)

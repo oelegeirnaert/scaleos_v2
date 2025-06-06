@@ -5,9 +5,22 @@ from polymorphic.admin import PolymorphicChildModelFilter
 from polymorphic.admin import PolymorphicInlineSupportMixin
 from polymorphic.admin import PolymorphicParentModelAdmin
 from polymorphic.admin import StackedPolymorphicInline
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 
 from scaleos.websites import models as website_models
 
+class WebsiteDomainInlineAdmin(admin.TabularInline):
+    model = website_models.WebsiteDomain
+    extra = 0
+    readonly_fields = ["is_primary_display"]
+    fields = ["domain_name", "is_primary_display"]
+
+    def is_primary_display(self, obj):
+        return obj.is_primary
+    is_primary_display.short_description = "Primary?"
+    is_primary_display.boolean = True
 
 class PageBlockInlineAdmin(admin.StackedInline):
     model = website_models.PageBlock
@@ -97,8 +110,18 @@ class PageInlineAdmin(StackedPolymorphicInline):
 
 @admin.register(website_models.Website)
 class WebsiteAdmin(PolymorphicInlineSupportMixin, admin.ModelAdmin):
-    readonly_fields = ["public_key"]
-    inlines = [PageInlineAdmin, BlockInlineAdmin, CallToActionInlineAdmin]
+    readonly_fields = ["public_key", "url"]
+    inlines = [WebsiteDomainInlineAdmin, PageInlineAdmin, BlockInlineAdmin, CallToActionInlineAdmin]
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "primary_domain":
+            # Get the object ID from the URL if editing an existing Website
+            website_id = request.resolver_match.kwargs.get("object_id")
+            if website_id:
+                kwargs["queryset"] = website_models.WebsiteDomain.objects.filter(website_id=website_id)
+            else:
+                kwargs["queryset"] = website_models.WebsiteDomain.objects.none()  # prevent selection when adding
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 # Register your models here.
@@ -195,3 +218,16 @@ class CTAVisitExternalURLAdmin(
     PolymorphicChildModelAdmin,
 ):
     base_model = website_models.CallToAction
+
+@admin.register(website_models.WebsiteDomain)
+class WebsiteDomainAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "linked_website", "is_primary", "is_wildcard"]
+
+    def linked_website(self, obj):
+        if obj.website_id:
+            url = reverse("admin:websites_website_change", args=[obj.website_id])
+            return format_html('<a href="{}">{}</a>', url, obj.website)
+        return "-"
+    linked_website.short_description = _("website")
+    linked_website.admin_order_field = "website"
+

@@ -87,3 +87,10 @@ class WebsiteImageFactory(DjangoModelFactory[website_models.WebsiteImage]):
 
     website = SubFactory(WebsiteFactory)
     image = SubFactory(ImageFileFactory)
+
+class WebsiteDomainFactory(DjangoModelFactory[website_models.WebsiteDomain]):
+    class Meta:
+        model = website_models.WebsiteDomain
+
+    domain_name = "example.com"
+    website = SubFactory(WebsiteFactory)

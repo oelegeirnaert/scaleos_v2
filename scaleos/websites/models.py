@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from polymorphic.models import PolymorphicModel
-
+from urllib.parse import urlparse
 from scaleos.events import models as event_models
 from scaleos.shared.fields import NameField
 from scaleos.shared.fields import PublicKeyField
@@ -140,16 +140,24 @@ class Website(
     AdminLinkMixin,
     PublicKeyField,
 ):
-    organization = models.OneToOneField(
+    organization = models.ForeignKey(
         "organizations.organization",
         verbose_name=_(
             "organization",
         ),
-        related_name="website",
+        related_name="websites",
         on_delete=models.CASCADE,
         null=True,
     )
-    domain_name = models.CharField(verbose_name=_("domain name"), max_length=255)
+    primary_domain = models.OneToOneField(
+        'websites.WebsiteDomain',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='primary_for_website'
+    )
+
+
     slogan = models.CharField(verbose_name=_("slogan"), default="", blank=True)
 
     homepage = models.OneToOneField(
@@ -175,25 +183,84 @@ class Website(
 
     @property
     def main_menu(self):
-        return self.published_pages.filter(show_in_main_menu=True).order_by("ordering")
+        published_pages = self.published_pages
+        if published_pages:
+            return published_pages.filter(show_in_main_menu=True).order_by("ordering")
 
     @property
     def footer_menu(self):
         return self.published_pages.filter(show_in_footer_menu=True).order_by(
             "ordering",
         )
-
+    
     @property
     def published_pages(self):
         return self.pages.filter(
             Q(publish_from__lte=ITS_NOW)
             & (Q(publish_till__isnull=True) | Q(publish_till__gte=ITS_NOW)),
         ).order_by("ordering")
+    
+
+    @property
+    def url(self) -> str | None:
+        """
+        If this is a wildcard domain (e.g., '*.example.com'),
+        returns 'example.com'. Otherwise returns None.
+        """
+        if self.primary_domain is None:
+            return None
+
+        return self.primary_domain.url
+    
+    def __str__(self) -> str:
+        the_url = self.url
+        if the_url:
+            return the_url
+
+        return super().__str__()
+
+
+
+
+
+class WebsiteDomain(models.Model): # Clearly states it is for Website, later maybe we need email domain as well
+    website = models.ForeignKey(Website, related_name='domains', verbose_name=_('website'), on_delete=models.CASCADE, null=True, blank=True, help_text=_('leave blank if default website needs to be shown'))
+    domain_name = models.CharField(max_length=255, unique=True, verbose_name=_('domain name'))
+
+    class Meta:
+        verbose_name = _("website domain")
+        verbose_name_plural = _("website domains")
 
     def __str__(self):
-        if self.domain_name:
-            return self.domain_name
-        return super().__str__()
+        return self.url
+    
+    @property
+    def is_wildcard(self) -> bool:
+        return self.domain_name.startswith("*.")
+
+    @property
+    def is_primary(self) -> bool:
+        if self.website is None:
+            return False
+        return self.website.primary_domain_id == self.id
+    
+    @property
+    def url(self) -> str | None:
+        if not self.domain_name:
+            return None
+
+        # Remove wildcard prefix if present
+        domain = self.domain_name[2:] if self.domain_name.startswith("*.") else self.domain_name
+
+        # Check if domain_name already has scheme
+        parsed = urlparse(domain)
+        if parsed.scheme:
+            return domain  # already full URL with scheme
+        
+        # Add http:// by default (or https:// if you want)
+        return f"http://{domain}"
+
+
 
 
 class WebsiteImage(
@@ -260,7 +327,7 @@ class Page(
 
     def __str__(self) -> str:
         if self.website:
-            return f"{self.website.domain_name.upper()}: {self.name}"
+            return f"{self.name}"
         return super().__str__()
 
     @property

@@ -14,10 +14,10 @@ logger = logging.getLogger("scaleos")
 
 
 @never_cache
-def ask_segment(request, website_domain_name):
+def ask_segment(request):
     shared_htmx.do_htmx_get_checks(request)
 
-    website = get_object_or_404(website_models.Website, domain_name=website_domain_name)
+    website = request.website
     used_template = "websites/website/ask_segment.html"
     logging.info("Template used: %s", used_template)
     return_string = get_template(used_template).render(
@@ -29,7 +29,7 @@ def ask_segment(request, website_domain_name):
     return shared_htmx.htmx_response(request, return_string)
 
 
-def set_segment(request, domain_name, segment):
+def set_segment(request, segment):
     match segment:
         case "business":
             request.session["segment"] = website_models.Page.SegmentType.B2B
@@ -38,13 +38,13 @@ def set_segment(request, domain_name, segment):
         case "both":
             request.session["segment"] = website_models.Page.SegmentType.BOTH
 
-    return redirect(reverse("websites:website", kwargs={"domain_name": domain_name}))
+    return redirect("/")
 
 
-def clear_segment(request, domain_name):
+def clear_segment(request):
     try:
         del request.session["segment"]
     except KeyError:
         contextlib.suppress(KeyError)
 
-    return redirect(reverse("websites:website", kwargs={"domain_name": domain_name}))
+    return redirect("/")

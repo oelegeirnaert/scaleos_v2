@@ -70,7 +70,7 @@ urlpatterns = [
         include("scaleos.organizations.urls", namespace="organizations"),
     ),
     path(
-        "website/",
+        "page/",
         include("scaleos.websites.urls", namespace="websites"),
     ),
     path(

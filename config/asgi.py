@@ -15,29 +15,30 @@ from pathlib import Path
 
 from django.core.asgi import get_asgi_application
 
-# This allows easy placement of apps within the interior
-# scaleos directory.
+# Setup path and settings
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 sys.path.append(str(BASE_DIR / "scaleos"))
 
-# If DJANGO_SETTINGS_MODULE is unset, default to the local settings
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 
-# This application object is used by any ASGI server configured to use this file.
+# Django app
 django_application = get_asgi_application()
-# Apply ASGI middleware here.
-# from helloworld.asgi import HelloWorldApplication
-# application = HelloWorldApplication(application)
 
-# Import websocket application here, so apps from django_application are loaded first
+# Your websocket ASGI app
 from config.websocket import websocket_application
 
+# Import the fully async middleware
+from scaleos.websites.middleware import AsyncHostValidationMiddleware
 
+# Wrap both HTTP and WebSocket ASGI apps with the middleware
+validated_http_app = AsyncHostValidationMiddleware(django_application)
+validated_websocket_app = AsyncHostValidationMiddleware(websocket_application)
+
+# ASGI main application router
 async def application(scope, receive, send):
     if scope["type"] == "http":
-        await django_application(scope, receive, send)
+        await validated_http_app(scope, receive, send)
     elif scope["type"] == "websocket":
-        await websocket_application(scope, receive, send)
+        await validated_websocket_app(scope, receive, send)
     else:
-        msg = f"Unknown scope type {scope['type']}"
-        raise NotImplementedError(msg)
+        raise NotImplementedError(f"Unknown scope type {scope['type']}")

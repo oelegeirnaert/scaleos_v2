@@ -5,7 +5,7 @@
 {% endblock banner %}
 {% block main %}
   {% if ask_segment %}
-    <span hx-get="{% url 'websites_htmx:ask_segment' website.domain_name %}?popup"
+    <span hx-get="{% url 'websites_htmx:ask_segment' %}?popup"
           hx-target=".modal.content"
           hx-trigger="load">Ask Segment</span>
   {% endif %}

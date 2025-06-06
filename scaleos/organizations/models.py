@@ -59,6 +59,13 @@ class Organization(
         blank=True,
         help_text="used for sending mails and notifications",
     )
+    primary_domain = models.OneToOneField(
+        'websites.WebsiteDomain',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='primary_for_organization'
+    )
 
     class Meta:
         verbose_name = _("organization")
@@ -229,6 +236,14 @@ class Organization(
 
     def get_event_types_with_count(self):
         return self.organizing_events.all()
+    
+    def clean(self):
+        # Ensure primary_domain belongs to a website that belongs to this org
+        if self.primary_domain:
+            domain_org = self.primary_domain.website.organization
+            if domain_org != self:
+                raise ValidationError("Primary domain must belong to a website under this organization.")
+
 
 
 class OrganizationMember(PolymorphicModel, AdminLinkMixin, LogInfoFields):

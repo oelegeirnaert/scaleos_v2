@@ -61,12 +61,10 @@
             <div class="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
               <div class="flex h-16 items-center justify-between">
                 <div class="flex-1 md:flex md:items-center md:gap-12">
-                  {% if website %}
-                    <a class="block text-teal-600"
-                       href="{% url 'websites:website' website.domain_name %}">
-                    {% else %}
-                      <a class="block text-teal-600" href="{% url 'home' %}">
-                      {% endif %}
+
+                    
+                      <a class="block text-teal-600" href="/">
+ 
                       <span class="sr-only">Home</span>
                       {% if active_organization and active_organization.styling and active_organization.styling.fav_icon %}
                         <img alt="logo"
@@ -92,10 +90,6 @@
                           <li>
                             <a class="text-gray-500 transition hover:text-gray-500/75"
                                href="{% url 'organizations:organization' %}">{% trans 'organizations'|capfirst %}</a>
-                          </li>
-                          <li>
-                            <a class="text-gray-500 transition hover:text-gray-500/75"
-                               href="{% url 'websites:website' %}">{% trans "websites"|capfirst %}</a>
                           </li>
                           <li>
                             <a class="text-gray-500 transition hover:text-gray-500/75"

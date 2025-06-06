@@ -50,6 +50,21 @@ class Command(BaseCommand):
                 django_file = File(img_file)
                 card.card_image.save(image_name, django_file, save=True)
 
+    def create_brunch_catering(self, brunch):
+        logger.info("creating brunch catering")
+        brunch_catering, created = catering_models.Catering.objects.get_or_create(
+            public_key="b89c7c1b-7d60-4d3d-8f67-54f04e8f38cd",
+        )
+        brunch.catering_id = brunch_catering.pk
+        brunch.save()
+
+        dish = catering_models.Dish.objects.first()
+        catering_dish, created = catering_models.CateringDish.objects.get_or_create(
+            dish_id=dish.pk,
+            catering_id=brunch_catering.pk,
+        )
+        brunch_catering.dishes.add(catering_dish)
+
     def create_brunch_concept(self, organization):  # noqa: PLR0915
         logger.info("Creating brunch concept for organization %s", organization)
 
@@ -195,6 +210,7 @@ Of je nu iets te vieren hebt of gewoon wil genieten van een ontspannen zondag in
 Zondag is buffetdag.
 Reserveer je tafel en proef de verfijning van de Waerboom."""  # noqa: E501, RUF001
         brunch_concept.save()
+        self.create_brunch_catering(brunch_concept)
 
         brunch_prices_matrix, created = (
             event_models.ConceptPriceMatrix.objects.get_or_create(
@@ -230,7 +246,6 @@ Reserveer je tafel en proef de verfijning van de Waerboom."""  # noqa: E501, RUF
         brunch_event.name_ml = f"Gastronomisch buffet {brunch_concept.name}"
         brunch_event.maximum_number_of_guests = 300
         brunch_event.save()
-
 
         target_date = timezone.now().date() + datetime.timedelta(days=60)
         brunch_duplicator, created = event_models.EventDuplicator.objects.get_or_create(
@@ -1097,13 +1112,10 @@ Maak van jouw viering een herinnering om te koesteren."""  # noqa: E501, RUF001
         cash_payment_method, created = (
             payment_models.CashPaymentMethod.objects.get_or_create(
                 public_key="072b5b09-b74f-48b7-8922-287794e2955c",
-
             )
         )
         cash_payment_method.organization_id = organization.pk
         cash_payment_method.save()
-
-
 
         money_transfer_payment_method, created = (
             payment_models.EPCMoneyTransferPaymentMethod.objects.get_or_create(
